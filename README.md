@@ -54,7 +54,7 @@ binary_sensor:
   - platform: virtual
     name: 'Binary Sensor 1'
     initial_value: 'on'
-	class: presence
+    class: presence
 ```
 
 To add a virtual light use the following:
