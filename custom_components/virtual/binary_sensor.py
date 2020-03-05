@@ -138,16 +138,16 @@ def _get_binary_sensor_from_entity_id(hass, entity_id):
 
 async def async_virtual_on_service(hass, call):
     _LOGGER.info("{0} turning on".format(call.data['entity_id']))
-    binary_sensor = _get_binary_sensor_from_entity_id(hass,call.data['entity_id'][0])
-    binary_sensor.turn_on()
+    for entity_id in call.data['entity_id']:
+        _get_binary_sensor_from_entity_id(hass,entity_id).turn_on()
 
 async def async_virtual_off_service(hass, call):
     _LOGGER.info("{0} turning off".format(call.data['entity_id']))
-    binary_sensor = _get_binary_sensor_from_entity_id(hass,call.data['entity_id'][0])
-    binary_sensor.turn_off()
+    for entity_id in call.data['entity_id']:
+        _get_binary_sensor_from_entity_id(hass,entity_id).turn_off()
 
 async def async_virtual_toggle_service(hass, call):
     _LOGGER.info("{0} turning off".format(call.data['entity_id']))
-    binary_sensor = _get_binary_sensor_from_entity_id(hass,call.data['entity_id'][0])
-    binary_sensor.toggle()
+    for entity_id in call.data['entity_id']:
+        _get_binary_sensor_from_entity_id(hass,entity_id).toggle()
 

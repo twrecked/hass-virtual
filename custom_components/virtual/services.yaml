@@ -1,0 +1,23 @@
+# Describes the format for available virtual services
+
+turn_on:
+  description: Turn on a binary sensor.
+  fields:
+    entity_id:
+      description: Name(s) of entities to turn on
+      example: 'binary_sensor.virtual_motion_1'
+
+turn_off:
+  description: Turn off a binary sensor.
+  fields:
+    entity_id:
+      description: Name(s) of entities to turn off
+      example: 'binary_sensor.virtual_motion_1'
+
+toggle:
+  description: Toggle a binary sensor.
+  fields:
+    entity_id:
+      description: Name(s) of entities to toggle
+      example: 'binary_sensor.virtual_motion_1'
+
