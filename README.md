@@ -57,6 +57,8 @@ binary_sensor:
     class: presence
 ```
 
+Use the `virtual.turn_on`, `virtual.turn_off` and `virtual.toggle` services to manipulate the binary sensors.
+
 To add a virtual light use the following:
 
 ```yaml
