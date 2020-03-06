@@ -110,7 +110,7 @@ def _get_sensor_from_entity_id(hass, entity_id):
     return sensor
 
 async def async_virtual_set_service(hass, call):
-    _LOGGER.info("{0} turning on".format(call.data['entity_id']))
+    _LOGGER.info("{0} setting".format(call.data['entity_id']))
     for entity_id in call.data['entity_id']:
         _get_sensor_from_entity_id(hass,entity_id).set(call.data['value'])
 
