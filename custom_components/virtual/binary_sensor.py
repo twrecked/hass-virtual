@@ -45,31 +45,28 @@ async def async_setup_platform(hass, config, async_add_entities, _discovery_info
     sensors = [VirtualBinarySensor(config)]
     async_add_entities(sensors, True)
 
-    async def async_virtual_on(call):
+    async def async_virtual_service(call):
         """Call virtual service handler."""
-        _LOGGER.info("turn_on: {}".format(pprint.pformat(call)))
-        await async_virtual_on_service(hass, call)
-
-    async def async_virtual_off(call):
-        """Call virtual service handler."""
-        await async_virtual_off_service(hass, call)
-
-    async def async_virtual_toggle(call):
-        """Call virtual service handler."""
-        await async_virtual_toggle_service(hass, call)
+        _LOGGER.info("{} service called".format(call.service))
+        if call.service == SERVICE_ON:
+            await async_virtual_on_service(hass, call)
+        if call.service == SERVICE_OFF:
+            await async_virtual_off_service(hass, call)
+        if call.service == SERVICE_TOGGLE:
+            await async_virtual_toggle_service(hass, call)
 
     # Build up services...
     if not hasattr(hass.data[COMPONENT_SERVICES], DOMAIN):
         _LOGGER.info("installing handlers")
         hass.data[COMPONENT_SERVICES][DOMAIN] = 'installed'
         hass.services.async_register(
-            COMPONENT_DOMAIN, SERVICE_ON, async_virtual_on, schema=SERVICE_SCHEMA,
+            COMPONENT_DOMAIN, SERVICE_ON, async_virtual_service, schema=SERVICE_SCHEMA,
         )
         hass.services.async_register(
-            COMPONENT_DOMAIN, SERVICE_OFF, async_virtual_off, schema=SERVICE_SCHEMA,
+            COMPONENT_DOMAIN, SERVICE_OFF, async_virtual_service, schema=SERVICE_SCHEMA,
         )
         hass.services.async_register(
-            COMPONENT_DOMAIN, SERVICE_TOGGLE, async_virtual_toggle, schema=SERVICE_SCHEMA,
+            COMPONENT_DOMAIN, SERVICE_TOGGLE, async_virtual_service, schema=SERVICE_SCHEMA,
         )
 
 
