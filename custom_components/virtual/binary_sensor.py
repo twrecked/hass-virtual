@@ -125,17 +125,17 @@ class VirtualBinarySensor(BinarySensorDevice):
 
 async def async_virtual_on_service(hass, call):
     for entity_id in call.data['entity_id']:
-        _LOGGER.info("{0} turning on".format(entity_id)
+        _LOGGER.info("{0} turning on".format(entity_id))
         get_entity_from_domain(hass,DOMAIN,entity_id).turn_on()
 
 
 async def async_virtual_off_service(hass, call):
     for entity_id in call.data['entity_id']:
-        _LOGGER.info("{0} turning off".format(entity_id)
+        _LOGGER.info("{0} turning off".format(entity_id))
         get_entity_from_domain(hass,DOMAIN,entity_id).turn_off()
 
 
 async def async_virtual_toggle_service(hass, call):
     for entity_id in call.data['entity_id']:
-        _LOGGER.info("{0} toggling".format(entity_id)
+        _LOGGER.info("{0} toggling".format(entity_id))
         get_entity_from_domain(hass,DOMAIN,entity_id).toggle()

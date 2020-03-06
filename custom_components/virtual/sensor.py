@@ -100,5 +100,5 @@ class VirtualSensor(Entity):
 
 async def async_virtual_set_service(hass, call):
     for entity_id in call.data['entity_id']:
-        _LOGGER.info("{0} setting".format(entity_id)
+        _LOGGER.info("{0} setting".format(entity_id))
         get_entity_from_domain(hass,DOMAIN,entity_id).set(call.data['value'])
