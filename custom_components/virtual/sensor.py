@@ -37,6 +37,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 SERVICE_SET = 'set'
 SERVICE_SCHEMA = vol.Schema({
     vol.Required(ATTR_ENTITY_ID): cv.comp_entity_ids,
+    vol.Required('value'): cv.string,
 })
 
 async def async_setup_platform(hass, config, async_add_entities, _discovery_info=None):
@@ -47,7 +48,7 @@ async def async_setup_platform(hass, config, async_add_entities, _discovery_info
     async def async_virtual_set(call):
         """Call virtual service handler."""
         _LOGGER.info("set: {}".format(pprint.pformat(call)))
-        await async_virtual_set(hass, call)
+        await async_virtual_set_service(hass, call)
 
     # Build up services...
     if hass.data.get(SENSOR_DOMAIN,None) is None:
@@ -108,7 +109,7 @@ def _get_sensor_from_entity_id(hass, entity_id):
 
     return sensor
 
-async def async_virtual_on_service(hass, call):
+async def async_virtual_set_service(hass, call):
     _LOGGER.info("{0} turning on".format(call.data['entity_id']))
     for entity_id in call.data['entity_id']:
         _get_sensor_from_entity_id(hass,entity_id).set(call.data['value'])
