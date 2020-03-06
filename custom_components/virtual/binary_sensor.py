@@ -13,7 +13,7 @@ from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.components.binary_sensor import (BinarySensorDevice, DOMAIN)
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
-from . import COMPONENT_DOMAIN, COMPONENT_SERVICES
+from . import COMPONENT_DOMAIN, COMPONENT_SERVICES, get_entity_from_domain
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -123,29 +123,19 @@ class VirtualBinarySensor(BinarySensorDevice):
         return attrs
 
 
-def _get_binary_sensor_from_entity_id(hass, entity_id):
-    component = hass.data.get(DOMAIN)
-    if component is None:
-        raise HomeAssistantError('binary_sensor component not set up')
-
-    binary_sensor = component.get_entity(entity_id)
-    if binary_sensor is None:
-        raise HomeAssistantError('binary_sensor not found')
-
-    return binary_sensor
-
 async def async_virtual_on_service(hass, call):
-    _LOGGER.info("{0} turning on".format(call.data['entity_id']))
     for entity_id in call.data['entity_id']:
-        _get_binary_sensor_from_entity_id(hass,entity_id).turn_on()
+        _LOGGER.info("{0} turning on".format(entity_id)
+        get_entity_from_domain(hass,DOMAIN,entity_id).turn_on()
+
 
 async def async_virtual_off_service(hass, call):
-    _LOGGER.info("{0} turning off".format(call.data['entity_id']))
     for entity_id in call.data['entity_id']:
-        _get_binary_sensor_from_entity_id(hass,entity_id).turn_off()
+        _LOGGER.info("{0} turning off".format(entity_id)
+        get_entity_from_domain(hass,DOMAIN,entity_id).turn_off()
+
 
 async def async_virtual_toggle_service(hass, call):
-    _LOGGER.info("{0} turning off".format(call.data['entity_id']))
     for entity_id in call.data['entity_id']:
-        _get_binary_sensor_from_entity_id(hass,entity_id).toggle()
-
+        _LOGGER.info("{0} toggling".format(entity_id)
+        get_entity_from_domain(hass,DOMAIN,entity_id).toggle()

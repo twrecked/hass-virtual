@@ -14,7 +14,7 @@ from homeassistant.components.sensor import DOMAIN
 from homeassistant.helpers.entity import Entity
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
-from . import COMPONENT_DOMAIN, COMPONENT_SERVICES
+from . import COMPONENT_DOMAIN, COMPONENT_SERVICES, get_entity_from_domain
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -57,6 +57,7 @@ async def async_setup_platform(hass, config, async_add_entities, _discovery_info
             COMPONENT_DOMAIN, SERVICE_SET, async_virtual_set, schema=SERVICE_SCHEMA,
         )
 
+
 class VirtualSensor(Entity):
     """An implementation of a Virtual Sensor."""
 
@@ -97,19 +98,7 @@ class VirtualSensor(Entity):
         return attrs
 
 
-def _get_sensor_from_entity_id(hass, entity_id):
-    component = hass.data.get(DOMAIN)
-    if component is None:
-        raise HomeAssistantError('sensor component not set up')
-
-    sensor = component.get_entity(entity_id)
-    if sensor is None:
-        raise HomeAssistantError('sensor not found')
-
-    return sensor
-
 async def async_virtual_set_service(hass, call):
-    _LOGGER.info("{0} setting".format(call.data['entity_id']))
     for entity_id in call.data['entity_id']:
-        _get_sensor_from_entity_id(hass,entity_id).set(call.data['value'])
-
+        _LOGGER.info("{0} setting".format(entity_id)
+        get_entity_from_domain(hass,DOMAIN,entity_id).set(call.data['value'])
