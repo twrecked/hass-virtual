@@ -10,8 +10,7 @@ import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.const import ATTR_ENTITY_ID
-from homeassistant.components.binary_sensor import (BinarySensorDevice,
-        DOMAIN )
+from homeassistant.components.binary_sensor import (BinarySensorDevice, DOMAIN)
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
 from . import COMPONENT_DOMAIN
