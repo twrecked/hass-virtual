@@ -59,6 +59,18 @@ binary_sensor:
 
 Use the `virtual.turn_on`, `virtual.turn_off` and `virtual.toggle` services to manipulate the binary sensors.
 
+To add a virtual sensor use the following:
+
+```yaml
+- platform: virtual
+  name: 'Temperature 1'
+  class: temperature
+  initial_value: 37
+```
+
+Use the `virtual.set` service to manipulate the binary sensors.
+
+
 To add a virtual light use the following:
 
 ```yaml
