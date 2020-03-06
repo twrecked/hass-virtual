@@ -13,13 +13,12 @@ from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.components.binary_sensor import (BinarySensorDevice, DOMAIN)
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
-from . import COMPONENT_DOMAIN
+from . import COMPONENT_DOMAIN, COMPONENT_SERVICES
+
 
 _LOGGER = logging.getLogger(__name__)
 
-DEPENDENCIES = ['virtual']
-
-BINARY_SENSOR_DOMAIN = COMPONENT_DOMAIN + '_BINARY_SENSOR'
+DEPENDENCIES = [COMPONENT_DOMAIN]
 
 CONF_NAME = "name"
 CONF_CLASS = "class"
@@ -60,9 +59,9 @@ async def async_setup_platform(hass, config, async_add_entities, _discovery_info
         await async_virtual_toggle_service(hass, call)
 
     # Build up services...
-    if hass.data.get(BINARY_SENSOR_DOMAIN,None) is None:
+    if not hasattr(hass.data[COMPONENT_SERVICES], DOMAIN):
         _LOGGER.info("installing handlers")
-        hass.data[BINARY_SENSOR_DOMAIN] = 'installed'
+        hass.data[COMPONENT_SERVICES][DOMAIN] = 'installed'
         hass.services.async_register(
             COMPONENT_DOMAIN, SERVICE_ON, async_virtual_on, schema=SERVICE_SCHEMA,
         )

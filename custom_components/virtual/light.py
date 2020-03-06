@@ -16,9 +16,12 @@ from homeassistant.components.light import (
     Light,
 )
 from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
+from . import COMPONENT_DOMAIN, COMPONENT_SERVICES
 
 
 _LOGGER = logging.getLogger(__name__)
+
+DEPENDENCIES = [COMPONENT_DOMAIN]
 
 CONF_NAME = "name"
 CONF_INITIAL_VALUE = "initial_value"
