@@ -91,6 +91,14 @@ switch:
     name: Switch 2
 ```
 
+To add a virtual lock use the following:
+
+```yaml
+lock:
+  - platform: virtual
+    name: Front Door Lock
+```
+
 To add a virtual device tracker use the following:
 
 ```yaml
