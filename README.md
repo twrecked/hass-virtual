@@ -91,3 +91,14 @@ switch:
     name: Switch 2
 ```
 
+To add a virtual device tracker use the following:
+
+```yaml
+device_tracker:
+  - platform: virtual
+    devices:
+      - virtual_user1
+      - virtual_user2
+```
+
+They will be moved to home on reboot. Use the `device_tracker.see` service to change device locations.
