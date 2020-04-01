@@ -109,3 +109,4 @@ venv.bak/
 *.rej
 *.orig
 *.diff
+.idea
