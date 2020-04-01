@@ -19,9 +19,9 @@ Many thanks to:
 
 ## Installation
 
-### HACS [COMING SOON!]
+### HACS
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
-Virtual is going to be part of the default HACS store. If you're not interested in development branches this is the easiest way to install.
+Virtual is part of the default HACS store. If you're not interested in development branches this is the easiest way to install.
 
 ### From Script
 Run the install script. Run it once to make sure the operations look sane and run it a second time with the `go` parameter to do the actual work. If you update just rerun the script, it will overwrite all installed files.

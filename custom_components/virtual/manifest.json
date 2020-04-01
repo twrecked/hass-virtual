@@ -3,6 +3,8 @@
   "name": "Virtual Components",
   "documentation": "https://github.com/twrecked/hass-virtual/blob/master/README.md",
   "dependencies": [],
-  "codeowners": ["@twrecked"],
+  "codeowners": [
+    "@twrecked"
+  ],
   "requirements": []
 }

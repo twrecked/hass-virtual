@@ -7,8 +7,7 @@ import logging
 
 from homeassistant.exceptions import HomeAssistantError
 
-
-__version__ = '0.3'
+__version__ = '0.4'
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,7 +15,7 @@ COMPONENT_DOMAIN = 'virtual'
 COMPONENT_SERVICES = 'virtual-services'
 
 
-def setup(hass, config):
+def setup(hass, _config):
     """Set up a virtual components."""
 
     hass.data[COMPONENT_SERVICES] = {}

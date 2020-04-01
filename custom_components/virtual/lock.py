@@ -13,7 +13,6 @@ from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
 
 _LOGGER = logging.getLogger(__name__)
 
-
 CONF_NAME = "name"
 CONF_INITIAL_VALUE = "initial_value"
 
@@ -61,6 +60,9 @@ class VirtualLock(LockDevice):
     def unlock(self, **kwargs):
         self._state = 'unlocked'
 
+    def open(self, **kwargs):
+        pass
+
     @property
     def device_state_attributes(self):
         """Return the device state attributes."""
@@ -69,4 +71,3 @@ class VirtualLock(LockDevice):
             'unique_id': self._unique_id,
         }
         return attrs
-

@@ -9,15 +9,13 @@ import pprint
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
-import homeassistant.util.dt as dt_util
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     SUPPORT_BRIGHTNESS,
     Light,
 )
 from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
-from . import COMPONENT_DOMAIN, COMPONENT_SERVICES
-
+from . import COMPONENT_DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -37,7 +35,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 })
 
 
-async def async_setup_platform(hass, config, async_add_entities, _discovery_info=None):
+async def async_setup_platform(_hass, config, async_add_entities, _discovery_info=None):
     lights = [VirtualLight(config)]
     async_add_entities(lights, True)
 
@@ -65,11 +63,11 @@ class VirtualLight(Light):
     @property
     def supported_features(self):
         """Flag features that are supported."""
-        return SUPPORT_BRIGHTNESS 
+        return SUPPORT_BRIGHTNESS
 
     def turn_on(self, **kwargs):
         """Turn the light on."""
-        brightness = kwargs.get(ATTR_BRIGHTNESS,None)
+        brightness = kwargs.get(ATTR_BRIGHTNESS, None)
         if brightness is not None:
             self._brightness = brightness
 
@@ -98,4 +96,3 @@ class VirtualLight(Light):
         }
 
         return attrs
-
