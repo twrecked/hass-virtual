@@ -5,6 +5,8 @@ This component provides support for virtual components.
 
 import logging
 
+from homeassistant.exceptions import HomeAssistantError
+
 
 __version__ = '0.3'
 
