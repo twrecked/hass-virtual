@@ -4,19 +4,16 @@ This component provides support for a virtual device tracker.
 """
 
 import logging
-import pprint
 
-import voluptuous as vol
-
-from homeassistant.const import CONF_DEVICES, STATE_HOME 
-from homeassistant.core import callback
+from homeassistant.const import CONF_DEVICES, STATE_HOME
 from . import COMPONENT_DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
 DEPENDENCIES = [COMPONENT_DOMAIN]
 
-async def async_setup_scanner(hass, config, async_see, discovery_info=None):
+
+async def async_setup_scanner(hass, config, async_see, _discovery_info=None):
     """Set up the virtual tracker."""
 
     # Move all configured devices home
@@ -26,4 +23,3 @@ async def async_setup_scanner(hass, config, async_see, discovery_info=None):
         hass.async_create_task(async_see(**see_args))
 
     return True
-

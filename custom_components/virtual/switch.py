@@ -13,7 +13,6 @@ from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
 
 _LOGGER = logging.getLogger(__name__)
 
-
 CONF_NAME = "name"
 CONF_INITIAL_VALUE = "initial_value"
 
@@ -74,4 +73,3 @@ class VirtualSwitch(SwitchDevice):
             'unique_id': self._unique_id,
         }
         return attrs
-

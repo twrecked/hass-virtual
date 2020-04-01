@@ -4,18 +4,15 @@ This component provides support for a virtual sensor.
 """
 
 import logging
-import pprint
 
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.components.sensor import DOMAIN
-from homeassistant.helpers.entity import Entity
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
+from homeassistant.helpers.entity import Entity
 from . import COMPONENT_DOMAIN, COMPONENT_SERVICES, get_entity_from_domain
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,8 +36,8 @@ SERVICE_SCHEMA = vol.Schema({
     vol.Required('value'): cv.string,
 })
 
-async def async_setup_platform(hass, config, async_add_entities, _discovery_info=None):
 
+async def async_setup_platform(hass, config, async_add_entities, _discovery_info=None):
     sensors = [VirtualSensor(config)]
     async_add_entities(sensors, True)
 
@@ -84,7 +81,7 @@ class VirtualSensor(Entity):
         """Return the state of the sensor."""
         return self._state
 
-    def set(self,value):
+    def set(self, value):
         self._state = value
         self.async_schedule_update_ha_state()
 
@@ -101,5 +98,5 @@ class VirtualSensor(Entity):
 async def async_virtual_set_service(hass, call):
     for entity_id in call.data['entity_id']:
         value = call.data['value']
-        _LOGGER.info("{} set(value={})".format(entity_id,value))
-        get_entity_from_domain(hass,DOMAIN,entity_id).set(value)
+        _LOGGER.info("{} set(value={})".format(entity_id, value))
+        get_entity_from_domain(hass, DOMAIN, entity_id).set(value)

@@ -4,17 +4,14 @@ This component provides support for a virtual binary sensor.
 """
 
 import logging
-import pprint
 
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.components.binary_sensor import (BinarySensorDevice, DOMAIN)
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
 from . import COMPONENT_DOMAIN, COMPONENT_SERVICES, get_entity_from_domain
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -41,7 +38,6 @@ SERVICE_SCHEMA = vol.Schema({
 
 
 async def async_setup_platform(hass, config, async_add_entities, _discovery_info=None):
-
     sensors = [VirtualBinarySensor(config)]
     async_add_entities(sensors, True)
 
@@ -123,16 +119,16 @@ class VirtualBinarySensor(BinarySensorDevice):
 async def async_virtual_on_service(hass, call):
     for entity_id in call.data['entity_id']:
         _LOGGER.info("{} turning on".format(entity_id))
-        get_entity_from_domain(hass,DOMAIN,entity_id).turn_on()
+        get_entity_from_domain(hass, DOMAIN, entity_id).turn_on()
 
 
 async def async_virtual_off_service(hass, call):
     for entity_id in call.data['entity_id']:
         _LOGGER.info("{} turning off".format(entity_id))
-        get_entity_from_domain(hass,DOMAIN,entity_id).turn_off()
+        get_entity_from_domain(hass, DOMAIN, entity_id).turn_off()
 
 
 async def async_virtual_toggle_service(hass, call):
     for entity_id in call.data['entity_id']:
         _LOGGER.info("{} toggling".format(entity_id))
-        get_entity_from_domain(hass,DOMAIN,entity_id).toggle()
+        get_entity_from_domain(hass, DOMAIN, entity_id).toggle()
