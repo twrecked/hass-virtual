@@ -11,20 +11,30 @@ Virtual components for testing Home Assistant systems.
 1. [Component Configuration](#Component-Configuration)
 
 ## Notes
-Wherever you see `/config` in this README it refers to your home-assistant configuration directory. For me, for example, it's `/home/steve/ha` that is mapped to `/config` inside my docker container.
+Wherever you see `/config` in this README it refers to your home-assistant
+configuration directory. For me, for example, it's `/home/steve/ha` that is
+mapped to `/config` inside my docker container.
 
 ## Thanks
 Many thanks to:
-* [![JetBrains](/images/jetbrains.svg)](https://www.jetbrains.com/?from=hass-aarlo) for the excellent **PyCharm IDE** and providing me with an open source license to speed up the project development.
+* [JetBrains](https://www.jetbrains.com/?from=hass-aarlo) for the excellent
+  **PyCharm IDE** and providing me with an open source license to speed up the
+  project development.
+
+  [![JetBrains](/images/jetbrains.svg)](https://www.jetbrains.com/?from=hass-aarlo)
 
 ## Installation
 
 ### HACS
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
-Virtual is part of the default HACS store. If you're not interested in development branches this is the easiest way to install.
+
+Virtual is part of the default HACS store. If you're not interested in
+development branches this is the easiest way to install.
 
 ### From Script
-Run the install script. Run it once to make sure the operations look sane and run it a second time with the `go` parameter to do the actual work. If you update just rerun the script, it will overwrite all installed files.
+Run the install script. Run it once to make sure the operations look sane and
+run it a second time with the `go` parameter to do the actual work. If you
+update just rerun the script, it will overwrite all installed files.
 
 ```sh
 install /config
@@ -47,7 +57,8 @@ switch:
     name: Switch 1
 ```
 
-To add a virtual binary_sensor use the following. It supports all standard classes.
+To add a virtual binary_sensor use the following. It supports all standard
+classes.
 
 ```yaml
 binary_sensor:
@@ -57,7 +68,8 @@ binary_sensor:
     class: presence
 ```
 
-Use the `virtual.turn_on`, `virtual.turn_off` and `virtual.toggle` services to manipulate the binary sensors.
+Use the `virtual.turn_on`, `virtual.turn_off` and `virtual.toggle` services to
+manipulate the binary sensors.
 
 To add a virtual sensor use the following:
 
@@ -69,7 +81,6 @@ To add a virtual sensor use the following:
 ```
 
 Use the `virtual.set` service to manipulate the binary sensors.
-
 
 To add a virtual light use the following:
 
@@ -109,4 +120,5 @@ device_tracker:
       - virtual_user2
 ```
 
-They will be moved to home on reboot. Use the `device_tracker.see` service to change device locations.
+They will be moved to home on reboot. Use the `device_tracker.see` service to
+change device locations.
