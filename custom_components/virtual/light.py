@@ -12,7 +12,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     SUPPORT_BRIGHTNESS,
-    Light,
+    LightEntity,
 )
 from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
 from . import COMPONENT_DOMAIN
@@ -40,7 +40,7 @@ async def async_setup_platform(_hass, config, async_add_entities, _discovery_inf
     async_add_entities(lights, True)
 
 
-class VirtualLight(Light):
+class VirtualLight(LightEntity):
 
     def __init__(self, config):
         """Initialize an Virtual light."""

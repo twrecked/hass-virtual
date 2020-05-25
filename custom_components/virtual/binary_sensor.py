@@ -8,7 +8,7 @@ import logging
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.binary_sensor import (BinarySensorDevice, DOMAIN)
+from homeassistant.components.binary_sensor import (BinarySensorEntity, DOMAIN)
 from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
 from . import COMPONENT_DOMAIN, COMPONENT_SERVICES, get_entity_from_domain
@@ -66,7 +66,7 @@ async def async_setup_platform(hass, config, async_add_entities, _discovery_info
         )
 
 
-class VirtualBinarySensor(BinarySensorDevice):
+class VirtualBinarySensor(BinarySensorEntity):
     """An implementation of a Virtual Binary Sensor."""
 
     def __init__(self, config):
