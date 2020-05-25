@@ -8,7 +8,7 @@ import logging
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.lock import LockDevice
+from homeassistant.components.lock import LockEntity
 from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
 
 _LOGGER = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ async def async_setup_platform(_hass, config, async_add_entities, _discovery_inf
     async_add_entities(locks, True)
 
 
-class VirtualLock(LockDevice):
+class VirtualLock(LockEntity):
     """Representation of a Virtual lock."""
 
     def __init__(self, config):
