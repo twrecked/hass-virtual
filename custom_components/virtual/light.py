@@ -115,7 +115,7 @@ class VirtualLight(LightEntity):
             self._ct = None
             
         ct = kwargs.get(ATTR_COLOR_TEMP, None)
-        if ct is not None  and self._features & SUPPORT_COLOR_TEMP:
+        if ct is not None and self._features & SUPPORT_COLOR_TEMP:
             self._color_mode = "ct"
             self._ct = ct
             self._hs_color = None
@@ -125,7 +125,7 @@ class VirtualLight(LightEntity):
             self._brightness = brightness
 
         white = kwargs.get(ATTR_WHITE_VALUE, None)
-        if white is not None & SUPPORT_WHITE_VALUE:
+        if white is not None and self._features & SUPPORT_WHITE_VALUE:
             self._white = white
 
         _LOGGER.info("turn_on: {}".format(pprint.pformat(kwargs)))
