@@ -90,7 +90,15 @@ light:
     name: 'Light 1'
     initial_value: 'on'
     initial_brightness: 100
+    support_color: true
+    initial_color: [0,255]
+    support_color_temp: true
+    initial_color_temp: 255
+    support_white_value: true
+    initial_white_value: 240
 ```
+
+Only `name` is required. Use the `support_*` options to allow the light to have color and temperature properties. Use `initial_*` to set the default values. `initial_color` is `[hue (0-360), saturation (0-100)]`
 
 To add multiple components repeat the platform.
 
