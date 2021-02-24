@@ -10,10 +10,12 @@ Virtual components for testing Home Assistant systems.
    1. [From Script](#From-Script)
 1. [Component Configuration](#Component-Configuration)
 
+
 ## Notes
 Wherever you see `/config` in this README it refers to your home-assistant
 configuration directory. For me, for example, it's `/home/steve/ha` that is
 mapped to `/config` inside my docker container.
+
 
 ## Thanks
 Many thanks to:
@@ -22,6 +24,7 @@ Many thanks to:
   project development.
 
   [![JetBrains](/images/jetbrains.svg)](https://www.jetbrains.com/?from=hass-aarlo)
+
 
 ## Installation
 
@@ -42,12 +45,27 @@ install /config
 install go /config
 ```
 
+
 ## Component Configuration
+
 Add the following to your `configuration.yaml` to enable the component:
 
 ```yaml
 virtual:
 ```
+
+To add multiple components repeat the platform.
+
+```yaml
+switch:
+  - platform: virtual
+    name: Switch 1
+  - platform: virtual
+    name: Switch 2
+```
+
+
+### Switches
 
 To add a virtual switch use the following:
 
@@ -57,6 +75,8 @@ switch:
     name: Switch 1
 ```
 
+
+### Binary Sensors
 To add a virtual binary_sensor use the following. It supports all standard
 classes.
 
@@ -71,6 +91,9 @@ binary_sensor:
 Use the `virtual.turn_on`, `virtual.turn_off` and `virtual.toggle` services to
 manipulate the binary sensors.
 
+
+### Sensors
+
 To add a virtual sensor use the following:
 
 ```yaml
@@ -81,6 +104,9 @@ To add a virtual sensor use the following:
 ```
 
 Use the `virtual.set` service to manipulate the binary sensors.
+
+
+### Lights
 
 To add a virtual light use the following:
 
@@ -98,17 +124,13 @@ light:
     initial_white_value: 240
 ```
 
-Only `name` is required. Use the `support_*` options to allow the light to have color and temperature properties. Use `initial_*` to set the default values. `initial_color` is `[hue (0-360), saturation (0-100)]`
+Only `name` is required.
+- `support_*`; this allows the light to have colour and temperature properties
+- `initial_*`; this is to set the initial values. `initial_color` is `[hue
+  (0-360), saturation (0-100)]`
 
-To add multiple components repeat the platform.
 
-```yaml
-switch:
-  - platform: virtual
-    name: Switch 1
-  - platform: virtual
-    name: Switch 2
-```
+### Locks
 
 To add a virtual lock use the following:
 
@@ -117,6 +139,28 @@ lock:
   - platform: virtual
     name: Front Door Lock
 ```
+
+
+### Fans
+
+To add a virtual fan use the following:
+
+```yaml
+fan:
+  - platform: virtual
+    name: Office Fan
+    speed: True
+    direction: True
+    oscillate: True
+```
+
+Only `name` is required.
+- `speed`; if `True` then fan can be set to low, medium and high speeds
+- `direction`; if `True` then fan can run in 2 directions
+- `oscillate`; if `True` then fan can be set to oscillate
+
+
+### Device Tracking
 
 To add a virtual device tracker use the following:
 
