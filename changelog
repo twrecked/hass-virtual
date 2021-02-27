@@ -1,3 +1,4 @@
+0.7.1: fixed Home Assistant breaking change
 0.4: fixed missing exception
 0.3: added locks
 0.2: added device trackers
