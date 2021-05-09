@@ -34,17 +34,6 @@ Many thanks to:
 Virtual is part of the default HACS store. If you're not interested in
 development branches this is the easiest way to install.
 
-### From Script
-Run the install script. Run it once to make sure the operations look sane and
-run it a second time with the `go` parameter to do the actual work. If you
-update just rerun the script, it will overwrite all installed files.
-
-```sh
-install /config
-# check output looks good
-install go /config
-```
-
 
 ## Component Configuration
 
@@ -62,6 +51,19 @@ switch:
     name: Switch 1
   - platform: virtual
     name: Switch 2
+```
+
+### Naming
+
+By default, the code creates entities with `virtual` as part of their name.
+`Switch 1` in the previous example will give an entity of
+`switch.virtual_switch_1`. If you don't want the `virtual_` prefix add a `!`
+to the device name. For example:
+
+```yaml
+switch:
+  - platform: virtual
+    name: !Switch 1
 ```
 
 

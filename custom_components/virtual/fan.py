@@ -48,6 +48,11 @@ class VirtualFan(FanEntity):
     def __init__(self, config):
         """Initialize the entity."""
         self._name = config.get(CONF_NAME)
+
+        # Are we adding the domain or not?
+        self.no_domain_ = self._name.startswith("!")
+        if self.no_domain_:
+            self._name = self.name[1:]
         self._unique_id = self._name.lower().replace(' ', '_')
 
         self._speed = STATE_OFF
@@ -66,14 +71,17 @@ class VirtualFan(FanEntity):
         _LOGGER.info('VirtualFan: {} created'.format(self._name))
 
     @property
+    def name(self) -> str:
+        """Get entity name."""
+        if self.no_domain_:
+            return self._name
+        else:
+            return super().name
+
+    @property
     def unique_id(self):
         """Return the unique id."""
         return self._unique_id
-
-    @property
-    def name(self) -> str:
-        """Get entity name."""
-        return self._name
 
     @property
     def should_poll(self):

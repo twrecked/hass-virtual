@@ -69,10 +69,15 @@ class VirtualLight(LightEntity):
     def __init__(self, config):
         """Initialize an Virtual light."""
         self._name = config.get(CONF_NAME)
-        self._unique_id = self._name.lower().replace(' ', '_')
         self._state = config.get(CONF_INITIAL_VALUE)
         self._brightness = config.get(CONF_INITIAL_BRIGHTNESS)
         self._features = SUPPORT_BRIGHTNESS
+
+        # Are we adding the domain or not?
+        self.no_domain_ = self._name.startswith("!")
+        if self.no_domain_:
+            self._name = self.name[1:]
+        self._unique_id = self._name.lower().replace(' ', '_')
 
         self._hs_color = None
         self._ct = None
@@ -90,6 +95,13 @@ class VirtualLight(LightEntity):
             self._features |= SUPPORT_WHITE_VALUE
             self._white =  config.get(CONF_INITIAL_WHITE_VALUE)
         _LOGGER.info('VirtualLight: %s created', self._name)
+
+    @property
+    def name(self):
+        if self.no_domain_:
+            return self._name
+        else:
+            return super().name
 
     @property
     def unique_id(self):
