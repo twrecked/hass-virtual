@@ -35,9 +35,22 @@ class VirtualSwitch(SwitchEntity):
     def __init__(self, config):
         """Initialize the Virtual switch device."""
         self._name = config.get(CONF_NAME)
+
+        # Are we adding the domain or not?
+        self.no_domain_ = self._name.startswith("!")
+        if self.no_domain_:
+            self._name = self.name[1:]
         self._unique_id = self._name.lower().replace(' ', '_')
+
         self._state = config.get(CONF_INITIAL_VALUE)
         _LOGGER.info('VirtualSwitch: {} created'.format(self._name))
+
+    @property
+    def name(self):
+        if self.no_domain_:
+            return self._name
+        else:
+            return super().name
 
     @property
     def unique_id(self):

@@ -72,10 +72,23 @@ class VirtualBinarySensor(BinarySensorEntity):
     def __init__(self, config):
         """Initialize an Virtual Binary Sensor."""
         self._name = config.get(CONF_NAME)
-        self._unique_id = self._name.lower().replace(' ', '_')
         self._class = config.get(CONF_CLASS)
         self._state = config.get(CONF_INITIAL_VALUE)
+
+        # Are we adding the domain or not?
+        self.no_domain_ = self._name.startswith("!")
+        if self.no_domain_:
+            self._name = self.name[1:]
+        self._unique_id = self._name.lower().replace(' ', '_')
+
         _LOGGER.info('VirtualBinarySensor: %s created', self._name)
+
+    @property
+    def name(self):
+        if self.no_domain_:
+            return self._name
+        else:
+            return super().name
 
     @property
     def unique_id(self):
