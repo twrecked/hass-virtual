@@ -71,17 +71,17 @@ class VirtualFan(FanEntity):
         _LOGGER.info('VirtualFan: {} created'.format(self._name))
 
     @property
-    def unique_id(self):
-        """Return the unique id."""
-        return self._unique_id
-
-    @property
     def name(self) -> str:
         """Get entity name."""
         if self.no_domain_:
             return self._name
         else:
             return super().name
+
+    @property
+    def unique_id(self):
+        """Return the unique id."""
+        return self._unique_id
 
     @property
     def should_poll(self):
