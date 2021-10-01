@@ -15,16 +15,19 @@ _LOGGER = logging.getLogger(__name__)
 
 CONF_NAME = "name"
 CONF_INITIAL_VALUE = "initial_value"
+CONF_INITIAL_AVAILABILITY = "initial_availability"
 
 DEFAULT_INITIAL_VALUE = "off"
+DEFAULT_INITIAL_AVAILABILITY = True
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_NAME): cv.string,
     vol.Optional(CONF_INITIAL_VALUE, default=DEFAULT_INITIAL_VALUE): cv.string,
+    vol.Optional(CONF_INITIAL_AVAILABILITY, default=DEFAULT_INITIAL_AVAILABILITY): cv.boolean,
 })
 
 
-async def async_setup_platform(_hass, config, async_add_entities, _discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, _discovery_info=None):
     switches = [VirtualSwitch(config)]
     async_add_entities(switches, True)
 
@@ -43,6 +46,7 @@ class VirtualSwitch(SwitchEntity):
         self._unique_id = self._name.lower().replace(' ', '_')
 
         self._state = config.get(CONF_INITIAL_VALUE)
+        self._available = config.get(CONF_INITIAL_AVAILABILITY)
         _LOGGER.info('VirtualSwitch: {} created'.format(self._name))
 
     @property
@@ -71,6 +75,15 @@ class VirtualSwitch(SwitchEntity):
     def is_off(self):
         """Return true if switch is on."""
         return not self.is_on
+
+    @property
+    def available(self):
+        """Return True if entity is available."""
+        return self._available
+
+    def set_available(self, value):
+        self._available = value
+        self.async_schedule_update_ha_state()
 
     def turn_on(self, **kwargs):
         self._state = 'on'

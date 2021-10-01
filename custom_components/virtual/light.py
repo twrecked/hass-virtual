@@ -36,6 +36,7 @@ CONF_SUPPORT_COLOR_TEMP = "support_color_temp"
 CONF_INITIAL_COLOR_TEMP = "initial_color_temp"
 CONF_SUPPORT_WHITE_VALUE = "support_white_value"
 CONF_INITIAL_WHITE_VALUE = "initial_white_value"
+CONF_INITIAL_AVAILABILITY = "initial_availability"
 
 DEFAULT_INITIAL_VALUE = "on"
 DEFAULT_INITIAL_BRIGHTNESS = 255
@@ -45,6 +46,7 @@ DEFAULT_SUPPORT_COLOR_TEMP = False
 DEFAULT_INITIAL_COLOR_TEMP = 240
 DEFAULT_SUPPORT_WHITE_VALUE = False
 DEFAULT_INITIAL_WHITE_VALUE = 240
+DEFAULT_INITIAL_AVAILABILITY = True
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_NAME): cv.string,
@@ -56,6 +58,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_INITIAL_COLOR_TEMP, default=DEFAULT_INITIAL_COLOR_TEMP): cv.byte,
     vol.Optional(CONF_SUPPORT_WHITE_VALUE, default=DEFAULT_SUPPORT_WHITE_VALUE): cv.boolean,
     vol.Optional(CONF_INITIAL_WHITE_VALUE, default=DEFAULT_INITIAL_WHITE_VALUE): cv.byte,
+    vol.Optional(CONF_INITIAL_AVAILABILITY, default=DEFAULT_INITIAL_AVAILABILITY): cv.boolean,
 })
 
 
@@ -94,6 +97,7 @@ class VirtualLight(LightEntity):
         if config.get(CONF_SUPPORT_WHITE_VALUE):
             self._features |= SUPPORT_WHITE_VALUE
             self._white =  config.get(CONF_INITIAL_WHITE_VALUE)
+        self._available = config.get(CONF_INITIAL_AVAILABILITY)
         _LOGGER.info('VirtualLight: %s created', self._name)
 
     @property
@@ -125,7 +129,7 @@ class VirtualLight(LightEntity):
             self._color_mode = "hs"
             self._hs_color = hs_color
             self._ct = None
-            
+
         ct = kwargs.get(ATTR_COLOR_TEMP, None)
         if ct is not None and self._features & SUPPORT_COLOR_TEMP:
             self._color_mode = "ct"
@@ -171,6 +175,15 @@ class VirtualLight(LightEntity):
     def white_value(self) -> int:
         """Return the white value of this light between 0..255."""
         return self._white
+
+    @property
+    def available(self):
+        """Return True if entity is available."""
+        return self._available
+
+    def set_available(self, value):
+        self._available = value
+        self.async_schedule_update_ha_state()
 
     @property
     def device_state_attributes(self):
