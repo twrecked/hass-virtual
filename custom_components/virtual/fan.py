@@ -4,6 +4,8 @@ This component provides support for a virtual fan.
 Borrowed heavily from components/demo/fan.py
 """
 
+from __future__ import annotations
+
 import logging
 
 import voluptuous as vol
@@ -25,14 +27,23 @@ _LOGGER = logging.getLogger(__name__)
 
 CONF_NAME = "name"
 CONF_SPEED = "speed"
+CONF_SPEED_COUNT = "speed_count"
 CONF_OSCILLATE = "oscillate"
 CONF_DIRECTION = "direction"
+CONF_MODES = "modes"
+
+#  PRESET_MODE_AUTO = "auto"
+#  PRESET_MODE_SMART = "smart"
+#  PRESET_MODE_SLEEP = "sleep"
+#  PRESET_MODE_ON = "on"
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_NAME): cv.string,
     vol.Optional(CONF_SPEED, default=False): cv.boolean,
+    vol.Optional(CONF_SPEED_COUNT, default=0): cv.positive_int,
     vol.Optional(CONF_OSCILLATE, default=False): cv.boolean,
     vol.Optional(CONF_DIRECTION, default=False): cv.boolean,
+    vol.Optional(CONF_MODES, default=[]): vol.All(cv.ensure_list, [cv.string]),
 })
 
 
@@ -55,11 +66,24 @@ class VirtualFan(FanEntity):
             self._name = self.name[1:]
         self._unique_id = self._name.lower().replace(' ', '_')
 
-        self._speed = STATE_OFF
-        self._supported_features = 0
+        # Modes if supported
+        self._preset_modes = config.get(CONF_MODES, [])
+
+        # Try for speed count then speed. 
+        #  - speed_count; number of speeds we support
+        #  - speed == True; 3 speeds
+        #  - speed == False; no speeds
+        self._speed_count = config.get(CONF_SPEED_COUNT)
+        if config.get(CONF_SPEED, False):
+            self._speed_count = 3
+
+        self._percentage = None
+        self._preset_mode = None
         self._oscillating = None
         self._direction = None
-        if config.get(CONF_SPEED, False):
+
+        self._supported_features = 0
+        if self._speed_count > 0:
             self._supported_features |= SUPPORT_SET_SPEED
         if config.get(CONF_OSCILLATE, False):
             self._supported_features |= SUPPORT_OSCILLATE
@@ -89,30 +113,60 @@ class VirtualFan(FanEntity):
         return False
 
     @property
-    def speed(self) -> str:
+    def percentage(self) -> int | None:
         """Return the current speed."""
-        return self._speed
+        return self._percentage
 
     @property
-    def speed_list(self) -> list:
-        """Get the list of available speeds."""
-        return [STATE_OFF, SPEED_LOW, SPEED_MEDIUM, SPEED_HIGH]
+    def speed_count(self) -> int:
+        """Return the number of speeds the fan supports."""
+        return self._speed_count
 
-    def turn_on(self, speed: str = None, **kwargs) -> None:
+    def set_percentage(self, percentage: int) -> None:
+        """Set the speed of the fan, as a percentage."""
+        self._percentage = percentage
+        self._preset_mode = None
+        self.schedule_update_ha_state()
+
+    @property
+    def preset_mode(self) -> str | None:
+        """Return the current preset mode, e.g., auto, smart, interval, favorite."""
+        return self._preset_mode
+
+    @property
+    def preset_modes(self) -> list[str] | None:
+        """Return a list of available preset modes."""
+        return self._preset_modes
+
+    def set_preset_mode(self, preset_mode: str) -> None:
+        """Set new preset mode."""
+        if preset_mode in self.preset_modes:
+            self._preset_mode = preset_mode
+            self._percentage = None
+            self.schedule_update_ha_state()
+        else:
+            raise ValueError(f"Invalid preset mode: {preset_mode}")
+
+    def turn_on(
+        self,
+        speed: str = None,
+        percentage: int = None,
+        preset_mode: str = None,
+        **kwargs,
+    ) -> None:
         """Turn on the entity."""
-        if speed is None:
-            speed = SPEED_MEDIUM
-        self.set_speed(speed)
+        if preset_mode:
+            self.set_preset_mode(preset_mode)
+            return
+
+        if percentage is None:
+            percentage = 67
+
+        self.set_percentage(percentage)
 
     def turn_off(self, **kwargs) -> None:
         """Turn off the entity."""
-        self.oscillate(False)
-        self.set_speed(STATE_OFF)
-
-    def set_speed(self, speed: str) -> None:
-        """Set the speed of the fan."""
-        self._speed = speed
-        self.schedule_update_ha_state()
+        self.set_percentage(0)
 
     def set_direction(self, direction: str) -> None:
         """Set the direction of the fan."""
