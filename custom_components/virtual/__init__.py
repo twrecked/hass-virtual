@@ -7,7 +7,7 @@ import logging
 
 from homeassistant.exceptions import HomeAssistantError
 
-__version__ = '0.4'
+__version__ = '0.7.3'
 
 _LOGGER = logging.getLogger(__name__)
 

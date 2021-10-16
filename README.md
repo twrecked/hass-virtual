@@ -152,12 +152,15 @@ fan:
   - platform: virtual
     name: Office Fan
     speed: True
+    speed_count: 5
     direction: True
     oscillate: True
 ```
 
-Only `name` is required.
+Only `name` is required. You only need one of `speed` or `speed_count`.
 - `speed`; if `True` then fan can be set to low, medium and high speeds
+- `speed_count`; number of speeds to allow, these will be broken down into
+  percentages. 4 speeds = 25, 50, 75 and 100%.
 - `direction`; if `True` then fan can run in 2 directions
 - `oscillate`; if `True` then fan can be set to oscillate
 
