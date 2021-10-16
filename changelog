@@ -1,4 +1,6 @@
 0.7.3: Add percentage support to fan
+       Allow user to set availability of the device
+0.7.2: Make virtual part of name optional
 0.7.1: fixed Home Assistant breaking change
 0.4: fixed missing exception
 0.3: added locks
