@@ -15,8 +15,10 @@ _LOGGER = logging.getLogger(__name__)
 
 CONF_NAME = "name"
 CONF_INITIAL_VALUE = "initial_value"
+CONF_INITIAL_AVAILABILITY = "initial_availability"
 
 DEFAULT_INITIAL_VALUE = "locked"
+DEFAULT_INITIAL_AVAILABILITY = True
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_NAME): cv.string,
@@ -43,6 +45,7 @@ class VirtualLock(LockEntity):
         self._unique_id = self._name.lower().replace(' ', '_')
 
         self._state = config.get(CONF_INITIAL_VALUE)
+        self._available = config.get(CONF_INITIAL_AVAILABILITY)
         _LOGGER.info('VirtualLock: {} created'.format(self._name))
 
     @property
@@ -75,6 +78,15 @@ class VirtualLock(LockEntity):
 
     def open(self, **kwargs):
         pass
+
+    @property
+    def available(self):
+        """Return True if entity is available."""
+        return self._available
+
+    def set_available(self, value):
+        self._available = value
+        self.async_schedule_update_ha_state()
 
     @property
     def device_state_attributes(self):

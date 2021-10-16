@@ -31,6 +31,8 @@ CONF_SPEED_COUNT = "speed_count"
 CONF_OSCILLATE = "oscillate"
 CONF_DIRECTION = "direction"
 CONF_MODES = "modes"
+CONF_INITIAL_AVAILABILITY = "initial_availability"
+DEFAULT_INITIAL_AVAILABILITY = True
 
 #  PRESET_MODE_AUTO = "auto"
 #  PRESET_MODE_SMART = "smart"
@@ -44,6 +46,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_OSCILLATE, default=False): cv.boolean,
     vol.Optional(CONF_DIRECTION, default=False): cv.boolean,
     vol.Optional(CONF_MODES, default=[]): vol.All(cv.ensure_list, [cv.string]),
+    vol.Optional(CONF_INITIAL_AVAILABILITY, default=DEFAULT_INITIAL_AVAILABILITY): cv.boolean,
 })
 
 
@@ -91,6 +94,7 @@ class VirtualFan(FanEntity):
         if config.get(CONF_DIRECTION, False):
             self._supported_features |= SUPPORT_DIRECTION
             self._direction = "forward"
+        self._available = config.get(CONF_INITIAL_AVAILABILITY)
 
         _LOGGER.info('VirtualFan: {} created'.format(self._name))
 
@@ -146,6 +150,14 @@ class VirtualFan(FanEntity):
             self.schedule_update_ha_state()
         else:
             raise ValueError(f"Invalid preset mode: {preset_mode}")
+
+    def available(self):
+        """Return True if entity is available."""
+        return self._available
+
+    def set_available(self, value):
+        self._available = value
+        self.async_schedule_update_ha_state()
 
     def turn_on(
         self,

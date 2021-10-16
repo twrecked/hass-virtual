@@ -67,6 +67,17 @@ switch:
 ```
 
 
+### Avilability
+
+By default, all devices are market as available.
+As shown below in each domain, adding `initial_availability: false`
+to configuration can override default and set as unavailable on HA start.
+Availability can by set by using the `virtual.set_available`
+with value `true` or `false`.
+
+This is fully optional and `initial_availability` is not requied to be set.
+
+
 ### Switches
 
 To add a virtual switch use the following:
@@ -75,6 +86,7 @@ To add a virtual switch use the following:
 switch:
   - platform: virtual
     name: Switch 1
+    initial_availability: true
 ```
 
 
@@ -88,6 +100,7 @@ binary_sensor:
     name: 'Binary Sensor 1'
     initial_value: 'on'
     class: presence
+    initial_availability: true
 ```
 
 Use the `virtual.turn_on`, `virtual.turn_off` and `virtual.toggle` services to
@@ -103,6 +116,7 @@ To add a virtual sensor use the following:
   name: 'Temperature 1'
   class: temperature
   initial_value: 37
+  initial_availability: true
 ```
 
 Use the `virtual.set` service to manipulate the binary sensors.
@@ -124,6 +138,7 @@ light:
     initial_color_temp: 255
     support_white_value: true
     initial_white_value: 240
+    initial_availability: true
 ```
 
 Only `name` is required.
@@ -140,6 +155,7 @@ To add a virtual lock use the following:
 lock:
   - platform: virtual
     name: Front Door Lock
+    initial_availability: true
 ```
 
 
@@ -155,6 +171,7 @@ fan:
     speed_count: 5
     direction: True
     oscillate: True
+    initial_availability: true
 ```
 
 Only `name` is required. You only need one of `speed` or `speed_count`.

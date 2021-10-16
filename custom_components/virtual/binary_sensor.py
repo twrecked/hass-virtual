@@ -20,13 +20,16 @@ DEPENDENCIES = [COMPONENT_DOMAIN]
 CONF_NAME = "name"
 CONF_CLASS = "class"
 CONF_INITIAL_VALUE = "initial_value"
+CONF_INITIAL_AVAILABILITY = "initial_availability"
 
 DEFAULT_INITIAL_VALUE = "off"
+DEFAULT_INITIAL_AVAILABILITY = True
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_NAME): cv.string,
     vol.Optional(CONF_CLASS): cv.string,
     vol.Optional(CONF_INITIAL_VALUE, default=DEFAULT_INITIAL_VALUE): cv.string,
+    vol.Optional(CONF_INITIAL_AVAILABILITY, default=DEFAULT_INITIAL_AVAILABILITY): cv.boolean,
 })
 
 SERVICE_ON = 'turn_on'
@@ -74,6 +77,7 @@ class VirtualBinarySensor(BinarySensorEntity):
         self._name = config.get(CONF_NAME)
         self._class = config.get(CONF_CLASS)
         self._state = config.get(CONF_INITIAL_VALUE)
+        self._available = config.get(CONF_INITIAL_AVAILABILITY)
 
         # Are we adding the domain or not?
         self.no_domain_ = self._name.startswith("!")
@@ -104,6 +108,15 @@ class VirtualBinarySensor(BinarySensorEntity):
     def is_on(self):
         """Return true if the binary sensor is on."""
         return self._state == 'on'
+
+    @property
+    def available(self):
+        """Return True if entity is available."""
+        return self._available
+
+    def set_available(self, value):
+        self._available = value
+        self.async_schedule_update_ha_state()
 
     def turn_on(self):
         self._state = 'on'

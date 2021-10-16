@@ -30,3 +30,13 @@ set:
     value:
       description: Value to set
       example: 10
+
+set_available:
+  description: Set availability of a entity.
+  fields:
+    entity_id:
+      description: Name(s) of entities to set
+      example: 'switch.virtual_switch_1'
+    value:
+      description: Value to set
+      example: false
