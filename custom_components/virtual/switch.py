@@ -92,7 +92,7 @@ class VirtualSwitch(SwitchEntity):
         self._state = 'off'
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Return the device state attributes."""
         attrs = {
             'friendly_name': self._name,

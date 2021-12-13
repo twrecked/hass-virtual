@@ -1,3 +1,4 @@
+0.7.4: Fix attributes issue.
 0.7.3: Add percentage support to fan
        Allow user to set availability of the device
 0.7.2: Make virtual part of name optional
@@ -6,4 +7,3 @@
 0.3: added locks
 0.2: added device trackers
 0.1: initial release
-
