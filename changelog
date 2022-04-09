@@ -1,4 +1,4 @@
-0.7.5: Remove depracted fan speeds
+0.7.6: Remove depracted fan speeds
 0.7.4: Fix attributes issue.
 0.7.3: Add percentage support to fan
        Allow user to set availability of the device
