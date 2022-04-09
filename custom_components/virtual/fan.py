@@ -12,9 +12,6 @@ import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.fan import (
-    SPEED_HIGH,
-    SPEED_LOW,
-    SPEED_MEDIUM,
     SUPPORT_DIRECTION,
     SUPPORT_OSCILLATE,
     SUPPORT_SET_SPEED,
