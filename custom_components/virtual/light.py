@@ -14,10 +14,12 @@ from homeassistant.components.light import (
     ATTR_COLOR_TEMP,
     ATTR_HS_COLOR,
     ATTR_WHITE_VALUE,
+    ATTR_EFFECT,
     SUPPORT_BRIGHTNESS,
     SUPPORT_COLOR,
     SUPPORT_COLOR_TEMP,
     SUPPORT_WHITE_VALUE,
+    SUPPORT_EFFECT,
     LightEntity,
 )
 from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
@@ -37,6 +39,9 @@ CONF_INITIAL_COLOR_TEMP = "initial_color_temp"
 CONF_SUPPORT_WHITE_VALUE = "support_white_value"
 CONF_INITIAL_WHITE_VALUE = "initial_white_value"
 CONF_INITIAL_AVAILABILITY = "initial_availability"
+CONF_SUPPORT_EFFECT = "support_effect"
+CONF_INITIAL_EFFECT = "initial_effect"
+CONF_INITIAL_EFFECT_LIST = "initial_effect_list"
 
 DEFAULT_INITIAL_VALUE = "on"
 DEFAULT_INITIAL_BRIGHTNESS = 255
@@ -47,6 +52,9 @@ DEFAULT_INITIAL_COLOR_TEMP = 240
 DEFAULT_SUPPORT_WHITE_VALUE = False
 DEFAULT_INITIAL_WHITE_VALUE = 240
 DEFAULT_INITIAL_AVAILABILITY = True
+DEFAULT_SUPPORT_EFFECT = False
+DEFAULT_INITIAL_EFFECT = "none"
+DEFAULT_INITIAL_EFFECT_LIST = ["rainbow", "none"]
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_NAME): cv.string,
@@ -59,6 +67,9 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_SUPPORT_WHITE_VALUE, default=DEFAULT_SUPPORT_WHITE_VALUE): cv.boolean,
     vol.Optional(CONF_INITIAL_WHITE_VALUE, default=DEFAULT_INITIAL_WHITE_VALUE): cv.byte,
     vol.Optional(CONF_INITIAL_AVAILABILITY, default=DEFAULT_INITIAL_AVAILABILITY): cv.boolean,
+    vol.Optional(CONF_SUPPORT_EFFECT, default=DEFAULT_SUPPORT_EFFECT): cv.boolean,
+    vol.Optional(CONF_INITIAL_EFFECT, default=DEFAULT_INITIAL_EFFECT): cv.string,
+    vol.Optional(CONF_INITIAL_EFFECT_LIST, default=DEFAULT_INITIAL_EFFECT_LIST): cv.ensure_list
 })
 
 
@@ -86,6 +97,8 @@ class VirtualLight(LightEntity):
         self._ct = None
         self._white =  None
         self._color_mode = None
+        self._effect = None
+        self._effect_list = None
         if config.get(CONF_SUPPORT_COLOR):
             self._features |= SUPPORT_COLOR
             self._hs_color = config.get(CONF_INITIAL_COLOR)
@@ -97,6 +110,10 @@ class VirtualLight(LightEntity):
         if config.get(CONF_SUPPORT_WHITE_VALUE):
             self._features |= SUPPORT_WHITE_VALUE
             self._white =  config.get(CONF_INITIAL_WHITE_VALUE)
+        if config.get(CONF_SUPPORT_EFFECT):
+            self._features |= SUPPORT_EFFECT
+            self._effect = config.get(CONF_INITIAL_EFFECT)
+            self._effect_list = config.get(CONF_INITIAL_EFFECT_LIST)
         self._available = config.get(CONF_INITIAL_AVAILABILITY)
         _LOGGER.info('VirtualLight: %s created', self._name)
 
@@ -143,6 +160,10 @@ class VirtualLight(LightEntity):
         white = kwargs.get(ATTR_WHITE_VALUE, None)
         if white is not None and self._features & SUPPORT_WHITE_VALUE:
             self._white = white
+        
+        effect = kwargs.get(ATTR_EFFECT, None)
+        if effect is not None and self._features & SUPPORT_EFFECT:
+            self._effect = effect
 
         _LOGGER.info("turn_on: {}".format(pprint.pformat(kwargs)))
         self._state = "on"
@@ -181,6 +202,16 @@ class VirtualLight(LightEntity):
         """Return True if entity is available."""
         return self._available
 
+    @property
+    def effect_list(self) -> list:
+        """Return the list of supported effects."""
+        return self._effect_list
+
+    @property
+    def effect(self) -> str:
+        """Return the current effect."""
+        return self._effect
+
     def set_available(self, value):
         self._available = value
         self.async_schedule_update_ha_state()
@@ -197,6 +228,9 @@ class VirtualLight(LightEntity):
                 ('white_value', self._white),
                 ('color_temp', self._ct),
                 ('color_mode', self._color_mode),
+                ('effect', self._effect),
+                ('effect_list', self._effect_list),
+                ('available', self._available),
             ) if value is not None
         }
 
