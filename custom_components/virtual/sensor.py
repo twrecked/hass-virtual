@@ -8,8 +8,19 @@ import logging
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.sensor import DOMAIN
-from homeassistant.const import ATTR_ENTITY_ID
+from homeassistant.components.sensor import DOMAIN, SensorDeviceClass
+from homeassistant.const import (ATTR_ENTITY_ID,
+                                 CONF_UNIT_OF_MEASUREMENT,
+                                 CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+                                 CONCENTRATION_PARTS_PER_MILLION,
+                                 FREQUENCY_GIGAHERTZ,
+                                 PERCENTAGE,
+                                 POWER_VOLT_AMPERE,
+                                 POWER_VOLT_AMPERE_REACTIVE,
+                                 PRESSURE_HPA,
+                                 SIGNAL_STRENGTH_DECIBELS,
+                                 VOLUME_CUBIC_METERS,
+                                 )
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.helpers.entity import Entity
 from . import COMPONENT_DOMAIN, COMPONENT_SERVICES, get_entity_from_domain
@@ -31,6 +42,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_CLASS): cv.string,
     vol.Optional(CONF_INITIAL_VALUE, default=DEFAULT_INITIAL_VALUE): cv.string,
     vol.Optional(CONF_INITIAL_AVAILABILITY, default=DEFAULT_INITIAL_AVAILABILITY): cv.boolean,
+    vol.Optional(CONF_UNIT_OF_MEASUREMENT, default=""): cv.string,
 })
 
 SERVICE_SET = 'set'
@@ -38,6 +50,35 @@ SERVICE_SCHEMA = vol.Schema({
     vol.Required(ATTR_ENTITY_ID): cv.comp_entity_ids,
     vol.Required('value'): cv.string,
 })
+
+UNITS_OF_MEASUREMENT = {
+    SensorDeviceClass.APPARENT_POWER: POWER_VOLT_AMPERE,  # apparent power (VA)
+    SensorDeviceClass.BATTERY: PERCENTAGE,  # % of battery that is left
+    SensorDeviceClass.CO: CONCENTRATION_PARTS_PER_MILLION,  # ppm of CO concentration
+    SensorDeviceClass.CO2: CONCENTRATION_PARTS_PER_MILLION,  # ppm of CO2 concentration
+    SensorDeviceClass.HUMIDITY: PERCENTAGE,  # % of humidity in the air
+    SensorDeviceClass.ILLUMINANCE: "lm",  # current light level (lx/lm)
+    SensorDeviceClass.NITROGEN_DIOXIDE: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of nitrogen dioxide
+    SensorDeviceClass.NITROGEN_MONOXIDE: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of nitrogen monoxide
+    SensorDeviceClass.NITROUS_OXIDE: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of nitrogen oxide
+    SensorDeviceClass.OZONE: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of ozone
+    SensorDeviceClass.PM1: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of PM1
+    SensorDeviceClass.PM10: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of PM10
+    SensorDeviceClass.PM25: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of PM2.5
+    SensorDeviceClass.SIGNAL_STRENGTH: SIGNAL_STRENGTH_DECIBELS,  # signal strength (dB/dBm)
+    SensorDeviceClass.SULPHUR_DIOXIDE: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of sulphur dioxide
+    SensorDeviceClass.TEMPERATURE: "C",  # temperature (C/F)
+    SensorDeviceClass.PRESSURE: PRESSURE_HPA,  # pressure (hPa/mbar)
+    SensorDeviceClass.POWER: "kW",  # power (W/kW)
+    SensorDeviceClass.CURRENT: "A",  # current (A)
+    SensorDeviceClass.ENERGY: "kWh",  # energy (Wh/kWh/MWh)
+    SensorDeviceClass.FREQUENCY: FREQUENCY_GIGAHERTZ,  # energy (Hz/kHz/MHz/GHz)
+    SensorDeviceClass.POWER_FACTOR: PERCENTAGE,  # power factor (no unit, min: -1.0, max: 1.0)
+    SensorDeviceClass.REACTIVE_POWER: POWER_VOLT_AMPERE_REACTIVE,  # reactive power (var)
+    SensorDeviceClass.VOLATILE_ORGANIC_COMPOUNDS: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of vocs
+    SensorDeviceClass.VOLTAGE: "V",  # voltage (V)
+    SensorDeviceClass.GAS: VOLUME_CUBIC_METERS,  # gas (m³)
+}
 
 
 async def async_setup_platform(hass, config, async_add_entities, _discovery_info=None):
@@ -74,6 +115,12 @@ class VirtualSensor(Entity):
         self._class = config.get(CONF_CLASS)
         self._state = config.get(CONF_INITIAL_VALUE)
         self._available = config.get(CONF_INITIAL_AVAILABILITY)
+
+        # Set unit of measurement
+        self._unit_of_measurement = config.get(CONF_UNIT_OF_MEASUREMENT)
+        if not self._unit_of_measurement and  self._class in UNITS_OF_MEASUREMENT.keys():
+            self._unit_of_measurement = UNITS_OF_MEASUREMENT[self._class]
+
         _LOGGER.info('VirtualSensor: %s created', self._name)
 
     @property
@@ -119,6 +166,11 @@ class VirtualSensor(Entity):
             'unique_id': self._unique_id,
         }
         return attrs
+
+    @property
+    def unit_of_measurement(self):
+        """Return the unit of measurement of this entity."""
+        return self._unit_of_measurement
 
 
 async def async_virtual_set_service(hass, call):

@@ -67,7 +67,7 @@ switch:
 ```
 
 
-### Avilability
+### Availability
 
 By default, all devices are market as available.
 As shown below in each domain, adding `initial_availability: false`
@@ -75,7 +75,7 @@ to configuration can override default and set as unavailable on HA start.
 Availability can by set by using the `virtual.set_available`
 with value `true` or `false`.
 
-This is fully optional and `initial_availability` is not requied to be set.
+This is fully optional and `initial_availability` is not required to be set.
 
 
 ### Switches
@@ -117,10 +117,14 @@ To add a virtual sensor use the following:
   class: temperature
   initial_value: 37
   initial_availability: true
+  unit_of_measurement: 'F'
 ```
 
 Use the `virtual.set` service to manipulate the binary sensors.
 
+Setting `unit_of_measurement` can override default unit for selected sensor class.
+This is optional ans any string is accepted. List of standard units can be found here:
+[Sensor Entity](https://developers.home-assistant.io/docs/core/entity/sensor/)
 
 ### Lights
 
