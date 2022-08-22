@@ -120,7 +120,7 @@ To add a virtual sensor use the following:
   unit_of_measurement: 'F'
 ```
 
-Use the `virtual.set` service to manipulate the binary sensors.
+Use the `virtual.set` service to manipulate the sensor value.
 
 Setting `unit_of_measurement` can override default unit for selected sensor class.
 This is optional ans any string is accepted. List of standard units can be found here:
