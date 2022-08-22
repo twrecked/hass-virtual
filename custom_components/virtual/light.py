@@ -2,6 +2,7 @@
 This component provides support for a virtual light.
 
 """
+from __future__ import annotations
 
 import logging
 import pprint
@@ -13,12 +14,10 @@ from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     ATTR_COLOR_TEMP,
     ATTR_HS_COLOR,
-    ATTR_WHITE_VALUE,
     ATTR_EFFECT,
     SUPPORT_BRIGHTNESS,
     SUPPORT_COLOR,
     SUPPORT_COLOR_TEMP,
-    SUPPORT_WHITE_VALUE,
     SUPPORT_EFFECT,
     LightEntity,
 )
@@ -46,7 +45,7 @@ CONF_INITIAL_EFFECT_LIST = "initial_effect_list"
 DEFAULT_INITIAL_VALUE = "on"
 DEFAULT_INITIAL_BRIGHTNESS = 255
 DEFAULT_SUPPORT_COLOR = False
-DEFAULT_INITIAL_COLOR = [0,100]
+DEFAULT_INITIAL_COLOR = [0, 00]
 DEFAULT_SUPPORT_COLOR_TEMP = False
 DEFAULT_INITIAL_COLOR_TEMP = 240
 DEFAULT_SUPPORT_WHITE_VALUE = False
@@ -95,7 +94,6 @@ class VirtualLight(LightEntity):
 
         self._hs_color = None
         self._ct = None
-        self._white =  None
         self._color_mode = None
         self._effect = None
         self._effect_list = None
@@ -107,9 +105,6 @@ class VirtualLight(LightEntity):
             self._features |= SUPPORT_COLOR_TEMP
             self._ct = config.get(CONF_INITIAL_COLOR_TEMP)
             self._color_mode = "ct"
-        if config.get(CONF_SUPPORT_WHITE_VALUE):
-            self._features |= SUPPORT_WHITE_VALUE
-            self._white =  config.get(CONF_INITIAL_WHITE_VALUE)
         if config.get(CONF_SUPPORT_EFFECT):
             self._features |= SUPPORT_EFFECT
             self._effect = config.get(CONF_INITIAL_EFFECT)
@@ -157,10 +152,6 @@ class VirtualLight(LightEntity):
         if brightness is not None:
             self._brightness = brightness
 
-        white = kwargs.get(ATTR_WHITE_VALUE, None)
-        if white is not None and self._features & SUPPORT_WHITE_VALUE:
-            self._white = white
-        
         effect = kwargs.get(ATTR_EFFECT, None)
         if effect is not None and self._features & SUPPORT_EFFECT:
             self._effect = effect
@@ -179,23 +170,18 @@ class VirtualLight(LightEntity):
         return self._brightness
 
     @property
-    def hs_color(self) -> tuple:
+    def hs_color(self) -> tuple[float, float] | None:
         """Return the hs color value."""
         if self._color_mode == "hs":
             return self._hs_color
         return None
 
     @property
-    def color_temp(self) -> int:
+    def color_temp(self) -> int | None:
         """Return the CT color temperature."""
         if self._color_mode == "ct":
             return self._ct
         return None
-
-    @property
-    def white_value(self) -> int:
-        """Return the white value of this light between 0..255."""
-        return self._white
 
     @property
     def available(self):
@@ -225,7 +211,6 @@ class VirtualLight(LightEntity):
                 ('friendly_name', self._name),
                 ('brightness', self._brightness),
                 ('hs_color', self._hs_color),
-                ('white_value', self._white),
                 ('color_temp', self._ct),
                 ('color_mode', self._color_mode),
                 ('effect', self._effect),
