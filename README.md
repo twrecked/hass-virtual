@@ -150,6 +150,7 @@ Only `name` is required.
 - `initial_*`; this is to set the initial values. `initial_color` is `[hue
   (0-360), saturation (0-100)]`
 
+_Note; *white_value is deprecated and will be removed in future releases._
 
 ### Locks
 
