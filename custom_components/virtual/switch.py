@@ -67,11 +67,6 @@ class VirtualSwitch(SwitchEntity):
         return self._state == "on"
 
     @property
-    def is_off(self):
-        """Return true if switch is on."""
-        return not self.is_on
-
-    @property
     def available(self):
         """Return True if entity is available."""
         return self._available
