@@ -17,7 +17,6 @@ from homeassistant.components.fan import (
     SUPPORT_SET_SPEED,
     FanEntity,
 )
-from homeassistant.const import STATE_OFF
 from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
 
 _LOGGER = logging.getLogger(__name__)

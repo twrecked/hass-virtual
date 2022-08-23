@@ -80,7 +80,7 @@ async def async_setup_platform(_hass, config, async_add_entities, _discovery_inf
 class VirtualLight(LightEntity):
 
     def __init__(self, config):
-        """Initialize an Virtual light."""
+        """Initialize a Virtual light."""
         self._name = config.get(CONF_NAME)
         self._state = config.get(CONF_INITIAL_VALUE)
         self._brightness = config.get(CONF_INITIAL_BRIGHTNESS)

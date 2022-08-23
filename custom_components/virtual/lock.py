@@ -62,14 +62,9 @@ class VirtualLock(LockEntity):
         return self._unique_id
 
     @property
-    def state(self):
-        """Return the state of the lock."""
-        return self._state
-
-    @property
     def is_locked(self):
         """Return true if lock is on."""
-        return self.state == "locked"
+        return self._state == "locked"
 
     def lock(self, **kwargs):
         self._state = 'locked'
