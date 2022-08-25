@@ -135,6 +135,7 @@ light:
   - platform: virtual
     name: 'Light 1'
     initial_value: 'on'
+    support_brightness: true
     initial_brightness: 100
     support_color: true
     initial_color: [0,255]

@@ -30,6 +30,7 @@ DEPENDENCIES = [COMPONENT_DOMAIN]
 
 CONF_NAME = "name"
 CONF_INITIAL_VALUE = "initial_value"
+CONF_SUPPORT_BRIGHTNESS = "support_brightness"
 CONF_INITIAL_BRIGHTNESS = "initial_brightness"
 CONF_SUPPORT_COLOR = "support_color"
 CONF_INITIAL_COLOR = "initial_color"
@@ -43,6 +44,7 @@ CONF_INITIAL_EFFECT = "initial_effect"
 CONF_INITIAL_EFFECT_LIST = "initial_effect_list"
 
 DEFAULT_INITIAL_VALUE = "on"
+DEFAULT_SUPPORT_BRIGHTNESS = True
 DEFAULT_INITIAL_BRIGHTNESS = 255
 DEFAULT_SUPPORT_COLOR = False
 DEFAULT_INITIAL_COLOR = [0, 100]
@@ -58,6 +60,7 @@ DEFAULT_INITIAL_EFFECT_LIST = ["rainbow", "none"]
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_NAME): cv.string,
     vol.Optional(CONF_INITIAL_VALUE, default=DEFAULT_INITIAL_VALUE): cv.string,
+    vol.Optional(CONF_SUPPORT_BRIGHTNESS, default=DEFAULT_SUPPORT_BRIGHTNESS): cv.boolean,
     vol.Optional(CONF_INITIAL_BRIGHTNESS, default=DEFAULT_INITIAL_BRIGHTNESS): cv.byte,
     vol.Optional(CONF_SUPPORT_COLOR, default=DEFAULT_SUPPORT_COLOR): cv.boolean,
     vol.Optional(CONF_INITIAL_COLOR, default=DEFAULT_INITIAL_COLOR): cv.ensure_list,
@@ -83,9 +86,7 @@ class VirtualLight(LightEntity):
         """Initialize a Virtual light."""
         self._name = config.get(CONF_NAME)
         self._state = config.get(CONF_INITIAL_VALUE)
-        self._brightness = config.get(CONF_INITIAL_BRIGHTNESS)
-        self._features = SUPPORT_BRIGHTNESS
-
+        
         # Are we adding the domain or not?
         self.no_domain_ = self._name.startswith("!")
         if self.no_domain_:
@@ -97,14 +98,24 @@ class VirtualLight(LightEntity):
         self._color_mode = None
         self._effect = None
         self._effect_list = None
+        self._brightness = None
+        self._features = 0
+        self._color_modes = ['onoff'];
+
+        if config.get(CONF_SUPPORT_BRIGHTNESS):
+            self._features |= SUPPORT_BRIGHTNESS
+            self._brightness = config.get(CONF_INITIAL_BRIGHTNESS)
+            self._color_modes.append('brightness')
         if config.get(CONF_SUPPORT_COLOR):
             self._features |= SUPPORT_COLOR
             self._hs_color = config.get(CONF_INITIAL_COLOR)
             self._color_mode = "hs"
+            self._color_modes.append('hs')
         if config.get(CONF_SUPPORT_COLOR_TEMP):
             self._features |= SUPPORT_COLOR_TEMP
             self._ct = config.get(CONF_INITIAL_COLOR_TEMP)
             self._color_mode = "ct"
+            self._color_modes.append('color_temp')
         if config.get(CONF_SUPPORT_EFFECT):
             self._features |= SUPPORT_EFFECT
             self._effect = config.get(CONF_INITIAL_EFFECT)
@@ -133,6 +144,11 @@ class VirtualLight(LightEntity):
     def supported_features(self):
         """Flag features that are supported."""
         return self._features
+
+    @property
+    def supported_color_modes(self):
+        """Return supported color modes"""
+        return self._color_modes
 
     def turn_on(self, **kwargs):
         """Turn the light on."""
