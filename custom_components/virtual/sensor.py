@@ -118,7 +118,7 @@ class VirtualSensor(Entity):
 
         # Set unit of measurement
         self._unit_of_measurement = config.get(CONF_UNIT_OF_MEASUREMENT)
-        if not self._unit_of_measurement and  self._class in UNITS_OF_MEASUREMENT.keys():
+        if not self._unit_of_measurement and self._class in UNITS_OF_MEASUREMENT.keys():
             self._unit_of_measurement = UNITS_OF_MEASUREMENT[self._class]
 
         _LOGGER.info('VirtualSensor: %s created', self._name)

@@ -73,7 +73,7 @@ class VirtualBinarySensor(BinarySensorEntity):
     """An implementation of a Virtual Binary Sensor."""
 
     def __init__(self, config):
-        """Initialize an Virtual Binary Sensor."""
+        """Initialize a Virtual Binary Sensor."""
         self._name = config.get(CONF_NAME)
         self._class = config.get(CONF_CLASS)
         self._state = config.get(CONF_INITIAL_VALUE)

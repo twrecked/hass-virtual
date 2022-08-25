@@ -27,7 +27,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 })
 
 
-async def async_setup_platform(hass, config, async_add_entities, _discovery_info=None):
+async def async_setup_platform(_hass, config, async_add_entities, _discovery_info=None):
     switches = [VirtualSwitch(config)]
     async_add_entities(switches, True)
 
@@ -62,19 +62,9 @@ class VirtualSwitch(SwitchEntity):
         return self._unique_id
 
     @property
-    def state(self):
-        """Return the state of the switch."""
-        return self._state
-
-    @property
     def is_on(self):
         """Return true if switch is on."""
-        return self.state == "on"
-
-    @property
-    def is_off(self):
-        """Return true if switch is on."""
-        return not self.is_on
+        return self._state == "on"
 
     @property
     def available(self):
