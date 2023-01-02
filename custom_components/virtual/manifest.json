@@ -2,9 +2,10 @@
   "domain": "virtual",
   "name": "Virtual Components",
   "documentation": "https://github.com/twrecked/hass-virtual/blob/master/README.md",
-  "dependencies": [],
-  "codeowners": [ "@twrecked" ],
-  "requirements": [],
+  "issue_tracker": "https://github.com/twrecked/hass-virtual/issues",
+  "codeowners": [
+    "@twrecked"
+  ],
   "version": "0.7.7",
   "iot_class": "local_push"
 }
