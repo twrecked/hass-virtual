@@ -8,6 +8,7 @@ import logging
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
+from homeassistant.core import HomeAssistant
 from homeassistant.components.sensor import DOMAIN, SensorDeviceClass
 from homeassistant.const import (ATTR_ENTITY_ID,
                                  CONF_UNIT_OF_MEASUREMENT,
@@ -22,7 +23,8 @@ from homeassistant.const import (ATTR_ENTITY_ID,
                                  VOLUME_CUBIC_METERS,
                                  )
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
-from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from . import COMPONENT_DOMAIN, COMPONENT_SERVICES, get_entity_from_domain
 
 _LOGGER = logging.getLogger(__name__)
@@ -33,15 +35,18 @@ CONF_NAME = "name"
 CONF_CLASS = "class"
 CONF_INITIAL_VALUE = "initial_value"
 CONF_INITIAL_AVAILABILITY = "initial_availability"
+CONF_PERSISTENT = "persistent"
 
 DEFAULT_INITIAL_VALUE = 0
 DEFAULT_INITIAL_AVAILABILITY = True
+DEFAULT_PERSISTENT = False
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_NAME): cv.string,
     vol.Optional(CONF_CLASS): cv.string,
     vol.Optional(CONF_INITIAL_VALUE, default=DEFAULT_INITIAL_VALUE): cv.string,
     vol.Optional(CONF_INITIAL_AVAILABILITY, default=DEFAULT_INITIAL_AVAILABILITY): cv.boolean,
+    vol.Optional(CONF_PERSISTENT, default=DEFAULT_PERSISTENT): cv.boolean,
     vol.Optional(CONF_UNIT_OF_MEASUREMENT, default=""): cv.string,
 })
 
@@ -99,7 +104,7 @@ async def async_setup_platform(hass, config, async_add_entities, _discovery_info
         )
 
 
-class VirtualSensor(Entity):
+class VirtualSensor(RestoreEntity):
     """An implementation of a Virtual Sensor."""
 
     def __init__(self, config):
@@ -115,6 +120,7 @@ class VirtualSensor(Entity):
         self._class = config.get(CONF_CLASS)
         self._state = config.get(CONF_INITIAL_VALUE)
         self._available = config.get(CONF_INITIAL_AVAILABILITY)
+        self._persistent = config.get(CONF_PERSISTENT)
 
         # Set unit of measurement
         self._unit_of_measurement = config.get(CONF_UNIT_OF_MEASUREMENT)
@@ -122,6 +128,14 @@ class VirtualSensor(Entity):
             self._unit_of_measurement = UNITS_OF_MEASUREMENT[self._class]
 
         _LOGGER.info('VirtualSensor: %s created', self._name)
+
+    async def async_added_to_hass(self) -> None:
+
+        await super().async_added_to_hass()
+        state = await self.async_get_last_state()
+        if not self._persistent or not state:
+            return
+        self._state = state.state
 
     @property
     def name(self):
