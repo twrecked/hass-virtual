@@ -6,6 +6,6 @@
   "codeowners": [
     "@twrecked"
   ],
-  "version": "0.7.7",
+  "version": "0.7.9",
   "iot_class": "local_push"
 }

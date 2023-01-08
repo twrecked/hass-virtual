@@ -13,7 +13,7 @@ from homeassistant.exceptions import HomeAssistantError
 
 import voluptuous as vol
 
-__version__ = '0.7.7'
+__version__ = '0.7.9'
 
 _LOGGER = logging.getLogger(__name__)
 
