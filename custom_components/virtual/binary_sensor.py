@@ -12,6 +12,7 @@ from homeassistant.components.binary_sensor import (BinarySensorEntity, DOMAIN)
 from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
 from . import COMPONENT_DOMAIN, COMPONENT_SERVICES, get_entity_from_domain
+from .entity import VirtualEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -69,40 +70,41 @@ async def async_setup_platform(hass, config, async_add_entities, _discovery_info
         )
 
 
-class VirtualBinarySensor(BinarySensorEntity):
+class VirtualBinarySensor(VirtualEntity, BinarySensorEntity):
     """An implementation of a Virtual Binary Sensor."""
 
     def __init__(self, config):
         """Initialize a Virtual Binary Sensor."""
-        self._name = config.get(CONF_NAME)
-        self._class = config.get(CONF_CLASS)
-        self._state = config.get(CONF_INITIAL_VALUE)
-        self._available = config.get(CONF_INITIAL_AVAILABILITY)
+        super().__init__(config)
+        # self._name = config.get(CONF_NAME)
+        # self._class = config.get(CONF_CLASS)
+        # self._state = config.get(CONF_INITIAL_VALUE)
+        # self._available = config.get(CONF_INITIAL_AVAILABILITY)
 
         # Are we adding the domain or not?
-        self.no_domain_ = self._name.startswith("!")
-        if self.no_domain_:
-            self._name = self.name[1:]
-        self._unique_id = self._name.lower().replace(' ', '_')
+        # self.no_domain_ = self._name.startswith("!")
+        # if self.no_domain_:
+        #     self._name = self.name[1:]
+        # self._unique_id = self._name.lower().replace(' ', '_')
 
         _LOGGER.info('VirtualBinarySensor: %s created', self._name)
 
-    @property
-    def name(self):
-        if self.no_domain_:
-            return self._name
-        else:
-            return super().name
-
-    @property
-    def unique_id(self):
-        """Return a unique ID."""
-        return self._unique_id
-
-    @property
-    def device_class(self):
-        """Return the device class of the sensor."""
-        return self._class
+    # @property
+    # def name(self):
+    #     if self.no_domain_:
+    #         return self._name
+    #     else:
+    #         return super().name
+    #
+    # @property
+    # def unique_id(self):
+    #     """Return a unique ID."""
+    #     return self._unique_id
+    #
+    # @property
+    # def device_class(self):
+    #     """Return the device class of the sensor."""
+    #     return self._class
 
     @property
     def is_on(self):

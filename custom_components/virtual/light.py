@@ -100,7 +100,7 @@ class VirtualLight(LightEntity):
         self._effect_list = None
         self._brightness = None
         self._features = 0
-        self._color_modes = ['onoff'];
+        self._color_modes = ['onoff']
 
         if config.get(CONF_SUPPORT_BRIGHTNESS):
             self._features |= SUPPORT_BRIGHTNESS

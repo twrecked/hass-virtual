@@ -23,9 +23,11 @@ from homeassistant.const import (ATTR_ENTITY_ID,
                                  VOLUME_CUBIC_METERS,
                                  )
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
-from homeassistant.helpers.restore_state import RestoreEntity
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.entity import Entity
+# from homeassistant.helpers.restore_state import RestoreEntity
+# from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from . import COMPONENT_DOMAIN, COMPONENT_SERVICES, get_entity_from_domain
+from .entity import VirtualEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -104,23 +106,12 @@ async def async_setup_platform(hass, config, async_add_entities, _discovery_info
         )
 
 
-class VirtualSensor(RestoreEntity):
+class VirtualSensor(VirtualEntity, Entity):
     """An implementation of a Virtual Sensor."""
 
     def __init__(self, config):
         """Initialize an Virtual Sensor."""
-        self._name = config.get(CONF_NAME)
-
-        # Are we adding the domain or not?
-        self.no_domain_ = self._name.startswith("!")
-        if self.no_domain_:
-            self._name = self.name[1:]
-        self._unique_id = self._name.lower().replace(' ', '_')
-
-        self._class = config.get(CONF_CLASS)
-        self._state = config.get(CONF_INITIAL_VALUE)
-        self._available = config.get(CONF_INITIAL_AVAILABILITY)
-        self._persistent = config.get(CONF_PERSISTENT)
+        super().__init__(config)
 
         # Set unit of measurement
         self._unit_of_measurement = config.get(CONF_UNIT_OF_MEASUREMENT)
@@ -128,31 +119,6 @@ class VirtualSensor(RestoreEntity):
             self._unit_of_measurement = UNITS_OF_MEASUREMENT[self._class]
 
         _LOGGER.info('VirtualSensor: %s created', self._name)
-
-    async def async_added_to_hass(self) -> None:
-
-        await super().async_added_to_hass()
-        state = await self.async_get_last_state()
-        if not self._persistent or not state:
-            return
-        self._state = state.state
-
-    @property
-    def name(self):
-        if self.no_domain_:
-            return self._name
-        else:
-            return super().name
-
-    @property
-    def unique_id(self):
-        """Return a unique ID."""
-        return self._unique_id
-
-    @property
-    def device_class(self):
-        """Return the device class of the sensor."""
-        return self._class
 
     @property
     def state(self):
