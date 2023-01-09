@@ -19,16 +19,20 @@ from homeassistant.components.fan import (
 )
 from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
 
+from .const import (
+    CONF_NAME,
+    CONF_INITIAL_AVAILABILITY,
+    DEFAULT_INITIAL_AVAILABILITY,
+)
+from .entity import VirtualEntity
+
 _LOGGER = logging.getLogger(__name__)
 
-CONF_NAME = "name"
-CONF_SPEED = "speed"
-CONF_SPEED_COUNT = "speed_count"
-CONF_OSCILLATE = "oscillate"
 CONF_DIRECTION = "direction"
 CONF_MODES = "modes"
-CONF_INITIAL_AVAILABILITY = "initial_availability"
-DEFAULT_INITIAL_AVAILABILITY = True
+CONF_OSCILLATE = "oscillate"
+CONF_SPEED = "speed"
+CONF_SPEED_COUNT = "speed_count"
 
 #  PRESET_MODE_AUTO = "auto"
 #  PRESET_MODE_SMART = "smart"

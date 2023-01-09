@@ -4,33 +4,39 @@ This component provides support for a virtual binary sensor.
 """
 
 import logging
-
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.binary_sensor import (BinarySensorEntity, DOMAIN)
+from homeassistant.components.binary_sensor import BinarySensorEntity, DOMAIN
 from homeassistant.const import ATTR_ENTITY_ID
-from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
-from . import COMPONENT_DOMAIN, COMPONENT_SERVICES, get_entity_from_domain
+from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
+
+from . import get_entity_from_domain
+from .const import (
+    COMPONENT_DOMAIN,
+    COMPONENT_SERVICES,
+    CONF_CLASS,
+    CONF_INITIAL_AVAILABILITY,
+    CONF_INITIAL_VALUE,
+    CONF_NAME,
+    CONF_PERSISTENT,
+    DEFAULT_INITIAL_AVAILABILITY,
+    DEFAULT_PERSISTENT,
+)
 from .entity import VirtualEntity
 
 _LOGGER = logging.getLogger(__name__)
 
 DEPENDENCIES = [COMPONENT_DOMAIN]
 
-CONF_NAME = "name"
-CONF_CLASS = "class"
-CONF_INITIAL_VALUE = "initial_value"
-CONF_INITIAL_AVAILABILITY = "initial_availability"
-
-DEFAULT_INITIAL_VALUE = "off"
-DEFAULT_INITIAL_AVAILABILITY = True
+DEFAULT_INITIAL_VALUE = 'off'
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_NAME): cv.string,
     vol.Optional(CONF_CLASS): cv.string,
     vol.Optional(CONF_INITIAL_VALUE, default=DEFAULT_INITIAL_VALUE): cv.string,
     vol.Optional(CONF_INITIAL_AVAILABILITY, default=DEFAULT_INITIAL_AVAILABILITY): cv.boolean,
+    vol.Optional(CONF_PERSISTENT, default=DEFAULT_PERSISTENT): cv.boolean,
 })
 
 SERVICE_ON = 'turn_on'
@@ -75,57 +81,32 @@ class VirtualBinarySensor(VirtualEntity, BinarySensorEntity):
 
     def __init__(self, config):
         """Initialize a Virtual Binary Sensor."""
-        super().__init__(config)
-        # self._name = config.get(CONF_NAME)
-        # self._class = config.get(CONF_CLASS)
-        # self._state = config.get(CONF_INITIAL_VALUE)
-        # self._available = config.get(CONF_INITIAL_AVAILABILITY)
+        super().__init__(config, DOMAIN)
 
-        # Are we adding the domain or not?
-        # self.no_domain_ = self._name.startswith("!")
-        # if self.no_domain_:
-        #     self._name = self.name[1:]
-        # self._unique_id = self._name.lower().replace(' ', '_')
+        self._attr_device_class = config.get(CONF_CLASS)
 
-        _LOGGER.info('VirtualBinarySensor: %s created', self._name)
+        self._attr_extra_state_attributes = self._add_virtual_attributes({
+            name: value for name, value in (
+                ('device_class', self._attr_device_class),
+            ) if value is not None
+        })
 
-    # @property
-    # def name(self):
-    #     if self.no_domain_:
-    #         return self._name
-    #     else:
-    #         return super().name
-    #
-    # @property
-    # def unique_id(self):
-    #     """Return a unique ID."""
-    #     return self._unique_id
-    #
-    # @property
-    # def device_class(self):
-    #     """Return the device class of the sensor."""
-    #     return self._class
+        _LOGGER.info('VirtualBinarySensor: %s created', self.name)
 
-    @property
-    def is_on(self):
-        """Return true if the binary sensor is on."""
-        return self._state == 'on'
+    def _create_state(self, config):
+        super()._create_state(config)
+        self._attr_is_on = config.get(CONF_INITIAL_VALUE).lower() == "on"
 
-    @property
-    def available(self):
-        """Return True if entity is available."""
-        return self._available
-
-    def set_available(self, value):
-        self._available = value
-        self.async_schedule_update_ha_state()
+    def _restore_state(self, state, config):
+        super()._restore_state(state, config)
+        self._attr_is_on = state.state.lower() == "on"
 
     def turn_on(self):
-        self._state = 'on'
+        self._attr_is_on = True
         self.async_schedule_update_ha_state()
 
     def turn_off(self):
-        self._state = 'off'
+        self._attr_is_on = False
         self.async_schedule_update_ha_state()
 
     def toggle(self):
@@ -134,14 +115,14 @@ class VirtualBinarySensor(VirtualEntity, BinarySensorEntity):
         else:
             self.turn_on()
 
-    @property
-    def extra_state_attributes(self):
-        """Return the device state attributes."""
-        attrs = {
-            'friendly_name': self._name,
-            'unique_id': self._unique_id,
-        }
-        return attrs
+    # @property
+    # def extra_state_attributes(self):
+    #     """Return the device state attributes."""
+    #     return self._add_virtual_attributes({
+    #         name: value for name, value in (
+    #             ('device_class', self._attr_device_class),
+    #         ) if value is not None
+    #     })
 
 
 async def async_virtual_on_service(hass, call):

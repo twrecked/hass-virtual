@@ -4,44 +4,45 @@ This component provides support for a virtual sensor.
 """
 
 import logging
-
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.core import HomeAssistant
 from homeassistant.components.sensor import DOMAIN, SensorDeviceClass
-from homeassistant.const import (ATTR_ENTITY_ID,
-                                 CONF_UNIT_OF_MEASUREMENT,
-                                 CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
-                                 CONCENTRATION_PARTS_PER_MILLION,
-                                 FREQUENCY_GIGAHERTZ,
-                                 PERCENTAGE,
-                                 POWER_VOLT_AMPERE,
-                                 POWER_VOLT_AMPERE_REACTIVE,
-                                 PRESSURE_HPA,
-                                 SIGNAL_STRENGTH_DECIBELS,
-                                 VOLUME_CUBIC_METERS,
-                                 )
+from homeassistant.const import (
+    ATTR_ENTITY_ID,
+    CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+    CONCENTRATION_PARTS_PER_MILLION,
+    CONF_UNIT_OF_MEASUREMENT,
+    FREQUENCY_GIGAHERTZ,
+    PERCENTAGE,
+    POWER_VOLT_AMPERE,
+    POWER_VOLT_AMPERE_REACTIVE,
+    PRESSURE_HPA,
+    SIGNAL_STRENGTH_DECIBELS,
+    VOLUME_CUBIC_METERS,
+)
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.helpers.entity import Entity
-# from homeassistant.helpers.restore_state import RestoreEntity
-# from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from . import COMPONENT_DOMAIN, COMPONENT_SERVICES, get_entity_from_domain
+
+from . import get_entity_from_domain
+from .const import (
+    COMPONENT_DOMAIN,
+    COMPONENT_SERVICES,
+    CONF_CLASS,
+    CONF_INITIAL_AVAILABILITY,
+    CONF_INITIAL_VALUE,
+    CONF_NAME,
+    CONF_PERSISTENT,
+    DEFAULT_INITIAL_AVAILABILITY,
+    DEFAULT_PERSISTENT,
+)
 from .entity import VirtualEntity
 
 _LOGGER = logging.getLogger(__name__)
 
 DEPENDENCIES = [COMPONENT_DOMAIN]
 
-CONF_NAME = "name"
-CONF_CLASS = "class"
-CONF_INITIAL_VALUE = "initial_value"
-CONF_INITIAL_AVAILABILITY = "initial_availability"
-CONF_PERSISTENT = "persistent"
-
-DEFAULT_INITIAL_VALUE = 0
-DEFAULT_INITIAL_AVAILABILITY = True
-DEFAULT_PERSISTENT = False
+DEFAULT_INITIAL_VALUE = '0'
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_NAME): cv.string,
@@ -111,46 +112,45 @@ class VirtualSensor(VirtualEntity, Entity):
 
     def __init__(self, config):
         """Initialize an Virtual Sensor."""
-        super().__init__(config)
+        super().__init__(config, DOMAIN)
+
+        self._attr_device_class = config.get(CONF_CLASS)
 
         # Set unit of measurement
-        self._unit_of_measurement = config.get(CONF_UNIT_OF_MEASUREMENT)
-        if not self._unit_of_measurement and self._class in UNITS_OF_MEASUREMENT.keys():
-            self._unit_of_measurement = UNITS_OF_MEASUREMENT[self._class]
+        self._attr_unit_of_measurement = config.get(CONF_UNIT_OF_MEASUREMENT)
+        if not self._attr_unit_of_measurement and self._attr_device_class in UNITS_OF_MEASUREMENT.keys():
+            self._attr_unit_of_measurement = UNITS_OF_MEASUREMENT[self._attr_device_class]
 
-        _LOGGER.info('VirtualSensor: %s created', self._name)
+        self._attr_extra_state_attributes = self._add_virtual_attributes({
+            name: value for name, value in (
+                ('device_class', self._attr_device_class),
+                ('unite_of_measurement', self._attr_unit_of_measurement),
+            ) if value is not None
+        })
 
-    @property
-    def state(self):
-        """Return the state of the sensor."""
-        return self._state
+        _LOGGER.info('VirtualSensor: %s created', self.name)
+
+    def _create_state(self, config):
+        super()._create_state(config)
+        self._attr_state = config.get(CONF_INITIAL_VALUE)
+
+    def _restore_state(self, state, config):
+        super()._restore_state(state, config)
+        self._attr_state = state.state
 
     def set(self, value):
-        self._state = value
+        self._attr_state = value
         self.async_schedule_update_ha_state()
 
-    @property
-    def available(self):
-        """Return True if entity is available."""
-        return self._available
-
-    def set_available(self, value):
-        self._available = value
-        self.async_schedule_update_ha_state()
-
-    @property
-    def extra_state_attributes(self):
-        """Return the device state attributes."""
-        attrs = {
-            'friendly_name': self._name,
-            'unique_id': self._unique_id,
-        }
-        return attrs
-
-    @property
-    def unit_of_measurement(self):
-        """Return the unit of measurement of this entity."""
-        return self._unit_of_measurement
+    # @property
+    # def extra_state_attributes(self):
+    #     """Return the device state attributes."""
+    #     return self._add_virtual_attributes({
+    #         name: value for name, value in (
+    #             ('device_class', self._attr_device_class),
+    #             ('unite_of_measurement', self._attr_unit_of_measurement),
+    #         ) if value is not None
+    #     })
 
 
 async def async_virtual_set_service(hass, call):

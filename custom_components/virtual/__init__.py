@@ -4,27 +4,28 @@ This component provides support for virtual components.
 """
 
 import logging
+import voluptuous as vol
 from distutils import util
-
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.service import verify_domain_control
 from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.exceptions import HomeAssistantError
 
-import voluptuous as vol
+from .const import (
+    COMPONENT_DOMAIN,
+    COMPONENT_SERVICES
+)
 
 __version__ = '0.7.9'
 
 _LOGGER = logging.getLogger(__name__)
-
-COMPONENT_DOMAIN = 'virtual'
-COMPONENT_SERVICES = 'virtual-services'
 
 SERVICE_AVAILABILE = 'set_available'
 SERVICE_SCHEMA = vol.Schema({
     vol.Required(ATTR_ENTITY_ID): cv.comp_entity_ids,
     vol.Required('value'): cv.boolean,
 })
+
 
 async def async_setup(hass, config):
     """Set up a virtual components."""
@@ -53,6 +54,7 @@ def get_entity_from_domain(hass, domain, entity_id):
         raise HomeAssistantError("{} not found".format(entity_id))
 
     return entity
+
 
 async def async_virtual_set_availability_service(hass, call):
     entity_id = call.data['entity_id']
