@@ -33,10 +33,11 @@ DEFAULT_INITIAL_VALUE = 'off'
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_NAME): cv.string,
-    vol.Optional(CONF_CLASS): cv.string,
     vol.Optional(CONF_INITIAL_VALUE, default=DEFAULT_INITIAL_VALUE): cv.string,
     vol.Optional(CONF_INITIAL_AVAILABILITY, default=DEFAULT_INITIAL_AVAILABILITY): cv.boolean,
     vol.Optional(CONF_PERSISTENT, default=DEFAULT_PERSISTENT): cv.boolean,
+
+    vol.Optional(CONF_CLASS): cv.string,
 })
 
 SERVICE_ON = 'turn_on'
@@ -114,15 +115,6 @@ class VirtualBinarySensor(VirtualEntity, BinarySensorEntity):
             self.turn_off()
         else:
             self.turn_on()
-
-    # @property
-    # def extra_state_attributes(self):
-    #     """Return the device state attributes."""
-    #     return self._add_virtual_attributes({
-    #         name: value for name, value in (
-    #             ('device_class', self._attr_device_class),
-    #         ) if value is not None
-    #     })
 
 
 async def async_virtual_on_service(hass, call):

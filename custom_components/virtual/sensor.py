@@ -46,10 +46,11 @@ DEFAULT_INITIAL_VALUE = '0'
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_NAME): cv.string,
-    vol.Optional(CONF_CLASS): cv.string,
     vol.Optional(CONF_INITIAL_VALUE, default=DEFAULT_INITIAL_VALUE): cv.string,
     vol.Optional(CONF_INITIAL_AVAILABILITY, default=DEFAULT_INITIAL_AVAILABILITY): cv.boolean,
     vol.Optional(CONF_PERSISTENT, default=DEFAULT_PERSISTENT): cv.boolean,
+
+    vol.Optional(CONF_CLASS): cv.string,
     vol.Optional(CONF_UNIT_OF_MEASUREMENT, default=""): cv.string,
 })
 
@@ -141,16 +142,6 @@ class VirtualSensor(VirtualEntity, Entity):
     def set(self, value):
         self._attr_state = value
         self.async_schedule_update_ha_state()
-
-    # @property
-    # def extra_state_attributes(self):
-    #     """Return the device state attributes."""
-    #     return self._add_virtual_attributes({
-    #         name: value for name, value in (
-    #             ('device_class', self._attr_device_class),
-    #             ('unite_of_measurement', self._attr_unit_of_measurement),
-    #         ) if value is not None
-    #     })
 
 
 async def async_virtual_set_service(hass, call):
