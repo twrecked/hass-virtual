@@ -8,7 +8,7 @@ import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.binary_sensor import BinarySensorEntity, DOMAIN
-from homeassistant.const import ATTR_ENTITY_ID
+from homeassistant.const import ATTR_ENTITY_ID, ATTR_DEVICE_CLASS
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.const import STATE_ON
 
@@ -20,6 +20,7 @@ from .const import (
     CONF_INITIAL_VALUE,
 )
 from .entity import VirtualEntity, virtual_schema
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -79,7 +80,7 @@ class VirtualBinarySensor(VirtualEntity, BinarySensorEntity):
 
         self._attr_extra_state_attributes = self._add_virtual_attributes({
             name: value for name, value in (
-                ('device_class', self._attr_device_class),
+                (ATTR_DEVICE_CLASS, self._attr_device_class),
             ) if value is not None
         })
 

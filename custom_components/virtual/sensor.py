@@ -10,6 +10,8 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.components.sensor import DOMAIN, SensorDeviceClass
 from homeassistant.const import (
     ATTR_ENTITY_ID,
+    ATTR_DEVICE_CLASS,
+    ATTR_UNIT_OF_MEASUREMENT,
     CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
     CONCENTRATION_PARTS_PER_MILLION,
     CONF_UNIT_OF_MEASUREMENT,
@@ -32,6 +34,7 @@ from .const import (
     CONF_INITIAL_VALUE,
 )
 from .entity import VirtualEntity, virtual_schema
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -114,8 +117,8 @@ class VirtualSensor(VirtualEntity, Entity):
 
         self._attr_extra_state_attributes = self._add_virtual_attributes({
             name: value for name, value in (
-                ('device_class', self._attr_device_class),
-                ('unite_of_measurement', self._attr_unit_of_measurement),
+                (ATTR_DEVICE_CLASS, self._attr_device_class),
+                (ATTR_UNIT_OF_MEASUREMENT, self._attr_unit_of_measurement),
             ) if value is not None
         })
 

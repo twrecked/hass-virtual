@@ -4,10 +4,8 @@ This component provides support for a virtual lock.
 """
 
 import logging
-import voluptuous as vol
 from typing import Any
 
-import homeassistant.helpers.config_validation as cv
 from homeassistant.components.lock import LockEntity, DOMAIN
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.const import STATE_LOCKED

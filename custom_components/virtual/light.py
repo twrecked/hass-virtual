@@ -10,11 +10,14 @@ import pprint
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
+from homeassistant.const import STATE_ON
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
+    ATTR_COLOR_MODE,
     ATTR_COLOR_TEMP,
     ATTR_HS_COLOR,
     ATTR_EFFECT,
+    ATTR_EFFECT_LIST,
     DOMAIN,
     SUPPORT_BRIGHTNESS,
     SUPPORT_COLOR,
@@ -95,11 +98,9 @@ class VirtualLight(VirtualEntity, LightEntity):
             self._attr_supported_color_modes.add(ColorMode.BRIGHTNESS)
         if config.get(CONF_SUPPORT_COLOR):
             self._attr_supported_features |= SUPPORT_COLOR
-            self._attr_color_mode = ColorMode.HS
             self._attr_supported_color_modes.add(ColorMode.HS)
         if config.get(CONF_SUPPORT_COLOR_TEMP):
             self._attr_supported_features |= SUPPORT_COLOR_TEMP
-            self._attr_color_mode = ColorMode.COLOR_TEMP
             self._attr_supported_color_modes.add(ColorMode.COLOR_TEMP)
         if config.get(CONF_SUPPORT_EFFECT):
             self._attr_supported_features |= SUPPORT_EFFECT
@@ -108,13 +109,15 @@ class VirtualLight(VirtualEntity, LightEntity):
     def _create_state(self, config):
         super()._create_state(config)
 
-        self._attr_is_on = config.get(CONF_INITIAL_VALUE, "off").lower() == "on"
+        self._attr_is_on = config.get(CONF_INITIAL_VALUE).lower() == STATE_ON
 
         if self._attr_supported_features & SUPPORT_BRIGHTNESS:
             self._attr_brightness = config.get(CONF_INITIAL_BRIGHTNESS)
         if self._attr_supported_features & SUPPORT_COLOR:
+            self._attr_color_mode = ColorMode.HS
             self._attr_hs_color = config.get(CONF_INITIAL_COLOR)
         if self._attr_supported_features & SUPPORT_COLOR_TEMP:
+            self._attr_color_mode = ColorMode.COLOR_TEMP
             self._attr_color_temp = config.get(CONF_INITIAL_COLOR_TEMP)
         if self._attr_supported_features & SUPPORT_EFFECT:
             self._attr_effect = config.get(CONF_INITIAL_EFFECT)
@@ -123,14 +126,16 @@ class VirtualLight(VirtualEntity, LightEntity):
     def _restore_state(self, state, config):
         super()._restore_state(state, config)
 
-        self._attr_is_on = state.state.lower() == "on"
+        self._attr_is_on = state.state.lower() == STATE_ON
 
         if self._attr_supported_features & SUPPORT_BRIGHTNESS:
-            self._attr_brightness = state.attributes.get('brightness', config.get(CONF_INITIAL_BRIGHTNESS))
+            self._attr_brightness = state.attributes.get(ATTR_BRIGHTNESS, config.get(CONF_INITIAL_BRIGHTNESS))
         if self._attr_supported_features & SUPPORT_COLOR:
-            self._attr_hs_color = state.attributes.get('hs_color', config.get(CONF_INITIAL_COLOR))
+            self._attr_color_mode = ColorMode.HS
+            self._attr_hs_color = state.attributes.get(ATTR_HS_COLOR, config.get(CONF_INITIAL_COLOR))
         if self._attr_supported_features & SUPPORT_COLOR_TEMP:
-            self._attr_color_temp = state.attributes.get('color_temp', config.get(CONF_INITIAL_COLOR_TEMP))
+            self._attr_color_mode = ColorMode.COLOR_TEMP
+            self._attr_color_temp = state.attributes.get(ATTR_COLOR_TEMP, config.get(CONF_INITIAL_COLOR_TEMP))
         if self._attr_supported_features & SUPPORT_EFFECT:
             self._attr_effect = state.attributes.get('effect', config.get(CONF_INITIAL_EFFECT))
         self._update_attributes()
@@ -139,12 +144,12 @@ class VirtualLight(VirtualEntity, LightEntity):
         """Return the state attributes."""
         self._attr_extra_state_attributes = self._add_virtual_attributes({
             name: value for name, value in (
-                ('brightness', self._attr_brightness),
-                ('color_mode', self._attr_color_mode),
-                ('color_temp', self._attr_color_temp),
-                ('effect', self._attr_effect),
-                ('effect_list', self._attr_effect_list),
-                ('hs_color', self._attr_hs_color),
+                (ATTR_BRIGHTNESS, self._attr_brightness),
+                (ATTR_COLOR_MODE, self._attr_color_mode),
+                (ATTR_COLOR_TEMP, self._attr_color_temp),
+                (ATTR_EFFECT, self._attr_effect),
+                (ATTR_EFFECT_LIST, self._attr_effect_list),
+                (ATTR_HS_COLOR, self._attr_hs_color),
             ) if value is not None
         })
 
@@ -179,17 +184,3 @@ class VirtualLight(VirtualEntity, LightEntity):
         _LOGGER.info("turn_off: {}".format(pprint.pformat(kwargs)))
         self._attr_is_on = False
         self._update_attributes()
-
-    # @property
-    # def extra_state_attributes(self):
-    #     """Return the state attributes."""
-    #     return self._add_virtual_attributes({
-    #         name: value for name, value in (
-    #             ('brightness', self._attr_brightness),
-    #             ('color_mode', self._attr_color_mode),
-    #             ('color_temp', self._attr_color_temp),
-    #             ('effect', self._attr_effect),
-    #             ('effect_list', self._attr_effect_list),
-    #             ('hs_color', self._attr_hs_color),
-    #         ) if value is not None
-    #     })
