@@ -2,12 +2,19 @@
 ### Virtual Components for Home Assistant
 Virtual components for testing Home Assistant systems.
 
+## Version 0.8
+
+### **Breaking Changes**
+
+I've added persistent support to `binary_sensor`, `fan`, `light`, `lock`,
+`sensor` and `switch`. The persistent saving of state is turned *on* by default.
+If you do not want this set `persistent: False` in the entity configuration.
+
+
 ## Table Of Contents
 1. [Notes](#Notes)
 1. [Thanks](#Thanks)
 1. [Installation](#Installation)
-   1. [Manually](#Manually)
-   1. [From Script](#From-Script)
 1. [Component Configuration](#Component-Configuration)
 
 
@@ -78,6 +85,12 @@ with value `true` or `false`.
 This is fully optional and `initial_availability` is not required to be set.
 
 
+### Persistence
+By default, all device states are persistent. You can change this behaviour with
+the `persistent` configuration option. If you have set an `initial_value` it will
+only be used if the device state is not restored.
+
+
 ### Switches
 
 To add a virtual switch use the following:
@@ -86,7 +99,7 @@ To add a virtual switch use the following:
 switch:
   - platform: virtual
     name: Switch 1
-    initial_availability: true
+    initial_availability: True
 ```
 
 
@@ -100,7 +113,7 @@ binary_sensor:
     name: 'Binary Sensor 1'
     initial_value: 'on'
     class: presence
-    initial_availability: true
+    initial_availability: True
 ```
 
 Use the `virtual.turn_on`, `virtual.turn_off` and `virtual.toggle` services to
