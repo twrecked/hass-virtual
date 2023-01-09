@@ -13,9 +13,13 @@ If you do not want this set `persistent: False` in the entity configuration.
 
 ## Table Of Contents
 1. [Notes](#Notes)
-1. [Thanks](#Thanks)
-1. [Installation](#Installation)
-1. [Component Configuration](#Component-Configuration)
+2. [Thanks](#Thanks)
+3. [Installation](#Installation)
+4. [Component Configuration](#Component-Configuration)
+   1. [Naming](#Naming)
+   2. [Availability](#Availability)
+   3. [Peristence](#Persistence)
+   4. [The Components...](#Switches)
 
 
 ## Notes
@@ -27,7 +31,7 @@ mapped to `/config` inside my docker container.
 ## Thanks
 Many thanks to:
 * [JetBrains](https://www.jetbrains.com/?from=hass-aarlo) for the excellent
-  **PyCharm IDE** and providing me with an open source license to speed up the
+  **PyCharm IDE** and providing me with an open source licence to speed up the
   project development.
 
   [![JetBrains](/images/jetbrains.svg)](https://www.jetbrains.com/?from=hass-aarlo)
@@ -76,20 +80,28 @@ switch:
 
 ### Availability
 
-By default, all devices are market as available.
-As shown below in each domain, adding `initial_availability: false`
-to configuration can override default and set as unavailable on HA start.
-Availability can by set by using the `virtual.set_available`
-with value `true` or `false`.
+By default, all devices are market as available. As shown below in each domain,
+adding `initial_availability: false` to configuration can override default and
+set as unavailable on HA start. Availability can by set by using
+the `virtual.set_available` with value `true` or `false`.
 
 This is fully optional and `initial_availability` is not required to be set.
 
 
 ### Persistence
 By default, all device states are persistent. You can change this behaviour with
-the `persistent` configuration option. If you have set an `initial_value` it will
-only be used if the device state is not restored.
+the `persistent` configuration option.
 
+If you have set an `initial_value` it will only be used if the device state is
+not restored. The following switch will always start _on_.
+
+```yaml
+switch:
+  - platform: virtual
+    name: Switch 1
+    persistent: False
+    initial_value: on
+```
 
 ### Switches
 
@@ -135,8 +147,9 @@ To add a virtual sensor use the following:
 
 Use the `virtual.set` service to manipulate the sensor value.
 
-Setting `unit_of_measurement` can override default unit for selected sensor class.
-This is optional ans any string is accepted. List of standard units can be found here:
+Setting `unit_of_measurement` can override default unit for selected sensor
+class. This is optional ans any string is accepted. List of standard units can
+be found here:
 [Sensor Entity](https://developers.home-assistant.io/docs/core/entity/sensor/)
 
 ### Lights
