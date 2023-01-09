@@ -6,18 +6,34 @@ This class adds persistence to an entity.
 
 import logging
 import pprint
+import voluptuous as vol
 
+import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
 
 from .const import (
+    COMPONENT_DOMAIN,
     CONF_INITIAL_AVAILABILITY,
+    CONF_INITIAL_VALUE,
     CONF_NAME,
     CONF_PERSISTENT,
-    COMPONENT_DOMAIN,
+    DEFAULT_INITIAL_AVAILABILITY,
+    DEFAULT_PERSISTENT,
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def virtual_schema(default_initial_value: str, extra_attrs):
+    schema = {
+        vol.Required(CONF_NAME): cv.string,
+        vol.Optional(CONF_INITIAL_VALUE, default=default_initial_value): cv.string,
+        vol.Optional(CONF_INITIAL_AVAILABILITY, default=DEFAULT_INITIAL_AVAILABILITY): cv.boolean,
+        vol.Optional(CONF_PERSISTENT, default=DEFAULT_PERSISTENT): cv.boolean,
+    }
+    schema.update(extra_attrs)
+    return schema
 
 
 class VirtualEntity(RestoreEntity):

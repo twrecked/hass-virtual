@@ -17,14 +17,9 @@ from .const import (
     COMPONENT_DOMAIN,
     COMPONENT_SERVICES,
     CONF_CLASS,
-    CONF_INITIAL_AVAILABILITY,
     CONF_INITIAL_VALUE,
-    CONF_NAME,
-    CONF_PERSISTENT,
-    DEFAULT_INITIAL_AVAILABILITY,
-    DEFAULT_PERSISTENT,
 )
-from .entity import VirtualEntity
+from .entity import VirtualEntity, virtual_schema
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,14 +27,9 @@ DEPENDENCIES = [COMPONENT_DOMAIN]
 
 DEFAULT_INITIAL_VALUE = 'off'
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_NAME): cv.string,
-    vol.Optional(CONF_INITIAL_VALUE, default=DEFAULT_INITIAL_VALUE): cv.string,
-    vol.Optional(CONF_INITIAL_AVAILABILITY, default=DEFAULT_INITIAL_AVAILABILITY): cv.boolean,
-    vol.Optional(CONF_PERSISTENT, default=DEFAULT_PERSISTENT): cv.boolean,
-
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_INITIAL_VALUE, {
     vol.Optional(CONF_CLASS): cv.string,
-})
+}))
 
 SERVICE_ON = 'turn_on'
 SERVICE_OFF = 'turn_off'

@@ -13,29 +13,22 @@ from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
 from homeassistant.const import STATE_ON
 
 from .const import (
-    CONF_INITIAL_AVAILABILITY,
+    COMPONENT_DOMAIN,
     CONF_INITIAL_VALUE,
     CONF_CLASS,
-    CONF_NAME,
-    CONF_PERSISTENT,
-    DEFAULT_INITIAL_AVAILABILITY,
-    DEFAULT_PERSISTENT,
 )
-from .entity import VirtualEntity
+from .entity import VirtualEntity, virtual_schema
 
 
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_INITIAL_VALUE = "off"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_NAME): cv.string,
-    vol.Optional(CONF_INITIAL_VALUE, default=DEFAULT_INITIAL_VALUE): cv.string,
-    vol.Optional(CONF_INITIAL_AVAILABILITY, default=DEFAULT_INITIAL_AVAILABILITY): cv.boolean,
-    vol.Optional(CONF_PERSISTENT, default=DEFAULT_PERSISTENT): cv.boolean,
+DEPENDENCIES = [COMPONENT_DOMAIN]
 
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_INITIAL_VALUE, {
     vol.Optional(CONF_CLASS): cv.string,
-})
+}))
 
 
 async def async_setup_platform(_hass, config, async_add_entities, _discovery_info=None):
