@@ -126,10 +126,12 @@ class VirtualSensor(VirtualEntity, Entity):
 
     def _create_state(self, config):
         super()._create_state(config)
+
         self._attr_state = config.get(CONF_INITIAL_VALUE)
 
     def _restore_state(self, state, config):
         super()._restore_state(state, config)
+
         self._attr_state = state.state
 
     def set(self, value) -> None:

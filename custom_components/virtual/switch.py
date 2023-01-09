@@ -58,10 +58,12 @@ class VirtualSwitch(VirtualEntity, SwitchEntity):
 
     def _create_state(self, config):
         super()._create_state(config)
+
         self._attr_is_on = config.get(CONF_INITIAL_VALUE).lower() == STATE_ON
 
     def _restore_state(self, state, config):
         super()._restore_state(state, config)
+
         self._attr_is_on = state.state.lower() == STATE_ON
 
     def turn_on(self, **kwargs: Any) -> None:

@@ -44,17 +44,23 @@ class VirtualLock(VirtualEntity, LockEntity):
 
     def _create_state(self, config):
         super()._create_state(config)
+
         self._attr_is_locked = config.get(CONF_INITIAL_VALUE).lower() == STATE_LOCKED
 
     def _restore_state(self, state, config):
         super()._restore_state(state, config)
+
         self._attr_is_locked = state.state == STATE_LOCKED
 
     def lock(self, **kwargs: Any) -> None:
         self._attr_is_locked = True
+        self._attr_is_locking = False
+        self._attr_is_unlocking = False
 
     def unlock(self, **kwargs: Any) -> None:
         self._attr_is_locked = False
+        self._attr_is_locking = False
+        self._attr_is_unlocking = False
 
     def open(self, **kwargs: Any) -> None:
-        pass
+        self.unlock()
