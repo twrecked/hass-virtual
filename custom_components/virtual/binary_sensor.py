@@ -10,6 +10,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.components.binary_sensor import BinarySensorEntity, DOMAIN
 from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
+from homeassistant.const import STATE_ON
 
 from . import get_entity_from_domain
 from .const import (
@@ -96,21 +97,21 @@ class VirtualBinarySensor(VirtualEntity, BinarySensorEntity):
 
     def _create_state(self, config):
         super()._create_state(config)
-        self._attr_is_on = config.get(CONF_INITIAL_VALUE).lower() == "on"
+        self._attr_is_on = config.get(CONF_INITIAL_VALUE).lower() == STATE_ON
 
     def _restore_state(self, state, config):
         super()._restore_state(state, config)
-        self._attr_is_on = state.state.lower() == "on"
+        self._attr_is_on = state.state.lower() == STATE_ON
 
-    def turn_on(self):
+    def turn_on(self) -> None:
         self._attr_is_on = True
         self.async_schedule_update_ha_state()
 
-    def turn_off(self):
+    def turn_off(self) -> None:
         self._attr_is_on = False
         self.async_schedule_update_ha_state()
 
-    def toggle(self):
+    def toggle(self) -> None:
         if self.is_on:
             self.turn_off()
         else:

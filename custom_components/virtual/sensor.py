@@ -139,7 +139,7 @@ class VirtualSensor(VirtualEntity, Entity):
         super()._restore_state(state, config)
         self._attr_state = state.state
 
-    def set(self, value):
+    def set(self, value) -> None:
         self._attr_state = value
         self.async_schedule_update_ha_state()
 

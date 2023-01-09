@@ -9,10 +9,8 @@ from typing import Any
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.lock import LockEntity, DOMAIN
-from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
-from homeassistant.const import (
-    STATE_LOCKED,
-)
+from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
+from homeassistant.const import STATE_LOCKED
 
 from .const import (
     CONF_INITIAL_AVAILABILITY,
