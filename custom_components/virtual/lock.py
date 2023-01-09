@@ -4,26 +4,35 @@ This component provides support for a virtual lock.
 """
 
 import logging
-
 import voluptuous as vol
+from typing import Any
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.lock import LockEntity
+from homeassistant.components.lock import LockEntity, DOMAIN
 from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
+from homeassistant.const import (
+    STATE_LOCKED,
+)
+
+from .const import (
+    CONF_INITIAL_AVAILABILITY,
+    CONF_INITIAL_VALUE,
+    CONF_NAME,
+    CONF_PERSISTENT,
+    DEFAULT_INITIAL_AVAILABILITY,
+    DEFAULT_PERSISTENT,
+)
+from .entity import VirtualEntity
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_NAME = "name"
-CONF_INITIAL_VALUE = "initial_value"
-CONF_INITIAL_AVAILABILITY = "initial_availability"
-
 DEFAULT_INITIAL_VALUE = "locked"
-DEFAULT_INITIAL_AVAILABILITY = True
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_NAME): cv.string,
     vol.Optional(CONF_INITIAL_VALUE, default=DEFAULT_INITIAL_VALUE): cv.string,
     vol.Optional(CONF_INITIAL_AVAILABILITY, default=DEFAULT_INITIAL_AVAILABILITY): cv.boolean,
+    vol.Optional(CONF_PERSISTENT, default=DEFAULT_PERSISTENT): cv.boolean,
 })
 
 
@@ -32,63 +41,30 @@ async def async_setup_platform(_hass, config, async_add_entities, _discovery_inf
     async_add_entities(locks, True)
 
 
-class VirtualLock(LockEntity):
+class VirtualLock(VirtualEntity, LockEntity):
     """Representation of a Virtual lock."""
 
     def __init__(self, config):
         """Initialize the Virtual lock device."""
-        self._name = config.get(CONF_NAME)
+        super().__init__(config, DOMAIN)
 
-        # Are we adding the domain or not?
-        self.no_domain_ = self._name.startswith("!")
-        if self.no_domain_:
-            self._name = self.name[1:]
-        self._unique_id = self._name.lower().replace(' ', '_')
+        self._attr_extra_state_attributes = self._add_virtual_attributes({})
 
-        self._state = config.get(CONF_INITIAL_VALUE)
-        self._available = config.get(CONF_INITIAL_AVAILABILITY)
-        _LOGGER.info('VirtualLock: {} created'.format(self._name))
+        _LOGGER.info('VirtualLock: {} created'.format(self.name))
 
-    @property
-    def name(self):
-        if self.no_domain_:
-            return self._name
-        else:
-            return super().name
+    def _create_state(self, config):
+        super()._create_state(config)
+        self._attr_is_locked = config.get(CONF_INITIAL_VALUE).lower() == STATE_LOCKED
 
-    @property
-    def unique_id(self):
-        """Return a unique ID."""
-        return self._unique_id
+    def _restore_state(self, state, config):
+        super()._restore_state(state, config)
+        self._attr_is_locked = state.state == STATE_LOCKED
 
-    @property
-    def is_locked(self):
-        """Return true if lock is on."""
-        return self._state == "locked"
+    def lock(self, **kwargs: Any) -> None:
+        self._attr_is_locked = True
 
-    def lock(self, **kwargs):
-        self._state = 'locked'
+    def unlock(self, **kwargs: Any) -> None:
+        self._attr_is_locked = False
 
-    def unlock(self, **kwargs):
-        self._state = 'unlocked'
-
-    def open(self, **kwargs):
+    def open(self, **kwargs: Any) -> None:
         pass
-
-    @property
-    def available(self):
-        """Return True if entity is available."""
-        return self._available
-
-    def set_available(self, value):
-        self._available = value
-        self.async_schedule_update_ha_state()
-
-    @property
-    def extra_state_attributes(self):
-        """Return the device state attributes."""
-        attrs = {
-            'friendly_name': self._name,
-            'unique_id': self._unique_id,
-        }
-        return attrs
