@@ -121,7 +121,6 @@ class VirtualLight(VirtualEntity, LightEntity):
             self._attr_color_temp = config.get(CONF_INITIAL_COLOR_TEMP)
         if self._attr_supported_features & SUPPORT_EFFECT:
             self._attr_effect = config.get(CONF_INITIAL_EFFECT)
-        self._update_attributes()
 
     def _restore_state(self, state, config):
         super()._restore_state(state, config)
@@ -138,11 +137,11 @@ class VirtualLight(VirtualEntity, LightEntity):
             self._attr_color_temp = state.attributes.get(ATTR_COLOR_TEMP, config.get(CONF_INITIAL_COLOR_TEMP))
         if self._attr_supported_features & SUPPORT_EFFECT:
             self._attr_effect = state.attributes.get(ATTR_EFFECT, config.get(CONF_INITIAL_EFFECT))
-        self._update_attributes()
 
     def _update_attributes(self):
         """Return the state attributes."""
-        self._attr_extra_state_attributes = self._add_virtual_attributes({
+        super()._update_attributes();
+        self._attr_extra_state_attributes.update({
             name: value for name, value in (
                 (ATTR_BRIGHTNESS, self._attr_brightness),
                 (ATTR_COLOR_MODE, self._attr_color_mode),

@@ -78,12 +78,6 @@ class VirtualBinarySensor(VirtualEntity, BinarySensorEntity):
 
         self._attr_device_class = config.get(CONF_CLASS)
 
-        self._attr_extra_state_attributes = self._add_virtual_attributes({
-            name: value for name, value in (
-                (ATTR_DEVICE_CLASS, self._attr_device_class),
-            ) if value is not None
-        })
-
         _LOGGER.info('VirtualBinarySensor: %s created', self.name)
 
     def _create_state(self, config):
@@ -95,6 +89,14 @@ class VirtualBinarySensor(VirtualEntity, BinarySensorEntity):
         super()._restore_state(state, config)
 
         self._attr_is_on = state.state.lower() == STATE_ON
+
+    def _update_attributes(self):
+        super()._update_attributes();
+        self._attr_extra_state_attributes.update({
+            name: value for name, value in (
+                (ATTR_DEVICE_CLASS, self._attr_device_class),
+            ) if value is not None
+        })
 
     def turn_on(self) -> None:
         _LOGGER.debug(f"turning {self.name} on")

@@ -115,13 +115,6 @@ class VirtualSensor(VirtualEntity, Entity):
         if not self._attr_unit_of_measurement and self._attr_device_class in UNITS_OF_MEASUREMENT.keys():
             self._attr_unit_of_measurement = UNITS_OF_MEASUREMENT[self._attr_device_class]
 
-        self._attr_extra_state_attributes = self._add_virtual_attributes({
-            name: value for name, value in (
-                (ATTR_DEVICE_CLASS, self._attr_device_class),
-                (ATTR_UNIT_OF_MEASUREMENT, self._attr_unit_of_measurement),
-            ) if value is not None
-        })
-
         _LOGGER.info('VirtualSensor: %s created', self.name)
 
     def _create_state(self, config):
@@ -133,6 +126,15 @@ class VirtualSensor(VirtualEntity, Entity):
         super()._restore_state(state, config)
 
         self._attr_state = state.state
+
+    def _update_attributes(self):
+        super()._update_attributes();
+        self._attr_extra_state_attributes.update({
+            name: value for name, value in (
+                (ATTR_DEVICE_CLASS, self._attr_device_class),
+                (ATTR_UNIT_OF_MEASUREMENT, self._attr_unit_of_measurement),
+            ) if value is not None
+        })
 
     def set(self, value) -> None:
         _LOGGER.debug(f"set {self.name} to {value}")
