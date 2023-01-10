@@ -63,7 +63,7 @@ class VirtualEntity(RestoreEntity):
 
     def _create_state(self, config):
         _LOGGER.info(f'VirtualEntity {self.unique_id}: creating initial state')
-        self._available = config.get(CONF_INITIAL_AVAILABILITY)
+        self._attr_available = config.get(CONF_INITIAL_AVAILABILITY)
 
     def _restore_state(self, state, config):
         _LOGGER.info(f'VirtualEntity {self.unique_id}: restoring state')
