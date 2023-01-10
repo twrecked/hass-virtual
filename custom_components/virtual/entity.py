@@ -9,6 +9,7 @@ import pprint
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
+from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
 
@@ -23,6 +24,10 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+ATTR_AVAILABLE = 'available'
+ATTR_PERSISTENT = 'persistent'
+ATTR_UNIQUE_ID = 'unique_id'
 
 
 def virtual_schema(default_initial_value: str, extra_attrs):
@@ -69,17 +74,17 @@ class VirtualEntity(RestoreEntity):
         _LOGGER.info(f'VirtualEntity {self.unique_id}: restoring state')
         _LOGGER.debug(f'VirtualEntity:: {pprint.pformat(state.state)}')
         _LOGGER.debug(f'VirtualEntity:: {pprint.pformat(state.attributes)}')
-        self._attr_available = state.attributes.get('availibilty', config.get(CONF_INITIAL_AVAILABILITY))
+        self._attr_available = state.attributes.get(ATTR_AVAILABLE)
 
     def _add_virtual_attributes(self, attrs):
         attrs.update({
-            'persistent': self._persistent,
-            'available': self._attr_available,
+            ATTR_PERSISTENT: self._persistent,
+            ATTR_AVAILABLE: self._attr_available,
         })
         if _LOGGER.isEnabledFor(logging.DEBUG):
             attrs.update({
-                'entity_id': self.entity_id,
-                'unique_id': self.unique_id,
+                ATTR_ENTITY_ID: self.entity_id,
+                ATTR_UNIQUE_ID: self.unique_id,
             })
         return attrs
 
