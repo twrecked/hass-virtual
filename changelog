@@ -1,4 +1,5 @@
 0.8.0a1: Added state restore to all but device tracker.
+            [thanks to SergeyPomelov for the push on this]
 
 0.7.9: Added state restore to sensor [thanks to SergeyPomelov]
 0.7.8: Added brightness support.
