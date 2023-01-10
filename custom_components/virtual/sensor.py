@@ -89,12 +89,12 @@ async def async_setup_platform(hass, config, async_add_entities, _discovery_info
 
     async def async_virtual_service(call):
         """Call virtual service handler."""
-        _LOGGER.info("{} service called".format(call.service))
+        _LOGGER.debug(f"{call.service} service called")
         await async_virtual_set_service(hass, call)
 
     # Build up services...
     if not hasattr(hass.data[COMPONENT_SERVICES], DOMAIN):
-        _LOGGER.info("installing handlers")
+        _LOGGER.debug("installing handlers")
         hass.data[COMPONENT_SERVICES][DOMAIN] = 'installed'
         hass.services.async_register(
             COMPONENT_DOMAIN, SERVICE_SET, async_virtual_service, schema=SERVICE_SCHEMA,
@@ -143,5 +143,5 @@ class VirtualSensor(VirtualEntity, Entity):
 async def async_virtual_set_service(hass, call):
     for entity_id in call.data['entity_id']:
         value = call.data['value']
-        _LOGGER.info("{} set(value={})".format(entity_id, value))
+        _LOGGER.debug(f"setting {entity_id} to {value})")
         get_entity_from_domain(hass, DOMAIN, entity_id).set(value)

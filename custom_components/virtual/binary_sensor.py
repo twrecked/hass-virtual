@@ -46,7 +46,7 @@ async def async_setup_platform(hass, config, async_add_entities, _discovery_info
 
     async def async_virtual_service(call):
         """Call virtual service handler."""
-        _LOGGER.info("{} service called".format(call.service))
+        _LOGGER.debug(f"{call.service} service called")
         if call.service == SERVICE_ON:
             await async_virtual_on_service(hass, call)
         if call.service == SERVICE_OFF:
@@ -56,7 +56,7 @@ async def async_setup_platform(hass, config, async_add_entities, _discovery_info
 
     # Build up services...
     if not hasattr(hass.data[COMPONENT_SERVICES], DOMAIN):
-        _LOGGER.info("installing handlers")
+        _LOGGER.debug("installing handlers")
         hass.data[COMPONENT_SERVICES][DOMAIN] = 'installed'
         hass.services.async_register(
             COMPONENT_DOMAIN, SERVICE_ON, async_virtual_service, schema=SERVICE_SCHEMA,
@@ -115,17 +115,17 @@ class VirtualBinarySensor(VirtualEntity, BinarySensorEntity):
 
 async def async_virtual_on_service(hass, call):
     for entity_id in call.data['entity_id']:
-        _LOGGER.info("{} turning on".format(entity_id))
+        _LOGGER.debug(f"turning on {entity_id}")
         get_entity_from_domain(hass, DOMAIN, entity_id).turn_on()
 
 
 async def async_virtual_off_service(hass, call):
     for entity_id in call.data['entity_id']:
-        _LOGGER.info("{} turning off".format(entity_id))
+        _LOGGER.debug(f"turning off {entity_id}")
         get_entity_from_domain(hass, DOMAIN, entity_id).turn_off()
 
 
 async def async_virtual_toggle_service(hass, call):
     for entity_id in call.data['entity_id']:
-        _LOGGER.info("{} toggling".format(entity_id))
+        _LOGGER.debug(f"toggling {entity_id}")
         get_entity_from_domain(hass, DOMAIN, entity_id).toggle()
