@@ -1,3 +1,4 @@
+0.8.0a2: added locking/unlocking state to locks
 0.8.0a1: Added state restore to all but device tracker.
             [thanks to SergeyPomelov for the push on this]
 

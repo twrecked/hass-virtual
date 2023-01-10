@@ -188,8 +188,21 @@ lock:
   - platform: virtual
     name: Front Door Lock
     initial_availability: true
+    initial_value: locked
+    locking_time: 5
+    jamming_test: 5
 ```
 
+- Persistent Configuration
+    - `initial_availibilty`: optional, default `True`; is device available at start up
+    - `initial_value`: optional, default `locked`; any other value will result in the lock
+      being unlocked at start up
+- Per Run Configuration
+  - `name`: _required_; device name
+  - `locking_time`: optional, default `0` seconds; any positive value will result in a
+    locking or unlocking phase that lasts `locking_time` seconds
+  - `jamming_test`: optional, default `0` tries; any positive value will result in a
+    jamming failure approximately once per `jamming_test` tries
 
 ### Fans
 
