@@ -4,27 +4,34 @@ This component provides support for a virtual switch.
 """
 
 import logging
-
 import voluptuous as vol
+from typing import Any
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.switch import SwitchEntity
+from homeassistant.components.switch import SwitchEntity, DOMAIN
 from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
+from homeassistant.const import (
+    ATTR_DEVICE_CLASS,
+    STATE_ON,
+)
+
+from .const import (
+    COMPONENT_DOMAIN,
+    CONF_INITIAL_VALUE,
+    CONF_CLASS,
+)
+from .entity import VirtualEntity, virtual_schema
+
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_NAME = "name"
-CONF_INITIAL_VALUE = "initial_value"
-CONF_INITIAL_AVAILABILITY = "initial_availability"
-
 DEFAULT_INITIAL_VALUE = "off"
-DEFAULT_INITIAL_AVAILABILITY = True
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_NAME): cv.string,
-    vol.Optional(CONF_INITIAL_VALUE, default=DEFAULT_INITIAL_VALUE): cv.string,
-    vol.Optional(CONF_INITIAL_AVAILABILITY, default=DEFAULT_INITIAL_AVAILABILITY): cv.boolean,
-})
+DEPENDENCIES = [COMPONENT_DOMAIN]
+
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_INITIAL_VALUE, {
+    vol.Optional(CONF_CLASS): cv.string,
+}))
 
 
 async def async_setup_platform(_hass, config, async_add_entities, _discovery_info=None):
@@ -32,60 +39,37 @@ async def async_setup_platform(_hass, config, async_add_entities, _discovery_inf
     async_add_entities(switches, True)
 
 
-class VirtualSwitch(SwitchEntity):
+class VirtualSwitch(VirtualEntity, SwitchEntity):
     """Representation of a Virtual switch."""
 
     def __init__(self, config):
         """Initialize the Virtual switch device."""
-        self._name = config.get(CONF_NAME)
+        super().__init__(config, DOMAIN)
 
-        # Are we adding the domain or not?
-        self.no_domain_ = self._name.startswith("!")
-        if self.no_domain_:
-            self._name = self.name[1:]
-        self._unique_id = self._name.lower().replace(' ', '_')
+        self._attr_device_class = config.get(CONF_CLASS)
 
-        self._state = config.get(CONF_INITIAL_VALUE)
-        self._available = config.get(CONF_INITIAL_AVAILABILITY)
-        _LOGGER.info('VirtualSwitch: {} created'.format(self._name))
+        self._attr_extra_state_attributes = self._add_virtual_attributes({
+            name: value for name, value in (
+                (ATTR_DEVICE_CLASS, self._attr_device_class),
+            ) if value is not None
+        })
 
-    @property
-    def name(self):
-        if self.no_domain_:
-            return self._name
-        else:
-            return super().name
+        _LOGGER.info('VirtualSwitch: {} created'.format(self.name))
 
-    @property
-    def unique_id(self):
-        """Return a unique ID."""
-        return self._unique_id
+    def _create_state(self, config):
+        super()._create_state(config)
 
-    @property
-    def is_on(self):
-        """Return true if switch is on."""
-        return self._state == "on"
+        self._attr_is_on = config.get(CONF_INITIAL_VALUE).lower() == STATE_ON
 
-    @property
-    def available(self):
-        """Return True if entity is available."""
-        return self._available
+    def _restore_state(self, state, config):
+        super()._restore_state(state, config)
 
-    def set_available(self, value):
-        self._available = value
-        self.async_schedule_update_ha_state()
+        self._attr_is_on = state.state.lower() == STATE_ON
 
-    def turn_on(self, **kwargs):
-        self._state = 'on'
+    def turn_on(self, **kwargs: Any) -> None:
+        _LOGGER.debug(f"turning {self.name} on")
+        self._attr_is_on = True
 
-    def turn_off(self, **kwargs):
-        self._state = 'off'
-
-    @property
-    def extra_state_attributes(self):
-        """Return the device state attributes."""
-        attrs = {
-            'friendly_name': self._name,
-            'unique_id': self._unique_id,
-        }
-        return attrs
+    def turn_off(self, **kwargs: Any) -> None:
+        _LOGGER.debug(f"turning {self.name} off")
+        self._attr_is_on = False

@@ -4,51 +4,48 @@ This component provides support for a virtual sensor.
 """
 
 import logging
-
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.core import HomeAssistant
 from homeassistant.components.sensor import DOMAIN, SensorDeviceClass
-from homeassistant.const import (ATTR_ENTITY_ID,
-                                 CONF_UNIT_OF_MEASUREMENT,
-                                 CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
-                                 CONCENTRATION_PARTS_PER_MILLION,
-                                 FREQUENCY_GIGAHERTZ,
-                                 PERCENTAGE,
-                                 POWER_VOLT_AMPERE,
-                                 POWER_VOLT_AMPERE_REACTIVE,
-                                 PRESSURE_HPA,
-                                 SIGNAL_STRENGTH_DECIBELS,
-                                 VOLUME_CUBIC_METERS,
-                                 )
+from homeassistant.const import (
+    ATTR_ENTITY_ID,
+    ATTR_DEVICE_CLASS,
+    ATTR_UNIT_OF_MEASUREMENT,
+    CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+    CONCENTRATION_PARTS_PER_MILLION,
+    CONF_UNIT_OF_MEASUREMENT,
+    FREQUENCY_GIGAHERTZ,
+    PERCENTAGE,
+    POWER_VOLT_AMPERE,
+    POWER_VOLT_AMPERE_REACTIVE,
+    PRESSURE_HPA,
+    SIGNAL_STRENGTH_DECIBELS,
+    VOLUME_CUBIC_METERS,
+)
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
-from homeassistant.helpers.restore_state import RestoreEntity
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from . import COMPONENT_DOMAIN, COMPONENT_SERVICES, get_entity_from_domain
+from homeassistant.helpers.entity import Entity
+
+from . import get_entity_from_domain
+from .const import (
+    COMPONENT_DOMAIN,
+    COMPONENT_SERVICES,
+    CONF_CLASS,
+    CONF_INITIAL_VALUE,
+)
+from .entity import VirtualEntity, virtual_schema
+
 
 _LOGGER = logging.getLogger(__name__)
 
 DEPENDENCIES = [COMPONENT_DOMAIN]
 
-CONF_NAME = "name"
-CONF_CLASS = "class"
-CONF_INITIAL_VALUE = "initial_value"
-CONF_INITIAL_AVAILABILITY = "initial_availability"
-CONF_PERSISTENT = "persistent"
+DEFAULT_INITIAL_VALUE = '0'
 
-DEFAULT_INITIAL_VALUE = 0
-DEFAULT_INITIAL_AVAILABILITY = True
-DEFAULT_PERSISTENT = False
-
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_NAME): cv.string,
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_INITIAL_VALUE, {
     vol.Optional(CONF_CLASS): cv.string,
-    vol.Optional(CONF_INITIAL_VALUE, default=DEFAULT_INITIAL_VALUE): cv.string,
-    vol.Optional(CONF_INITIAL_AVAILABILITY, default=DEFAULT_INITIAL_AVAILABILITY): cv.boolean,
-    vol.Optional(CONF_PERSISTENT, default=DEFAULT_PERSISTENT): cv.boolean,
     vol.Optional(CONF_UNIT_OF_MEASUREMENT, default=""): cv.string,
-})
+}))
 
 SERVICE_SET = 'set'
 SERVICE_SCHEMA = vol.Schema({
@@ -92,103 +89,59 @@ async def async_setup_platform(hass, config, async_add_entities, _discovery_info
 
     async def async_virtual_service(call):
         """Call virtual service handler."""
-        _LOGGER.info("{} service called".format(call.service))
+        _LOGGER.debug(f"{call.service} service called")
         await async_virtual_set_service(hass, call)
 
     # Build up services...
     if not hasattr(hass.data[COMPONENT_SERVICES], DOMAIN):
-        _LOGGER.info("installing handlers")
+        _LOGGER.debug("installing handlers")
         hass.data[COMPONENT_SERVICES][DOMAIN] = 'installed'
         hass.services.async_register(
             COMPONENT_DOMAIN, SERVICE_SET, async_virtual_service, schema=SERVICE_SCHEMA,
         )
 
 
-class VirtualSensor(RestoreEntity):
+class VirtualSensor(VirtualEntity, Entity):
     """An implementation of a Virtual Sensor."""
 
     def __init__(self, config):
         """Initialize an Virtual Sensor."""
-        self._name = config.get(CONF_NAME)
+        super().__init__(config, DOMAIN)
 
-        # Are we adding the domain or not?
-        self.no_domain_ = self._name.startswith("!")
-        if self.no_domain_:
-            self._name = self.name[1:]
-        self._unique_id = self._name.lower().replace(' ', '_')
-
-        self._class = config.get(CONF_CLASS)
-        self._state = config.get(CONF_INITIAL_VALUE)
-        self._available = config.get(CONF_INITIAL_AVAILABILITY)
-        self._persistent = config.get(CONF_PERSISTENT)
+        self._attr_device_class = config.get(CONF_CLASS)
 
         # Set unit of measurement
-        self._unit_of_measurement = config.get(CONF_UNIT_OF_MEASUREMENT)
-        if not self._unit_of_measurement and self._class in UNITS_OF_MEASUREMENT.keys():
-            self._unit_of_measurement = UNITS_OF_MEASUREMENT[self._class]
+        self._attr_unit_of_measurement = config.get(CONF_UNIT_OF_MEASUREMENT)
+        if not self._attr_unit_of_measurement and self._attr_device_class in UNITS_OF_MEASUREMENT.keys():
+            self._attr_unit_of_measurement = UNITS_OF_MEASUREMENT[self._attr_device_class]
 
-        _LOGGER.info('VirtualSensor: %s created', self._name)
+        self._attr_extra_state_attributes = self._add_virtual_attributes({
+            name: value for name, value in (
+                (ATTR_DEVICE_CLASS, self._attr_device_class),
+                (ATTR_UNIT_OF_MEASUREMENT, self._attr_unit_of_measurement),
+            ) if value is not None
+        })
 
-    async def async_added_to_hass(self) -> None:
+        _LOGGER.info('VirtualSensor: %s created', self.name)
 
-        await super().async_added_to_hass()
-        state = await self.async_get_last_state()
-        if not self._persistent or not state:
-            return
-        self._state = state.state
+    def _create_state(self, config):
+        super()._create_state(config)
 
-    @property
-    def name(self):
-        if self.no_domain_:
-            return self._name
-        else:
-            return super().name
+        self._attr_state = config.get(CONF_INITIAL_VALUE)
 
-    @property
-    def unique_id(self):
-        """Return a unique ID."""
-        return self._unique_id
+    def _restore_state(self, state, config):
+        super()._restore_state(state, config)
 
-    @property
-    def device_class(self):
-        """Return the device class of the sensor."""
-        return self._class
+        self._attr_state = state.state
 
-    @property
-    def state(self):
-        """Return the state of the sensor."""
-        return self._state
-
-    def set(self, value):
-        self._state = value
+    def set(self, value) -> None:
+        _LOGGER.debug(f"set {self.name} to {value}")
+        self._attr_state = value
         self.async_schedule_update_ha_state()
-
-    @property
-    def available(self):
-        """Return True if entity is available."""
-        return self._available
-
-    def set_available(self, value):
-        self._available = value
-        self.async_schedule_update_ha_state()
-
-    @property
-    def extra_state_attributes(self):
-        """Return the device state attributes."""
-        attrs = {
-            'friendly_name': self._name,
-            'unique_id': self._unique_id,
-        }
-        return attrs
-
-    @property
-    def unit_of_measurement(self):
-        """Return the unit of measurement of this entity."""
-        return self._unit_of_measurement
 
 
 async def async_virtual_set_service(hass, call):
     for entity_id in call.data['entity_id']:
         value = call.data['value']
-        _LOGGER.info("{} set(value={})".format(entity_id, value))
+        _LOGGER.debug(f"setting {entity_id} to {value})")
         get_entity_from_domain(hass, DOMAIN, entity_id).set(value)
