@@ -76,17 +76,16 @@ class VirtualEntity(RestoreEntity):
         _LOGGER.debug(f'VirtualEntity:: {pprint.pformat(state.attributes)}')
         self._attr_available = state.attributes.get(ATTR_AVAILABLE)
 
-    def _add_virtual_attributes(self, attrs):
-        attrs.update({
+    def _update_attributes(self):
+        self._attr_extra_state_attributes = {
             ATTR_PERSISTENT: self._persistent,
             ATTR_AVAILABLE: self._attr_available,
-        })
+        }
         if _LOGGER.isEnabledFor(logging.DEBUG):
-            attrs.update({
+            self._attr_extra_state_attributes.update({
                 ATTR_ENTITY_ID: self.entity_id,
                 ATTR_UNIQUE_ID: self.unique_id,
             })
-        return attrs
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
@@ -95,7 +94,9 @@ class VirtualEntity(RestoreEntity):
             self._create_state(self._config)
         else:
             self._restore_state(state, self._config)
+        self._update_attributes()
 
     def set_available(self, value):
         self._attr_available = value
+        self._update_attributes()
         self.async_schedule_update_ha_state()

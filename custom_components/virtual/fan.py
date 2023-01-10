@@ -95,7 +95,6 @@ class VirtualFan(VirtualEntity, FanEntity):
             self._attr_oscillating = False
         self._attr_percentage = None
         self._attr_preset_mode = None
-        self._update_attributes()
 
     def _restore_state(self, state, config):
         super()._restore_state(state, config)
@@ -106,11 +105,10 @@ class VirtualFan(VirtualEntity, FanEntity):
             self._attr_oscillating = state.attributes.get(ATTR_OSCILLATING)
         self._attr_percentage = state.attributes.get(ATTR_PERCENTAGE)
         self._attr_preset_mode = state.attributes.get(ATTR_PRESET_MODE)
-        self._update_attributes()
 
     def _update_attributes(self):
-        """Return the state attributes."""
-        self._attr_extra_state_attributes = self._add_virtual_attributes({
+        super()._update_attributes();
+        self._attr_extra_state_attributes.update({
             name: value for name, value in (
                 (ATTR_DIRECTION, self._attr_current_direction),
                 (ATTR_OSCILLATING, self._attr_oscillating),

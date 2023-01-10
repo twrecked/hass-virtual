@@ -38,8 +38,6 @@ class VirtualLock(VirtualEntity, LockEntity):
         """Initialize the Virtual lock device."""
         super().__init__(config, DOMAIN)
 
-        self._attr_extra_state_attributes = self._add_virtual_attributes({})
-
         _LOGGER.info('VirtualLock: {} created'.format(self.name))
 
     def _create_state(self, config):
