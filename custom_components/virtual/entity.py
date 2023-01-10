@@ -59,9 +59,6 @@ class VirtualEntity(RestoreEntity):
             self.entity_id = f'{domain}.{COMPONENT_DOMAIN}_{slugify(self._attr_name)}'
         self._attr_unique_id = slugify(self._attr_name)
 
-        # We are virtual, we don't change unless we do it.
-        self._attr_should_poll = False
-
         _LOGGER.info(f'VirtualEntity {self._attr_name} created')
 
     def _create_state(self, config):

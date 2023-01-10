@@ -135,6 +135,7 @@ class VirtualSensor(VirtualEntity, Entity):
         self._attr_state = state.state
 
     def set(self, value) -> None:
+        _LOGGER.debug(f"set {self.name} to {value}")
         self._attr_state = value
         self.async_schedule_update_ha_state()
 

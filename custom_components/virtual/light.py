@@ -137,7 +137,7 @@ class VirtualLight(VirtualEntity, LightEntity):
             self._attr_color_mode = ColorMode.COLOR_TEMP
             self._attr_color_temp = state.attributes.get(ATTR_COLOR_TEMP, config.get(CONF_INITIAL_COLOR_TEMP))
         if self._attr_supported_features & SUPPORT_EFFECT:
-            self._attr_effect = state.attributes.get('effect', config.get(CONF_INITIAL_EFFECT))
+            self._attr_effect = state.attributes.get(ATTR_EFFECT, config.get(CONF_INITIAL_EFFECT))
         self._update_attributes()
 
     def _update_attributes(self):
@@ -155,6 +155,7 @@ class VirtualLight(VirtualEntity, LightEntity):
 
     def turn_on(self, **kwargs):
         """Turn the light on."""
+        _LOGGER.debug(f"turning {self.name} on {pprint.pformat(kwargs)}")
         hs_color = kwargs.get(ATTR_HS_COLOR, None)
         if hs_color is not None and self._attr_supported_features & SUPPORT_COLOR:
             self._attr_color_mode = ColorMode.HS
@@ -175,12 +176,11 @@ class VirtualLight(VirtualEntity, LightEntity):
         if effect is not None and self._attr_supported_features & SUPPORT_EFFECT:
             self._attr_effect = effect
 
-        _LOGGER.info("turn_on: {}".format(pprint.pformat(kwargs)))
         self._attr_is_on = True
         self._update_attributes()
 
     def turn_off(self, **kwargs):
         """Turn the light off."""
-        _LOGGER.info("turn_off: {}".format(pprint.pformat(kwargs)))
+        _LOGGER.debug(f"turning {self.name} off {pprint.pformat(kwargs)}")
         self._attr_is_on = False
         self._update_attributes()

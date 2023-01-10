@@ -67,7 +67,9 @@ class VirtualSwitch(VirtualEntity, SwitchEntity):
         self._attr_is_on = state.state.lower() == STATE_ON
 
     def turn_on(self, **kwargs: Any) -> None:
+        _LOGGER.debug(f"turning {self.name} on")
         self._attr_is_on = True
 
     def turn_off(self, **kwargs: Any) -> None:
+        _LOGGER.debug(f"turning {self.name} off")
         self._attr_is_on = False

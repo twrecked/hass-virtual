@@ -121,18 +121,18 @@ class VirtualFan(VirtualEntity, FanEntity):
 
     def set_percentage(self, percentage: int) -> None:
         """Set the speed of the fan, as a percentage."""
+        _LOGGER.debug(f"setting {self.name} pcent to {percentage}")
         self._attr_percentage = percentage
         self._attr_preset_mode = None
         self._update_attributes()
-        self.schedule_update_ha_state()
 
     def set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
+        _LOGGER.debug(f"setting {self.name} mode to {preset_mode}")
         if preset_mode in self.preset_modes:
             self._attr_preset_mode = preset_mode
             self._attr_percentage = None
             self._update_attributes()
-            self.schedule_update_ha_state()
         else:
             raise ValueError(f"Invalid preset mode: {preset_mode}")
 
@@ -144,6 +144,7 @@ class VirtualFan(VirtualEntity, FanEntity):
         **kwargs,
     ) -> None:
         """Turn on the entity."""
+        _LOGGER.debug(f"turning {self.name} on")
         if preset_mode:
             self.set_preset_mode(preset_mode)
             return
@@ -154,16 +155,17 @@ class VirtualFan(VirtualEntity, FanEntity):
 
     def turn_off(self, **kwargs) -> None:
         """Turn off the entity."""
+        _LOGGER.debug(f"turning {self.name} off")
         self.set_percentage(0)
 
     def set_direction(self, direction: str) -> None:
         """Set the direction of the fan."""
+        _LOGGER.debug(f"setting direction of {self.name} to {direction}")
         self._attr_current_direction = direction
         self._update_attributes()
-        self.schedule_update_ha_state()
 
     def oscillate(self, oscillating: bool) -> None:
         """Set oscillation."""
+        _LOGGER.debug(f"setting oscillate of {self.name} to {oscillating}")
         self._attr_oscillating = oscillating
         self._update_attributes()
-        self.schedule_update_ha_state()
