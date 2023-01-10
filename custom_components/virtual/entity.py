@@ -89,7 +89,6 @@ class VirtualEntity(RestoreEntity):
         return attrs
 
     async def async_added_to_hass(self) -> None:
-        _LOGGER.info(f'VirtualEntity {self._attr_unique_id}: async_added_to_hass')
         await super().async_added_to_hass()
         state = await self.async_get_last_state()
         if not self._persistent or not state:
