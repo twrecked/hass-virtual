@@ -7,8 +7,9 @@ Virtual components for testing Home Assistant systems.
 ### **Breaking Changes**
 
 I've added persistent support to `binary_sensor`, `fan`, `light`, `lock`,
-`sensor` and `switch`. The persistent saving of state is turned *on* by default.
-If you do not want this set `persistent: False` in the entity configuration.
+`sensor`, `switch` and `device_tracker`. The persistent saving of state is
+turned *on* by default. If you do not want this set `persistent: False` in the
+entity configuration.
 
 
 ## Table Of Contents
@@ -194,9 +195,9 @@ lock:
 ```
 
 - Persistent Configuration
-    - `initial_availibilty`: optional, default `True`; is device available at start up
-    - `initial_value`: optional, default `locked`; any other value will result in the lock
-      being unlocked at start up
+  - `initial_availibilty`: optional, default `True`; is device available at start up
+  - `initial_value`: optional, default `locked`; any other value will result in the lock
+    being unlocked at start up
 - Per Run Configuration
   - `name`: _required_; device name
   - `locking_time`: optional, default `0` seconds; any positive value will result in a
@@ -235,9 +236,32 @@ To add a virtual device tracker use the following:
 device_tracker:
   - platform: virtual
     devices:
+      - name: virtual_user1
+        peristent: True
+        location: home
+      - name: virtual_user2
+        peristent: False
+        location: not_home
+```
+
+Only `name` is required.
+- `persistent`: default `True`; if `True` then entity location is remembered
+  across restarts otherwise entity always starts at `location`
+- `location`: default `home`; this sets the device location when it is created
+  or if the device is not `persistent`
+
+Use the `device_tracker.see` service to change device locations.
+
+
+#### Old Style Configuration
+The old style configuration will still work. They will be moved to home on
+initial creation and their location will survive restarts.
+
+```yaml
+device_tracker:
+  - platform: virtual
+    devices:
       - virtual_user1
       - virtual_user2
 ```
 
-They will be moved to home on reboot. Use the `device_tracker.see` service to
-change device locations.
