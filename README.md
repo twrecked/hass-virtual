@@ -7,7 +7,7 @@ Virtual components for testing Home Assistant systems.
 ### **Breaking Changes**
 
 I've added persistent support to `binary_sensor`, `fan`, `light`, `lock`,
-`sensor` and `switch` and `device_tracker`. The persistent saving of state is
+`sensor`, `switch` and `device_tracker`. The persistent saving of state is
 turned *on* by default. If you do not want this set `persistent: False` in the
 entity configuration.
 
