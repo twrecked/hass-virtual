@@ -9,9 +9,17 @@ import json
 from homeassistant.const import CONF_DEVICES, STATE_HOME
 from homeassistant.components.device_tracker import DOMAIN
 from homeassistant.helpers.event import async_track_state_change_event
-from . import COMPONENT_DOMAIN
+from .const import (
+    COMPONENT_DOMAIN,
+    CONF_NAME,
+    CONF_PERSISTENT,
+    DEFAULT_PERSISTENT,
+)
 
 _LOGGER = logging.getLogger(__name__)
+
+CONF_LOCATION = 'location'
+DEFAULT_LOCATION = 'home'
 
 DEPENDENCIES = [COMPONENT_DOMAIN]
 STATE_FILE = "/config/.storage/virtual.restore_state"
@@ -50,28 +58,47 @@ def _shutting_down(event):
 async def async_setup_scanner(hass, config, async_see, _discovery_info=None):
     """Set up the virtual tracker."""
 
-    # parse out the last known state
-    global tracker_states
+    # Read in the last known states.
+    old_tracker_states = {}
     try:
         with open(STATE_FILE, 'r') as f:
-            tracker_states = json.load(f)
+            old_tracker_states = json.load(f)
     except:
         pass
 
+    new_tracker_states = {}
     for device in config[CONF_DEVICES]:
-        entity_id = f"{DOMAIN}.{device}"
-        state = tracker_states.get(entity_id, STATE_HOME)
-        tracker_states[entity_id] = state
-        _LOGGER.info(f"setting {entity_id} to {state}")
+        if not isinstance(device, dict):
+            device = {
+                CONF_NAME: device,
+            }
+
+        name = device.get(CONF_NAME, 'unknown')
+        location = device.get(CONF_LOCATION, DEFAULT_LOCATION)
+        peristent = device.get(CONF_PERSISTENT, DEFAULT_PERSISTENT)
+        entity_id = f"{DOMAIN}.{name}"
+
+        if peristent:
+            location = old_tracker_states.get(entity_id, location)
+            new_tracker_states[entity_id] = location
+            _LOGGER.info(f"setting persistent {entity_id} to {location}")
+        else:
+            _LOGGER.info(f"setting ephemeral {entity_id} to {location}")
 
         see_args = {
-            "dev_id": device,
+            "dev_id": name,
             "source_type": COMPONENT_DOMAIN,
-            "location_name": state,
+            "location_name": location,
         }
         hass.async_create_task(async_see(**see_args))
 
-    async_track_state_change_event(hass, tracker_states.keys(), _state_changed)
-    hass.bus.async_listen("homeassistant_stop", _shutting_down)
+    # Start listening if there are persistent entities.
+    global tracker_states
+    tracker_states = new_tracker_states
+    if tracker_states:
+        async_track_state_change_event(hass, tracker_states.keys(), _state_changed)
+        hass.bus.async_listen("homeassistant_stop", _shutting_down)
+    else:
+        _write_state()
 
     return True
