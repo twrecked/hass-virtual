@@ -16,7 +16,7 @@ from .const import (
     COMPONENT_SERVICES
 )
 
-__version__ = '0.8.0a2'
+__version__ = '0.8.0a3'
 
 _LOGGER = logging.getLogger(__name__)
 
