@@ -15,6 +15,8 @@ from .const import (
     COMPONENT_DOMAIN,
     COMPONENT_SERVICES
 )
+from .cfg import UpgradeCfg
+
 
 __version__ = '0.8.0b1'
 
@@ -29,6 +31,9 @@ SERVICE_SCHEMA = vol.Schema({
 
 async def async_setup(hass, config):
     """Set up a virtual components."""
+
+    ucfg = UpgradeCfg()
+    ucfg.import_yaml(config)
 
     hass.data[COMPONENT_SERVICES] = {}
     _LOGGER.debug('setup')
