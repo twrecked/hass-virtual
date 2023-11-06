@@ -11,11 +11,8 @@ from homeassistant.helpers.service import verify_domain_control
 from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.exceptions import HomeAssistantError
 
-from .const import (
-    COMPONENT_DOMAIN,
-    COMPONENT_SERVICES
-)
-from .cfg import UpgradeCfg
+from .const import *
+from .cfg import BlendedCfg, UpgradeCfg
 
 
 __version__ = '0.8.0b1'
@@ -32,8 +29,15 @@ SERVICE_SCHEMA = vol.Schema({
 async def async_setup(hass, config):
     """Set up a virtual components."""
 
-    ucfg = UpgradeCfg()
-    ucfg.import_yaml(config)
+    # ucfg = UpgradeCfg()
+    UpgradeCfg.import_yaml(config)
+    _LOGGER.debug(f"flow-data={UpgradeCfg.create_flow_data(config)}")
+
+    bcfg = BlendedCfg({
+        ATTR_GROUP_NAME: IMPORTED_GROUP_NAME,
+        ATTR_FILE_NAME: IMPORTED_YAML_FILE,
+    })
+    bcfg.load()
 
     hass.data[COMPONENT_SERVICES] = {}
     _LOGGER.debug('setup')

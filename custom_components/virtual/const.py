@@ -4,6 +4,9 @@ COMPONENT_DOMAIN = 'virtual'
 COMPONENT_SERVICES = 'virtual-services'
 
 ATTR_DEVICES = "devices"
+ATTR_DEVICE_ID = "device_id"
+ATTR_GROUP_NAME = "group_name"
+ATTR_FILE_NAME = "file_name"
 ATTR_PARENT_ID = "parent_id"
 ATTR_UNIQUE_ID = "unique_id"
 ATTR_VERSION = "version"
@@ -17,5 +20,6 @@ CONF_PERSISTENT = "persistent"
 DEFAULT_INITIAL_AVAILABILITY = True
 DEFAULT_PERSISTENT = True
 
-CFG_DEFAULT_FILE = "/config/virtual.yaml"
-CFG_DEFAULT_META_FILE = "/config/.storage/virtual.meta.json"
+IMPORTED_GROUP_NAME = "imported"
+IMPORTED_YAML_FILE = "/config/virtual.yaml"
+META_JSON_FILE = "/config/.storage/virtual.meta.json"

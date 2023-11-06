@@ -19,7 +19,7 @@ from .cfg import UpgradeCfg
 _LOGGER = logging.getLogger(__name__)
 
 
-class AarloFlowHandler(config_entries.ConfigFlow, domain=COMPONENT_DOMAIN):
+class VirtualFlowHandler(config_entries.ConfigFlow, domain=COMPONENT_DOMAIN):
     """Aarlo config flow."""
 
     VERSION = 1
@@ -27,8 +27,8 @@ class AarloFlowHandler(config_entries.ConfigFlow, domain=COMPONENT_DOMAIN):
     async def async_step_import(self, import_data):
         """Import momentary config from configuration.yaml."""
 
-        _LOGGER.info("importing aarlo YAML")
-        UpgradeCfg.create_file_config(import_data)
+        _LOGGER.debug(f"importing aarlo YAML {import_data}")
+        UpgradeCfg.import_yaml(import_data)
         data = UpgradeCfg.create_flow_data(import_data)
 
         return self.async_create_entry(

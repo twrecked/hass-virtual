@@ -19,6 +19,7 @@ import logging
 import json
 import threading
 import voluptuous as vol
+import uuid
 from datetime import timedelta
 
 from homeassistant.const import (
@@ -37,8 +38,6 @@ from .entity import virtual_schema
 
 _LOGGER = logging.getLogger(__name__)
 
-IMPORTED_YAML_FILE = "/config/virtual.yaml"
-
 BINARY_SENSOR_DEFAULT_INITIAL_VALUE = 'off'
 BINARY_SENSOR_SCHEMA = vol.Schema(virtual_schema(BINARY_SENSOR_DEFAULT_INITIAL_VALUE, {
     vol.Optional(CONF_CLASS): cv.string,
@@ -51,6 +50,69 @@ SENSOR_SCHEMA = vol.Schema(virtual_schema(SENSOR_DEFAULT_INITIAL_VALUE, {
 }))
 
 DB_LOCK = threading.Lock()
+
+
+def _load_meta_data(group_name: str):
+    """Read in meta data for a particular group.
+    """
+    devices = {}
+    with DB_LOCK:
+        try:
+            with open(META_JSON_FILE, 'r') as meta_file:
+                devices = json.load(meta_file).get(ATTR_DEVICES, {})
+        except Exception as e:
+            _LOGGER.debug(f"no meta data yet {str(e)}")
+    return devices.get(group_name, {})
+
+
+def _save_meta_data(group_name, meta_data):
+    """Save meta data for a particular group name.
+    """
+    with DB_LOCK:
+
+        # Read in current meta data
+        devices = {}
+        try:
+            with open(META_JSON_FILE, 'r') as meta_file:
+                devices = json.load(meta_file).get(ATTR_DEVICES, {})
+        except Exception as e:
+            _LOGGER.debug(f"no meta data yet {str(e)}")
+
+        # Update (or add) the group piece.
+        _LOGGER.debug(f"meta before {devices}")
+        devices.update({
+            group_name: meta_data
+        })
+        _LOGGER.debug(f"meta after {devices}")
+
+        # Write it back out.
+        try:
+            with open(META_JSON_FILE, 'w') as meta_file:
+                json.dump({
+                    ATTR_VERSION: 1,
+                    ATTR_DEVICES: devices
+                }, meta_file, indent=4)
+        except Exception as e:
+            _LOGGER.debug(f"couldn't save meta data {str(e)}")
+
+
+def _save_user_data(file_name, devices):
+    try:
+        save_yaml(file_name, {
+            ATTR_VERSION: 1,
+            ATTR_DEVICES: devices
+        })
+    except Exception as e:
+        _LOGGER.debug(f"couldn't save user data {str(e)}")
+
+
+def _load_user_data(file_name):
+    entities = {}
+    try:
+        entities = load_yaml(file_name).get(ATTR_DEVICES, [])
+    except Exception as e:
+        _LOGGER.debug(f"failed to read virtual file {str(e)}")
+    return entities
 
 
 def _fix_config(config):
@@ -74,41 +136,7 @@ def _fix_value(value):
     return value
 
 
-class BlendedCfg(object):
-    """Helper class to get at Virtual configuration options.
-
-    Reads in non config flow settings from the external config file and merges
-    them with flow data and options.
-    """
-
-    _main_config = {}
-    _alarm_config = {}
-    _binary_sensor_config = {}
-    _sensor_config = {}
-    _switch_config = {}
-
-    @property
-    def domain_config(self):
-        return self._main_config
-
-    @property
-    def alarm_config(self):
-        return self._alarm_config
-
-    @property
-    def binary_sensor_config(self):
-        return self._binary_sensor_config
-
-    @property
-    def sensor_config(self):
-        return self._sensor_config
-
-    @property
-    def switch_config(self):
-        return self._switch_config
-
-
-def upgrade_name(name: str):
+def _upgrade_name(name: str):
     """We're making the non virtual prefix the default so this flips the naming.
     """
     if name.startswith("!"):
@@ -119,11 +147,14 @@ def upgrade_name(name: str):
         return f"+{name}"
 
 
-def parse_old_config(devices, configs, platform):
+def _parse_old_config(devices, configs, platform):
     """Parse out config into different devices.
 
-    We invert the sense so we can support multiple virtual devices per
-    platform.
+    We do several things:
+    - insert a platform key/value, i.e, this this is a switch
+    - fix the naming
+    - create and store the entity under a device, for imported config there
+      will only be one entity per device
     """
     for config in configs:
         if config[CONF_PLATFORM] != COMPONENT_DOMAIN:
@@ -132,80 +163,203 @@ def parse_old_config(devices, configs, platform):
         # Copy and fix up config.
         config = copy.deepcopy(config)
         config[CONF_PLATFORM] = platform
-        name = upgrade_name(config.pop(CONF_NAME))
+        config[CONF_NAME] = _upgrade_name(config[CONF_NAME])
 
         # Insert or create a device for it.
-        if name in devices:
-            devices[name].append(config)
+        if config[CONF_NAME] in devices:
+            devices[config[CONF_NAME]].append(config)
         else:
-            devices[name] = [config]
+            devices[config[CONF_NAME]] = [config]
 
     return devices
+
+
+def _make_original_unique_id(name):
+    if name.startswith("+"):
+        return slugify(name[1:])
+    else:
+        return slugify(name)
+
+
+def _make_name(name):
+    if name.startswith("+"):
+        return name[1:]
+    return name
+
+
+def _make_entity_id(platform, name):
+    if name.startswith("+"):
+        return f'{platform}.{COMPONENT_DOMAIN}_{slugify(name[1:])}'
+    else:
+        return f'{platform}.{slugify(name)}'
+
+
+def _make_unique_id():
+    return f'{uuid.uuid4()}.{COMPONENT_DOMAIN}'
+
+
+def _make_suffix(platform, device_class):
+    """Make a suitable suffix for an unnamed entity.
+    
+    Binary sensors and sensors have a class so we append that, everything else
+    gets left as-is.
+    """
+    if platform == Platform.BINARY_SENSOR or platform == Platform.SENSOR:
+        if device_class is None:
+            return "_unknown"
+        else:
+            return f"_{device_class}"
+    return ""
+
+
+class BlendedCfg(object):
+    """Helper class to get at Virtual configuration options.
+
+    Reads in non config flow settings from the external config file and merges
+    them with flow data and options.
+    """
+
+    _group_name: str = ""
+    _file_name: str = ""
+    _changed: bool = False
+
+    _meta_data = {}
+    _devices = []
+    _entities = {}
+
+    def __init__(self, flow_data):
+        self._group_name = flow_data[ATTR_GROUP_NAME]
+        self._file_name = flow_data[ATTR_FILE_NAME]
+
+    def _load_meta_data(self):
+        return _load_meta_data(self._group_name)
+
+    def _save_meta_data(self):
+        _save_meta_data(self._group_name, self._meta_data)
+        self._changed = False
+
+    def _load_user_data(self):
+        return _load_user_data(self._file_name)
+        # try:
+        #     entities = load_yaml(self._file_name).get(ATTR_DEVICES, [])
+        # except Exception as e:
+        #     _LOGGER.debug(f"failed to read virtual file {str(e)}")
+        # return entities
+
+    def load(self):
+        meta_data = self._load_meta_data()
+        devices = self._load_user_data()
+
+        _LOGGER.debug(f"loaded-meta-data={meta_data}")
+        _LOGGER.debug(f"loaded-devices={devices}")
+
+        # Let's fix up the devices/entities
+        for device_name, entities in devices.items():
+
+            # Create device. One per all entities.
+            self._devices.append({
+                ATTR_DEVICE_ID: device_name,
+                CONF_NAME: _make_name(device_name)
+            })
+
+            for entity in entities:
+
+                platform = entity.pop(CONF_PLATFORM)
+                device_class = entity.get(CONF_CLASS, None)
+
+                # Figure out the name. We use the one provided and if that isn't
+                # there the device name and, optionally, the class.
+                name = entity.get(CONF_NAME, None)
+                if name is None:
+                    name = f"{device_name} {_make_suffix(platform, device_class)}"
+
+                # Look up unique id for this device. If not there this is a new
+                # device.
+                unique_id = meta_data.get(name, {}).get(ATTR_UNIQUE_ID, None)
+                if unique_id is None:
+                    _LOGGER.debug(f"creating {name}")
+                    unique_id = _make_unique_id()
+                    meta_data.update({name: {
+                        ATTR_UNIQUE_ID: unique_id,
+                        ATTR_ENTITY_ID: _make_entity_id(device_class, name)
+                    }})
+                    self._changed = True
+
+                # Now copy over the entity id of the device. Not having this is a
+                # bug.
+                entity_id = meta_data.get(name, {}).get(ATTR_ENTITY_ID, None)
+                if entity_id is None:
+                    _LOGGER.info(f"problem creating {name}, no entity id")
+                    continue
+
+                # Update the entity.
+                entity.update({
+                    CONF_NAME: _make_name(name),
+                    ATTR_ENTITY_ID: _make_entity_id(platform, name),
+                    ATTR_DEVICE_ID: device_name
+                })
+                _LOGGER.debug(f"added entity {platform}/{entity}")
+
+                # Now store in the correct place. Move off temporary meta
+                # data list.
+                if platform not in self._entities:
+                    self._entities[platform] = []
+                self._entities[platform].append(entity)
+                self._meta_data.update({
+                    name: meta_data.pop(name)
+                })
+
+        # # Create orphaned list. If we have anything here we need to update
+        # # the saved meta data.
+        # for switch, values in meta_data.items():
+        #     values[CONF_NAME] = switch
+        #     self._orphaned_switches.update({
+        #         values[ATTR_UNIQUE_ID]: values
+        #     })
+        #     self._changed = True
+        #
+        # # Make sure changes are kept.
+        # if self._changed:
+        #     self.save_meta_data()
+        _LOGGER.debug(f"meta-data={self._meta_data}")
+        _LOGGER.debug(f"devices={self._devices}")
+        _LOGGER.debug(f"entities={self._entities}")
+
+    @property
+    def binary_sensor_config(self):
+        return self._entities.get(Platform.BINARY_SENSOR, [])
+
+    @property
+    def sensor_config(self):
+        return self._entities.get(Platform.SENSOR, [])
+
+    @property
+    def switch_config(self):
+        return self._entities.get(Platform.SWITCH, [])
 
 
 class UpgradeCfg(object):
     """Read in the old YAML config and convert it to the new format.
     """
 
-    _devices_ = {}
-    _devices_meta_data = {}
-    _orphaned_devices = {}
-    _changed: bool = False
+    # _devices = {}
+    # _devices_meta_data = {}
 
-    def _make_original_unique_id(self, name):
-        if name.startswith("+"):
-            return slugify(name[1:])
-        else:
-            return slugify(name)
+    # def save_meta_data(self):
+    #     _save_meta_data(IMPORTED_GROUP_NAME, self._devices_meta_data)
 
-    def _make_original_entity_id(self, platform, name):
-        if name.startswith("+"):
-            return f'{platform}.{COMPONENT_DOMAIN}_{slugify(name[1:])}'
-        else:
-            return f'{platform}.{slugify(name)}'
+    # def save_user_data(self):
+    #     _save_user_data(IMPORTED_YAML_FILE, self._devices)
+        # try:
+        #     save_yaml(IMPORTED_YAML_FILE, {
+        #         ATTR_VERSION: 1,
+        #         ATTR_DEVICES: self._devices
+        #     })
+        # except Exception as e:
+        #     _LOGGER.debug(f"couldn't save user data {str(e)}")
 
-    def save_meta_data(self):
-
-        # Make sure we have the global lock for this.
-        with DB_LOCK:
-
-            # Read in current meta data
-            devices = {}
-            try:
-                with open(CFG_DEFAULT_META_FILE, 'r') as meta_file:
-                    devices = json.load(meta_file).get(ATTR_DEVICES, {})
-            except Exception as e:
-                _LOGGER.debug(f"no meta data yet {str(e)}")
-
-            # Update (or add) the group piece.
-            _LOGGER.debug(f"meta before {devices}")
-            devices.update({
-                "imported": self._devices_meta_data
-            })
-            _LOGGER.debug(f"meta after {devices}")
-
-            # Write it back out.
-            try:
-                with open(CFG_DEFAULT_META_FILE, 'w') as meta_file:
-                    json.dump({
-                        ATTR_VERSION: 1,
-                        ATTR_DEVICES: devices
-                    }, meta_file, indent=4)
-            except Exception as e:
-                _LOGGER.debug(f"couldn't save meta data {str(e)}")
-
-        self._changed = False
-
-    def save_user_data(self):
-        try:
-            save_yaml(CFG_DEFAULT_FILE, {
-                ATTR_VERSION: 1,
-                ATTR_DEVICES: self._devices
-            })
-        except Exception as e:
-            _LOGGER.debug(f"couldn't save user data {str(e)}")
-
-    def import_yaml(self, config):
+    @staticmethod
+    def import_yaml(config):
         """ Take the current virtual config and make the new yaml file.
 
         Virtual needs a lot of fine tuning so rather than get rid of the
@@ -213,13 +367,14 @@ class UpgradeCfg(object):
         where the user can configure things.
         """
 
-        self._devices = {}
+        devices_meta_data = {}
+        devices = {}
 
         # Add in the easily formatted devices.
         for platform in [Platform.BINARY_SENSOR, Platform.SENSOR,
                          Platform.FAN, Platform.LIGHT,
                          Platform.LOCK, Platform.SWITCH]:
-            self._devices = parse_old_config(self._devices, config.get(platform, []), str(platform))
+            devices = _parse_old_config(devices, config.get(platform, []), str(platform))
 
         # Device tracker is awkward, we have to split it out and fake looking
         # like the other entities.
@@ -227,38 +382,42 @@ class UpgradeCfg(object):
         for device_trackers in all_device_trackers:
             if device_trackers[CONF_PLATFORM] != COMPONENT_DOMAIN:
                 continue
-            for device_tracker in device_trackers.get("self._devices", []):
+            for device_tracker in device_trackers.get("devices", []):
                 _LOGGER.debug(f"trying {device_tracker}")
-                self._devices = parse_old_config(self._devices, [{
+                devices = _parse_old_config(devices, [{
                     CONF_PLATFORM: COMPONENT_DOMAIN,
                     "name": device_tracker["name"]
                 }], str(Platform.DEVICE_TRACKER))
 
-        _LOGGER.info(f"devices={self._devices}")
+        _LOGGER.info(f"devices={devices}")
 
         # Here we have all the original devices we build the meta data.
         # For import
         #  - we can only have one entity per device, which means...
         #  - devices are their own parent
-        for name, values in self._devices.items():
-            unique_id = self._make_original_unique_id(name)
-            entity_id = self._make_original_entity_id(values[0][CONF_PLATFORM], name)
+        for name, values in devices.items():
+            unique_id = _make_original_unique_id(name)
+            entity_id = _make_entity_id(values[0][CONF_PLATFORM], name)
 
             _LOGGER.debug(f"uid={unique_id}")
             _LOGGER.debug(f"eid={entity_id}")
-            self._devices_meta_data.update({name: {
+            devices_meta_data.update({name: {
                 ATTR_UNIQUE_ID: unique_id,
-                ATTR_PARENT_ID: unique_id,
                 ATTR_ENTITY_ID: entity_id
             }})
 
-        _LOGGER.debug(f"devices-meta-data={self._devices_meta_data}")
+        _LOGGER.debug(f"devices-meta-data={devices_meta_data}")
 
-        self.save_user_data()
-        self.save_meta_data()
+        _save_user_data(IMPORTED_YAML_FILE, devices)
+        _save_meta_data(IMPORTED_GROUP_NAME, devices_meta_data)
+        # self.save_user_data()
+        # self.save_meta_data()
 
     @staticmethod
     def create_flow_data(config):
         """ Take the current aarlo config and make the new flow configuration.
         """
-        pass
+        return {
+            ATTR_GROUP_NAME: IMPORTED_GROUP_NAME,
+            ATTR_FILE_NAME: IMPORTED_YAML_FILE
+        }
