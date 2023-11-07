@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import voluptuous as vol
+from collections.abc import Callable
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.fan import (
@@ -15,17 +16,17 @@ from homeassistant.components.fan import (
     ATTR_OSCILLATING,
     ATTR_PERCENTAGE,
     ATTR_PRESET_MODE,
-    DOMAIN,
+    DOMAIN as PLATFORM_DOMAIN,
     SUPPORT_DIRECTION,
     SUPPORT_OSCILLATE,
     SUPPORT_SET_SPEED,
     FanEntity,
 )
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
+from homeassistant.helpers.typing import HomeAssistantType
 
-from .const import (
-    COMPONENT_DOMAIN,
-)
+from .const import *
 from .entity import VirtualEntity, virtual_schema
 
 
@@ -40,22 +41,40 @@ CONF_PERCENTAGE = "percentage"
 CONF_SPEED = "speed"
 CONF_SPEED_COUNT = "speed_count"
 
-DEFAULT_INITIAL_VALUE = "off"
+DEFAULT_FAN_VALUE = "off"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_INITIAL_VALUE, {
-
+BASE_SCHEMA = virtual_schema(DEFAULT_FAN_VALUE, {
     vol.Optional(CONF_SPEED, default=False): cv.boolean,
     vol.Optional(CONF_SPEED_COUNT, default=0): cv.positive_int,
     vol.Optional(CONF_OSCILLATE, default=False): cv.boolean,
     vol.Optional(CONF_DIRECTION, default=False): cv.boolean,
     vol.Optional(CONF_MODES, default=[]): vol.All(cv.ensure_list, [cv.string]),
-}))
+})
+
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(BASE_SCHEMA)
+# PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_FAN_VALUE, {
+#     vol.Optional(CONF_SPEED, default=False): cv.boolean,
+#     vol.Optional(CONF_SPEED_COUNT, default=0): cv.positive_int,
+#     vol.Optional(CONF_OSCILLATE, default=False): cv.boolean,
+#     vol.Optional(CONF_DIRECTION, default=False): cv.boolean,
+#     vol.Optional(CONF_MODES, default=[]): vol.All(cv.ensure_list, [cv.string]),
+# }))
+
+FAN_SCHEMA = vol.Schema(BASE_SCHEMA)
 
 
-async def async_setup_platform(_hass, config, async_add_entities, _discovery_info=None):
-    """Set up the Demo config entry."""
-    fans = [VirtualFan(config)]
-    async_add_entities(fans, True)
+async def async_setup_entry(
+        hass: HomeAssistantType,
+        _entry: ConfigEntry,
+        async_add_entities: Callable[[list], None],
+) -> None:
+    _LOGGER.debug("setting up the entries...")
+
+    entities = []
+    for entity in hass.data[COMPONENT_DOMAIN].get(PLATFORM_DOMAIN, []):
+        entity = FAN_SCHEMA(entity)
+        entities.append(VirtualFan(entity))
+    async_add_entities(entities)
 
 
 class VirtualFan(VirtualEntity, FanEntity):
@@ -63,7 +82,7 @@ class VirtualFan(VirtualEntity, FanEntity):
 
     def __init__(self, config):
         """Initialize the entity."""
-        super().__init__(config, DOMAIN)
+        super().__init__(config, PLATFORM_DOMAIN)
 
         # Modes if supported
         self._attr_preset_modes = config.get(CONF_MODES)
@@ -84,7 +103,7 @@ class VirtualFan(VirtualEntity, FanEntity):
         if config.get(CONF_DIRECTION, False):
             self._attr_supported_features |= SUPPORT_DIRECTION
 
-        _LOGGER.info('VirtualFan: {} created'.format(self.name))
+        _LOGGER.info(f"VirtualFan: {self.name} created")
 
     def _create_state(self, config):
         super()._create_state(config)

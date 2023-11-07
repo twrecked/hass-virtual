@@ -32,6 +32,7 @@ SERVICE_SCHEMA = vol.Schema({
 
 VIRTUAL_PLATFORMS = [
     Platform.BINARY_SENSOR,
+    Platform.FAN,
     Platform.LIGHT,
     Platform.LOCK,
     Platform.SENSOR,
