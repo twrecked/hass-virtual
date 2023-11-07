@@ -10,18 +10,11 @@ import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.const import ATTR_ENTITY_ID
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
 
-from .const import (
-    COMPONENT_DOMAIN,
-    CONF_INITIAL_AVAILABILITY,
-    CONF_INITIAL_VALUE,
-    CONF_NAME,
-    CONF_PERSISTENT,
-    DEFAULT_INITIAL_AVAILABILITY,
-    DEFAULT_PERSISTENT,
-)
+from .const import *
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -36,6 +29,9 @@ def virtual_schema(default_initial_value: str, extra_attrs):
         vol.Optional(CONF_INITIAL_VALUE, default=default_initial_value): cv.string,
         vol.Optional(CONF_INITIAL_AVAILABILITY, default=DEFAULT_INITIAL_AVAILABILITY): cv.boolean,
         vol.Optional(CONF_PERSISTENT, default=DEFAULT_PERSISTENT): cv.boolean,
+        vol.Optional(ATTR_DEVICE_ID, default="NOTYET"): cv.string,
+        vol.Optional(ATTR_ENTITY_ID, default="NOTYET"): cv.string,
+        vol.Optional(ATTR_UNIQUE_ID, default="NOTYET"): cv.string,
     }
     schema.update(extra_attrs)
     return schema
@@ -50,6 +46,7 @@ class VirtualEntity(RestoreEntity):
 
     def __init__(self, config, domain):
         """Initialize an Virtual Sensor."""
+        _LOGGER.debug(f"creating-virtual-{domain}={config}")
         self._config = config
         self._persistent = config.get(CONF_PERSISTENT)
 
@@ -57,12 +54,26 @@ class VirtualEntity(RestoreEntity):
         # the non-domain piece of the entity_id was prefixed with virtual_ so
         # we build the pieces manually to make sure.
         self._attr_name = config.get(CONF_NAME)
-        if self._attr_name.startswith("!"):
-            self._attr_name = self._attr_name[1:]
-            self.entity_id = f'{domain}.{slugify(self._attr_name)}'
-        else:
-            self.entity_id = f'{domain}.{COMPONENT_DOMAIN}_{slugify(self._attr_name)}'
-        self._attr_unique_id = slugify(self._attr_name)
+
+        self.entity_id = config.get(ATTR_ENTITY_ID)
+        if self.entity_id == "NOTYET":
+            if self._attr_name.startswith("+"):
+                self._attr_name = self._attr_name[1:]
+                self.entity_id = f'{domain}.{COMPONENT_DOMAIN}_{slugify(self._attr_name)}'
+            else:
+                self.entity_id = f'{domain}.{slugify(self._attr_name)}'
+
+        self._attr_unique_id = config.get(ATTR_UNIQUE_ID, None)
+        if self._attr_unique_id == "NOTYET":
+            self._attr_unique_id = slugify(self._attr_name)
+
+        if config.get(ATTR_DEVICE_ID) != "NOTYET":
+            _LOGGER.debug("setting up device info")
+            self._attr_device_info = DeviceInfo(
+                identifiers={(COMPONENT_DOMAIN, config.get(ATTR_DEVICE_ID))},
+                manufacturer=COMPONENT_MANUFACTURER,
+                model=COMPONENT_MODEL,
+            )
 
         _LOGGER.info(f'VirtualEntity {self._attr_name} created')
 

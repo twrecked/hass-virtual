@@ -230,6 +230,7 @@ class BlendedCfg(object):
     def __init__(self, flow_data):
         self._group_name = flow_data[ATTR_GROUP_NAME]
         self._file_name = flow_data[ATTR_FILE_NAME]
+        self.load()
 
     def _load_meta_data(self):
         return _load_meta_data(self._group_name)
@@ -295,7 +296,8 @@ class BlendedCfg(object):
                 # Update the entity.
                 entity.update({
                     CONF_NAME: _make_name(name),
-                    ATTR_ENTITY_ID: _make_entity_id(platform, name),
+                    ATTR_ENTITY_ID: entity_id,
+                    ATTR_UNIQUE_ID: unique_id,
                     ATTR_DEVICE_ID: device_name
                 })
                 _LOGGER.debug(f"added entity {platform}/{entity}")
@@ -324,6 +326,14 @@ class BlendedCfg(object):
         _LOGGER.debug(f"meta-data={self._meta_data}")
         _LOGGER.debug(f"devices={self._devices}")
         _LOGGER.debug(f"entities={self._entities}")
+
+    @property
+    def devices(self):
+        return self._devices
+
+    @property
+    def entities(self):
+        return self._entities
 
     @property
     def binary_sensor_config(self):
