@@ -26,10 +26,12 @@ _LOGGER = logging.getLogger(__name__)
 
 DEPENDENCIES = [COMPONENT_DOMAIN]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_INITIAL_BINARY_SENSOR_VALUE, {
+DEFAULT_BINARY_SENSOR_VALUE = "off"
+
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_BINARY_SENSOR_VALUE, {
     vol.Optional(CONF_CLASS): cv.string,
 }))
-BINARY_SENSOR_SCHEMA = vol.Schema(virtual_schema(DEFAULT_INITIAL_BINARY_SENSOR_VALUE, {
+BINARY_SENSOR_SCHEMA = vol.Schema(virtual_schema(DEFAULT_BINARY_SENSOR_VALUE, {
     vol.Optional(CONF_CLASS): cv.string,
 }))
 

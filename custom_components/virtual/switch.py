@@ -29,10 +29,12 @@ _LOGGER = logging.getLogger(__name__)
 
 DEPENDENCIES = [COMPONENT_DOMAIN]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_INITIAL_SWITCH_VALUE, {
+DEFAULT_SWITCH_VALUE = "off"
+
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_SWITCH_VALUE, {
     vol.Optional(CONF_CLASS): cv.string,
 }))
-SWITCH_SCHEMA = vol.Schema(virtual_schema(DEFAULT_INITIAL_SWITCH_VALUE, {
+SWITCH_SCHEMA = vol.Schema(virtual_schema(DEFAULT_SWITCH_VALUE, {
     vol.Optional(CONF_CLASS): cv.string,
 }))
 

@@ -41,11 +41,13 @@ _LOGGER = logging.getLogger(__name__)
 
 DEPENDENCIES = [COMPONENT_DOMAIN]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_INITIAL_SENSOR_VALUE, {
+DEFAULT_SENSOR_VALUE = "0"
+
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_SENSOR_VALUE, {
     vol.Optional(CONF_CLASS): cv.string,
     vol.Optional(CONF_UNIT_OF_MEASUREMENT, default=""): cv.string,
 }))
-SENSOR_SCHEMA = vol.Schema(virtual_schema(DEFAULT_INITIAL_SENSOR_VALUE, {
+SENSOR_SCHEMA = vol.Schema(virtual_schema(DEFAULT_SENSOR_VALUE, {
     vol.Optional(CONF_CLASS): cv.string,
     vol.Optional(CONF_UNIT_OF_MEASUREMENT, default=""): cv.string,
 }))

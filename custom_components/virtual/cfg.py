@@ -352,22 +352,6 @@ class UpgradeCfg(object):
     """Read in the old YAML config and convert it to the new format.
     """
 
-    # _devices = {}
-    # _devices_meta_data = {}
-
-    # def save_meta_data(self):
-    #     _save_meta_data(IMPORTED_GROUP_NAME, self._devices_meta_data)
-
-    # def save_user_data(self):
-    #     _save_user_data(IMPORTED_YAML_FILE, self._devices)
-        # try:
-        #     save_yaml(IMPORTED_YAML_FILE, {
-        #         ATTR_VERSION: 1,
-        #         ATTR_DEVICES: self._devices
-        #     })
-        # except Exception as e:
-        #     _LOGGER.debug(f"couldn't save user data {str(e)}")
-
     @staticmethod
     def import_yaml(config):
         """ Take the current virtual config and make the new yaml file.
@@ -420,8 +404,6 @@ class UpgradeCfg(object):
 
         _save_user_data(IMPORTED_YAML_FILE, devices)
         _save_meta_data(IMPORTED_GROUP_NAME, devices_meta_data)
-        # self.save_user_data()
-        # self.save_meta_data()
 
     @staticmethod
     def create_flow_data(config):

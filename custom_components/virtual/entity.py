@@ -27,7 +27,7 @@ def virtual_schema(default_initial_value: str, extra_attrs):
     schema = {
         vol.Required(CONF_NAME): cv.string,
         vol.Optional(CONF_INITIAL_VALUE, default=default_initial_value): cv.string,
-        vol.Optional(CONF_INITIAL_AVAILABILITY, default=DEFAULT_INITIAL_AVAILABILITY): cv.boolean,
+        vol.Optional(CONF_INITIAL_AVAILABILITY, default=DEFAULT_AVAILABILITY): cv.boolean,
         vol.Optional(CONF_PERSISTENT, default=DEFAULT_PERSISTENT): cv.boolean,
         vol.Optional(ATTR_DEVICE_ID, default="NOTYET"): cv.string,
         vol.Optional(ATTR_ENTITY_ID, default="NOTYET"): cv.string,
