@@ -32,6 +32,7 @@ SERVICE_SCHEMA = vol.Schema({
 
 VIRTUAL_PLATFORMS = [
     Platform.BINARY_SENSOR,
+    Platform.LIGHT,
     Platform.SENSOR,
     Platform.SWITCH
 ]
