@@ -118,6 +118,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a config entry."""
+    _LOGGER.debug(f"unloading it {entry.data[ATTR_GROUP_NAME]}")
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, [Platform.SWITCH])
+    if unload_ok:
+        BlendedCfg(entry.data).delete()
+        hass.data[COMPONENT_DOMAIN].pop(entry.data[ATTR_GROUP_NAME])
+    _LOGGER.debug(f"after hass={hass.data[COMPONENT_DOMAIN]}")
+
+    return unload_ok
+
+
 async def _async_get_or_create_momentary_device_in_registry(
         hass: HomeAssistant, entry: ConfigEntry, device
 ) -> None:

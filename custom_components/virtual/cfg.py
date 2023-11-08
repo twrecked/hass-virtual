@@ -96,6 +96,35 @@ def _save_meta_data(group_name, meta_data):
             _LOGGER.debug(f"couldn't save meta data {str(e)}")
 
 
+def _delete_meta_data(group_name):
+    """Save meta data for a particular group name.
+    """
+    with DB_LOCK:
+
+        # Read in current meta data
+        devices = {}
+        try:
+            with open(META_JSON_FILE, 'r') as meta_file:
+                devices = json.load(meta_file).get(ATTR_DEVICES, {})
+        except Exception as e:
+            _LOGGER.debug(f"no meta data yet {str(e)}")
+
+        # Delete the group piece.
+        _LOGGER.debug(f"meta before {devices}")
+        devices.pop(group_name)
+        _LOGGER.debug(f"meta after {devices}")
+
+        # Write it back out.
+        try:
+            with open(META_JSON_FILE, 'w') as meta_file:
+                json.dump({
+                    ATTR_VERSION: 1,
+                    ATTR_DEVICES: devices
+                }, meta_file, indent=4)
+        except Exception as e:
+            _LOGGER.debug(f"couldn't save meta data {str(e)}")
+
+
 def _save_user_data(file_name, devices):
     try:
         save_yaml(file_name, {
@@ -326,6 +355,9 @@ class BlendedCfg(object):
         _LOGGER.debug(f"meta-data={self._meta_data}")
         _LOGGER.debug(f"devices={self._devices}")
         _LOGGER.debug(f"entities={self._entities}")
+
+    def delete(self):
+        _delete_meta_data(self._group_name)
 
     @property
     def devices(self):
