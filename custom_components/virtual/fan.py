@@ -52,13 +52,6 @@ BASE_SCHEMA = virtual_schema(DEFAULT_FAN_VALUE, {
 })
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(BASE_SCHEMA)
-# PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_FAN_VALUE, {
-#     vol.Optional(CONF_SPEED, default=False): cv.boolean,
-#     vol.Optional(CONF_SPEED_COUNT, default=0): cv.positive_int,
-#     vol.Optional(CONF_OSCILLATE, default=False): cv.boolean,
-#     vol.Optional(CONF_DIRECTION, default=False): cv.boolean,
-#     vol.Optional(CONF_MODES, default=[]): vol.All(cv.ensure_list, [cv.string]),
-# }))
 
 FAN_SCHEMA = vol.Schema(BASE_SCHEMA)
 

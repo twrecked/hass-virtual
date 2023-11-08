@@ -4,101 +4,72 @@ This component provides support for a virtual device tracker.
 """
 
 import logging
-import json
+from collections.abc import Callable
 
-from homeassistant.const import CONF_DEVICES, STATE_HOME
-from homeassistant.components.device_tracker import DOMAIN
-from homeassistant.helpers.event import async_track_state_change_event
-from .const import (
-    COMPONENT_DOMAIN,
-    CONF_NAME,
-    CONF_PERSISTENT,
-    DEFAULT_PERSISTENT,
+from homeassistant.components.device_tracker import (
+    DOMAIN as PLATFORM_DOMAIN,
+    SourceType,
+    TrackerEntity,
 )
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers.typing import HomeAssistantType
+
+from .const import *
+from .entity import VirtualEntity
 
 _LOGGER = logging.getLogger(__name__)
+
+DEPENDENCIES = [COMPONENT_DOMAIN]
 
 CONF_LOCATION = 'location'
 DEFAULT_LOCATION = 'home'
 
-DEPENDENCIES = [COMPONENT_DOMAIN]
-STATE_FILE = "/config/.storage/virtual.restore_state"
 
-tracker_states = {}
+async def async_setup_entry(
+        hass: HomeAssistantType,
+        _entry: ConfigEntry,
+        async_add_entities: Callable[[list], None],
+) -> None:
+    _LOGGER.debug("setting up the device_tracker entries...")
 
-
-def _write_state():
-    global tracker_states
-    try:
-        with open(STATE_FILE, 'w') as f:
-            json.dump(tracker_states, f)
-    except:
-        pass
-
-
-def _state_changed(event):
-    entity_id = event.data.get('entity_id', None)
-    new_state = event.data.get('new_state', None)
-    if entity_id is None or new_state is None:
-        _LOGGER.info(f'state changed error')
-        return
-
-    # update database
-    _LOGGER.info(f"moving {entity_id} to {new_state.state}")
-    global tracker_states
-    tracker_states[entity_id] = new_state.state
-    _write_state()
+    entities = []
+    for entity in hass.data[COMPONENT_DOMAIN].get(PLATFORM_DOMAIN, []):
+        entities.append(VirtualDeviceTracker(entity))
+    async_add_entities(entities)
 
 
-def _shutting_down(event):
-    _LOGGER.info(f'shutting down {event}')
-    _write_state()
+class VirtualDeviceTracker(TrackerEntity, VirtualEntity):
+    """Represent a tracked device."""
 
+    _location: str | None = None
 
-async def async_setup_scanner(hass, config, async_see, _discovery_info=None):
-    """Set up the virtual tracker."""
+    def __init__(self, config):
+        """Initialize a Virtual light."""
+        super().__init__(config, PLATFORM_DOMAIN)
 
-    # Read in the last known states.
-    old_tracker_states = {}
-    try:
-        with open(STATE_FILE, 'r') as f:
-            old_tracker_states = json.load(f)
-    except:
-        pass
+    def _create_state(self, config):
+        super()._create_state(config)
+        self._location = DEFAULT_LOCATION
 
-    new_tracker_states = {}
-    for device in config[CONF_DEVICES]:
-        if not isinstance(device, dict):
-            device = {
-                CONF_NAME: device,
-            }
+    def _restore_state(self, state, config):
+        super()._restore_state(state, config)
+        self._location = state.state
 
-        name = device.get(CONF_NAME, 'unknown')
-        location = device.get(CONF_LOCATION, DEFAULT_LOCATION)
-        peristent = device.get(CONF_PERSISTENT, DEFAULT_PERSISTENT)
-        entity_id = f"{DOMAIN}.{name}"
+    @property
+    def location_name(self) -> str | None:
+        """Return a location name for the current location of the device."""
+        return self._location
 
-        if peristent:
-            location = old_tracker_states.get(entity_id, location)
-            new_tracker_states[entity_id] = location
-            _LOGGER.info(f"setting persistent {entity_id} to {location}")
-        else:
-            _LOGGER.info(f"setting ephemeral {entity_id} to {location}")
+    @property
+    def source_type(self) -> SourceType | str:
+        return "virtual"
 
-        see_args = {
-            "dev_id": name,
-            "source_type": COMPONENT_DOMAIN,
-            "location_name": location,
-        }
-        hass.async_create_task(async_see(**see_args))
+    @property
+    def latitude(self) -> float | None:
+        """Return latitude value of the device."""
+        return None
 
-    # Start listening if there are persistent entities.
-    global tracker_states
-    tracker_states = new_tracker_states
-    if tracker_states:
-        async_track_state_change_event(hass, tracker_states.keys(), _state_changed)
-        hass.bus.async_listen("homeassistant_stop", _shutting_down)
-    else:
-        _write_state()
-
-    return True
+    @property
+    def longitude(self) -> float | None:
+        """Return longitude value of the device."""
+        return None
