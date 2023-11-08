@@ -1,4 +1,5 @@
 {
+  "config_flow": true,
   "domain": "virtual",
   "name": "Virtual Components",
   "documentation": "https://github.com/twrecked/hass-virtual/blob/master/README.md",
