@@ -1,3 +1,4 @@
+0.8.0.1: move out of beta... get ready for config flow version
 0.8.0b1: move into beta...
 0.8.0a3: save device tracker location
 0.8.0a2: added locking/unlocking state to locks
