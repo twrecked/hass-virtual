@@ -83,8 +83,8 @@ class VirtualEntity(RestoreEntity):
 
     def _restore_state(self, state, config):
         _LOGGER.info(f'VirtualEntity {self.unique_id}: restoring state')
-        _LOGGER.debug(f'VirtualEntity:: {pprint.pformat(state.state)}')
-        _LOGGER.debug(f'VirtualEntity:: {pprint.pformat(state.attributes)}')
+        _LOGGER.debug(f'VirtualEntity:: state={pprint.pformat(state.state)}')
+        _LOGGER.debug(f'VirtualEntity:: attr={pprint.pformat(state.attributes)}')
         self._attr_available = state.attributes.get(ATTR_AVAILABLE)
 
     def _update_attributes(self):
