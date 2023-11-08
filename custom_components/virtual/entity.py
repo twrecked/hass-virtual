@@ -16,11 +16,8 @@ from homeassistant.util import slugify
 
 from .const import *
 
-_LOGGER = logging.getLogger(__name__)
 
-ATTR_AVAILABLE = 'available'
-ATTR_PERSISTENT = 'persistent'
-ATTR_UNIQUE_ID = 'unique_id'
+_LOGGER = logging.getLogger(__name__)
 
 
 def virtual_schema(default_initial_value: str, extra_attrs):
@@ -106,6 +103,10 @@ class VirtualEntity(RestoreEntity):
         else:
             self._restore_state(state, self._config)
         self._update_attributes()
+
+    async def async_will_remove_from_hass(self) -> None:
+        """Call when entity is being removed from hass."""
+        await super().async_will_remove_from_hass()
 
     def set_available(self, value):
         self._attr_available = value

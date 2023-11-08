@@ -84,16 +84,23 @@ class VirtualDeviceTracker(TrackerEntity, VirtualEntity):
             config[CONF_INITIAL_VALUE] = config.pop(CONF_LOCATION)
 
         super().__init__(config, PLATFORM_DOMAIN)
-        _LOGGER.debug(f"{self._attr_name}, available={self._attr_available} is ")
-        _LOGGER.debug(f"{self._attr_name}, entity={self.entity_id} is ")
+        _LOGGER.debug(f"{self._attr_name}, available={self._attr_available}")
+        _LOGGER.debug(f"{self._attr_name}, entity={self.entity_id}")
 
     def _create_state(self, config):
+        _LOGGER.debug(f"device_tracker-create=config={config}")
         super()._create_state(config)
         self._location = config.get(CONF_INITIAL_VALUE)
 
     def _restore_state(self, state, config):
-        super()._restore_state(state, config)
-        self._location = state.state
+        _LOGGER.debug(f"device_tracker-restore=state={state.state}")
+        _LOGGER.debug(f"device_tracker-restore=attrs={state.attributes}")
+        if ATTR_AVAILABLE not in state.attributes:
+            _LOGGER.debug("looks wrong, from upgrade? creating instead...")
+            self._create_state(config)
+        else:
+            super()._restore_state(state, config)
+            self._location = state.state
 
     @property
     def location_name(self) -> str | None:

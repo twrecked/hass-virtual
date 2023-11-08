@@ -412,7 +412,7 @@ class UpgradeCfg(object):
                 _LOGGER.debug(f"trying {device_tracker}")
                 devices = _parse_old_config(devices, [{
                     CONF_PLATFORM: COMPONENT_DOMAIN,
-                    "name": device_tracker["name"]
+                    CONF_NAME: device_tracker[CONF_NAME]
                 }], str(Platform.DEVICE_TRACKER))
 
         _LOGGER.info(f"devices={devices}")

@@ -88,6 +88,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # create the devices.
     _LOGGER.debug("creating the devices")
     for device in vcfg.devices:
+        _LOGGER.debug(f"creating-device={device}")
         await _async_get_or_create_momentary_device_in_registry(hass, entry, device)
 
     # Update the component data.
