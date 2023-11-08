@@ -17,7 +17,7 @@ from homeassistant.const import ATTR_ENTITY_ID, ATTR_DEVICE_CLASS, STATE_ON
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.helpers.typing import HomeAssistantType
 
-from . import get_entity_from_domain
+from . import get_entity_from_domain, get_entity_configs
 from .const import *
 from .entity import VirtualEntity, virtual_schema
 
@@ -45,13 +45,13 @@ SERVICE_SCHEMA = vol.Schema({
 
 async def async_setup_entry(
         hass: HomeAssistantType,
-        _entry: ConfigEntry,
+        entry: ConfigEntry,
         async_add_entities: Callable[[list], None],
 ) -> None:
     _LOGGER.debug("setting up the entries...")
 
     entities = []
-    for entity in hass.data[COMPONENT_DOMAIN].get(PLATFORM_DOMAIN, []):
+    for entity in get_entity_configs(hass, entry.data[ATTR_GROUP_NAME], PLATFORM_DOMAIN):
         entity = BINARY_SENSOR_SCHEMA(entity)
         entities.append(VirtualBinarySensor(entity))
     async_add_entities(entities)

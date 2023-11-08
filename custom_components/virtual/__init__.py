@@ -45,7 +45,8 @@ def setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up a virtual component.
     """
 
-    hass.data.setdefault(COMPONENT_DOMAIN, {})
+    hass.data[COMPONENT_DOMAIN] = {}
+    hass.data[COMPONENT_SERVICES] = {}
 
     # See if we have already imported the data. If we haven't then do it now.
     config_entry = _async_find_matching_config_entry(hass)
@@ -76,16 +77,27 @@ def _async_find_matching_config_entry(hass):
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.debug(f'async setup {entry.data}')
 
-    # Install the config.
+    # Set up hass data if necessary
+    if COMPONENT_DOMAIN not in hass.data:
+        hass.data[COMPONENT_DOMAIN] = {}
+        hass.data[COMPONENT_SERVICES] = {}
+
+    # Get the config.
     vcfg = BlendedCfg(entry.data)
-    hass.data[COMPONENT_DOMAIN] = vcfg.entities
-    hass.data[COMPONENT_SERVICES] = {}
-    _LOGGER.debug(f"update hass data {hass.data[COMPONENT_DOMAIN]}")
 
     # create the devices.
     _LOGGER.debug("creating the devices")
     for device in vcfg.devices:
         await _async_get_or_create_momentary_device_in_registry(hass, entry, device)
+
+    # Update the component data.
+    hass.data[COMPONENT_DOMAIN].update({
+        entry.data[ATTR_GROUP_NAME]: {
+            ATTR_ENTITIES: vcfg.entities,
+            ATTR_FILE_NAME: entry.data[ATTR_FILE_NAME]
+        }
+    })
+    _LOGGER.debug(f"update hass data {hass.data[COMPONENT_DOMAIN]}")
 
     # Create the entities.
     _LOGGER.debug("creating the entities")
@@ -98,25 +110,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.info(f"{call.service} service called")
         await async_virtual_set_availability_service(hass, call)
 
-    _LOGGER.debug("installing service handler")
-    hass.services.async_register(COMPONENT_DOMAIN, SERVICE_AVAILABILE, async_virtual_service_set_available)
-
-    return True
-
-
-async def async_setup2(hass, config):
-    """Set up a virtual components."""
-
-    hass.data[COMPONENT_SERVICES] = {}
-    _LOGGER.debug('setup')
-
-    @verify_domain_control(hass, COMPONENT_DOMAIN)
-    async def async_virtual_service_set_available(call) -> None:
-        """Call virtual service handler."""
-        _LOGGER.info("{} service called".format(call.service))
-        await async_virtual_set_availability_service(hass, call)
-
-    hass.services.async_register(COMPONENT_DOMAIN, SERVICE_AVAILABILE, async_virtual_service_set_available)
+    if not hasattr(hass.data[COMPONENT_SERVICES], COMPONENT_DOMAIN):
+        _LOGGER.debug("installing handlers")
+        hass.data[COMPONENT_SERVICES][COMPONENT_DOMAIN] = 'installed'
+        hass.services.async_register(COMPONENT_DOMAIN, SERVICE_AVAILABILE, async_virtual_service_set_available)
 
     return True
 
@@ -133,6 +130,10 @@ async def _async_get_or_create_momentary_device_in_registry(
         name=device[CONF_NAME],
         sw_version=__version__
     )
+
+
+def get_entity_configs(hass, group_name, domain):
+    return hass.data.get(COMPONENT_DOMAIN, {}).get(group_name, {}).get(ATTR_ENTITIES, {}).get(domain, [])
 
 
 def get_entity_from_domain(hass, domain, entity_id):

@@ -22,6 +22,7 @@ from homeassistant.const import STATE_LOCKED
 from homeassistant.helpers.event import track_point_in_time
 from homeassistant.helpers.typing import HomeAssistantType
 
+from . import get_entity_configs
 from .const import *
 from .entity import VirtualEntity, virtual_schema
 
@@ -49,13 +50,13 @@ LOCK_SCHEMA = vol.Schema(virtual_schema(DEFAULT_LOCK_VALUE, {
 
 async def async_setup_entry(
         hass: HomeAssistantType,
-        _entry: ConfigEntry,
+        entry: ConfigEntry,
         async_add_entities: Callable[[list], None],
 ) -> None:
     _LOGGER.debug("setting up the entries...")
 
     entities = []
-    for entity in hass.data[COMPONENT_DOMAIN].get(PLATFORM_DOMAIN, []):
+    for entity in get_entity_configs(hass, entry.data[ATTR_GROUP_NAME], PLATFORM_DOMAIN):
         entity = LOCK_SCHEMA(entity)
         entities.append(VirtualLock(hass, entity))
     async_add_entities(entities)

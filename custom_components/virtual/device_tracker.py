@@ -14,6 +14,7 @@ from homeassistant.components.device_tracker import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.typing import HomeAssistantType
 
+from . import get_entity_configs
 from .const import *
 from .entity import VirtualEntity
 
@@ -27,13 +28,13 @@ DEFAULT_LOCATION = 'home'
 
 async def async_setup_entry(
         hass: HomeAssistantType,
-        _entry: ConfigEntry,
+        entry: ConfigEntry,
         async_add_entities: Callable[[list], None],
 ) -> None:
     _LOGGER.debug("setting up the device_tracker entries...")
 
     entities = []
-    for entity in hass.data[COMPONENT_DOMAIN].get(PLATFORM_DOMAIN, []):
+    for entity in get_entity_configs(hass, entry.data[ATTR_GROUP_NAME], PLATFORM_DOMAIN):
         entities.append(VirtualDeviceTracker(entity))
     async_add_entities(entities)
 

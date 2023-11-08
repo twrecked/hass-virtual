@@ -30,6 +30,7 @@ from homeassistant.const import STATE_ON
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.helpers.typing import HomeAssistantType
 
+from . import get_entity_configs
 from .const import *
 from .entity import VirtualEntity, virtual_schema
 
@@ -84,13 +85,13 @@ LIGHT_SCHEMA = vol.Schema(BASE_SCHEMA)
 
 async def async_setup_entry(
         hass: HomeAssistantType,
-        _entry: ConfigEntry,
+        entry: ConfigEntry,
         async_add_entities: Callable[[list], None],
 ) -> None:
     _LOGGER.debug("setting up the entries...")
 
     entities = []
-    for entity in hass.data[COMPONENT_DOMAIN].get(PLATFORM_DOMAIN, []):
+    for entity in get_entity_configs(hass, entry.data[ATTR_GROUP_NAME], PLATFORM_DOMAIN):
         entity = LIGHT_SCHEMA(entity)
         entities.append(VirtualLight(entity))
     async_add_entities(entities)

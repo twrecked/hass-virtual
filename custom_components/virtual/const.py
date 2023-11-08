@@ -7,6 +7,7 @@ COMPONENT_MODEL = "virtual"
 
 ATTR_DEVICES = "devices"
 ATTR_DEVICE_ID = "device_id"
+ATTR_ENTITIES = "entities"
 ATTR_GROUP_NAME = "group_name"
 ATTR_FILE_NAME = "file_name"
 ATTR_PARENT_ID = "parent_id"
