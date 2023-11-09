@@ -299,6 +299,22 @@ Only `name` is required. You only need one of `speed` or `speed_count`.
 - `direction`; if `True` then fan can run in 2 directions
 - `oscillate`; if `True` then fan can be set to oscillate
 
+### Covers _(in development)_
+
+To add a virtual cover use the following:
+
+```yaml
+cover:
+  - platform: virtual
+    name: Window cover
+    initial_value: 'closed'
+    initial_availability: true
+    persistent: false
+```
+
+`name` is required. By the moment, only `open` (default `initial_value`)
+and `closed` states are supported and, therefore, only `cover.cover_open`
+and `cover.cover_close` services are available.
 
 ### Device Tracking
 
@@ -336,4 +352,3 @@ device_tracker:
       - virtual_user1
       - virtual_user2
 ```
-
