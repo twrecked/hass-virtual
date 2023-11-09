@@ -24,7 +24,7 @@ fi
 
 ${ECHO} mkdir -p "${DEST}/custom_components"
 if [[ -n $(command -v fd) ]]; then
-	fd -e py -e json . custom_components --exec ${ECHO} cp -vf --parents {} "${DEST}" ;
+	fd -e py -e json -e yaml . custom_components --exec ${ECHO} cp -vf --parents {} "${DEST}" ;
 else
 	${ECHO} cp -afv custom_components/virtual "${DEST}/custom_components"
 fi
