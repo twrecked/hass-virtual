@@ -16,7 +16,6 @@
       }
     }
   },
-
   "services": {
     "turn_on": {
       "name": "Turn On",
@@ -66,13 +65,9 @@
       "name": "Set Availability",
       "description": "Set availability of an entity.",
       "fields": {
-        "entity_id": {
-          "name": "Entity Id",
-          "description": "Name(s) of entities to set"
-        },
         "value": {
           "name": "Value",
-          "description": "Value to set state availability to."
+          "description": "Is the entity available.."
         }
       }
     },
@@ -80,13 +75,9 @@
       "name": "Move",
       "description": "Move a device tracker to a new location.",
       "fields": {
-        "entity_id": {
-          "name": "Entity Id",
-          "description": "Name(s) of device tracker to move"
-        },
         "location": {
           "name": "Location",
-          "description": "Where the device tracker is."
+          "description": "Where to move the device tracker to."
         }
       }
     }
