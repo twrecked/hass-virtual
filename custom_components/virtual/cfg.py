@@ -361,7 +361,7 @@ class BlendedCfg(object):
 
     @property
     def entities(self):
-        return copy.deepcopy(self._entities)
+        return self._entities
 
     @property
     def orphaned_entities(self):
