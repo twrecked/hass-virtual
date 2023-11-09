@@ -9,6 +9,7 @@ from distutils import util
 
 import homeassistant.helpers.config_validation as cv
 import homeassistant.helpers.device_registry as dr
+from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.helpers.service import verify_domain_control
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.config_entries import ConfigEntry, SOURCE_IMPORT
@@ -23,6 +24,9 @@ from .cfg import BlendedCfg, UpgradeCfg
 __version__ = '0.9.0a1'
 
 _LOGGER = logging.getLogger(__name__)
+
+# Purely to quieten down the checks.
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({})
 
 SERVICE_AVAILABILE = 'set_available'
 SERVICE_SCHEMA = vol.Schema({
