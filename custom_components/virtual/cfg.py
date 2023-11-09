@@ -230,12 +230,12 @@ def _make_unique_id():
 def _make_suffix(platform, device_class):
     """Make a suitable suffix for an unnamed entity.
     
-    Binary sensors and sensors have a class so we append that, everything else
-    gets left as-is.
+    Binary sensors, covers and sensors have a class so we append that,
+    everything else gets left as-is.
     """
-    if platform == Platform.BINARY_SENSOR or platform == Platform.SENSOR:
+    if platform in [Platform.BINARY_SENSOR, Platform.COVER, Platform.SENSOR]:
         if device_class is None:
-            return "unknown"
+            return platform
         else:
             return f"{device_class}"
     return ""

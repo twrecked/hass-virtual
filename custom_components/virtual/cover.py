@@ -11,6 +11,7 @@ from collections.abc import Callable
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.cover import (
     CoverEntity,
+    CoverEntityFeature,
     DOMAIN as PLATFORM_DOMAIN
 )
 from homeassistant.const import (
@@ -62,6 +63,10 @@ class VirtualCover(VirtualEntity, CoverEntity):
         super().__init__(config, PLATFORM_DOMAIN)
 
         self._attr_device_class = config.get(CONF_CLASS)
+        self._attr_supported_features = CoverEntityFeature(
+            CoverEntityFeature.OPEN |
+            CoverEntityFeature.CLOSE
+        )
 
         _LOGGER.info(f"VirtualCover: {self.name} created")
 
