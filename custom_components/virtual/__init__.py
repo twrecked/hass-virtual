@@ -124,13 +124,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     _LOGGER.debug(f"unloading virtual group {entry.data[ATTR_GROUP_NAME]}")
-    _LOGGER.debug(f"before hass={hass.data[COMPONENT_DOMAIN]}")
+    # _LOGGER.debug(f"before hass={hass.data[COMPONENT_DOMAIN]}")
     unload_ok = await hass.config_entries.async_unload_platforms(entry, VIRTUAL_PLATFORMS)
     if unload_ok:
         bcfg = BlendedCfg(entry.data)
         bcfg.delete()
         hass.data[COMPONENT_DOMAIN].pop(entry.data[ATTR_GROUP_NAME])
-    _LOGGER.debug(f"after hass={hass.data[COMPONENT_DOMAIN]}")
+    # _LOGGER.debug(f"after hass={hass.data[COMPONENT_DOMAIN]}")
 
     return unload_ok
 

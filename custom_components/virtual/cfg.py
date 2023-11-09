@@ -274,7 +274,6 @@ class BlendedCfg(object):
 
         _LOGGER.debug(f"loaded-meta-data={meta_data}")
         _LOGGER.debug(f"loaded-devices={devices}")
-        _LOGGER.debug(f"entities={self._entities}")
 
         # Let's fix up the devices/entities
         for device_name, entities in devices.items():
@@ -287,7 +286,6 @@ class BlendedCfg(object):
 
             for entity in entities:
 
-                entity = copy.deepcopy(entity)
                 platform = entity.pop(CONF_PLATFORM)
                 device_class = entity.get(CONF_CLASS, None)
 
@@ -329,7 +327,6 @@ class BlendedCfg(object):
                 # data list.
                 # _LOGGER.debug(f"entities={self._entities}")
                 if platform not in self._entities:
-                    _LOGGER.debug(f"creating {platform}")
                     self._entities[platform] = []
                 self._entities[platform].append(entity)
                 self._meta_data.update({
@@ -412,7 +409,6 @@ class UpgradeCfg(object):
             if device_trackers[CONF_PLATFORM] != COMPONENT_DOMAIN:
                 continue
             for device_tracker in device_trackers.get("devices", []):
-                _LOGGER.debug(f"trying {device_tracker}")
                 devices = _parse_old_config(devices, [{
                     CONF_PLATFORM: COMPONENT_DOMAIN,
                     CONF_NAME: device_tracker[CONF_NAME]
