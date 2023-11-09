@@ -1,42 +1,72 @@
 # Describes the format for available virtual services
 
 turn_on:
+  name: Turn On
   description: Turn on a binary sensor.
-  fields:
-    entity_id:
-      description: Name(s) of entities to turn on
-      example: 'binary_sensor.virtual_motion_1'
+  target:
+    entity:
+      integration: virtual
+      domain: binary_sensor
 
 turn_off:
+  name: Turn Off
   description: Turn off a binary sensor.
-  fields:
-    entity_id:
-      description: Name(s) of entities to turn off
-      example: 'binary_sensor.virtual_motion_1'
+  target:
+    entity:
+      integration: virtual
+      domain: binary_sensor
 
 toggle:
+  name: Toggle
   description: Toggle a binary sensor.
-  fields:
-    entity_id:
-      description: Name(s) of entities to toggle
-      example: 'binary_sensor.virtual_motion_1'
+  target:
+    entity:
+      integration: virtual
+      domain: binary_sensor
 
 set:
-  description: Set value of a sensor.
+  name: Set
+  description: Set the value of a sensor.
+  target:
+    entity:
+      integration: virtual
+      domain: sensor
   fields:
-    entity_id:
-      description: Name(s) of entities to toggle
-      example: 'binary_sensor.virtual_motion_1'
     value:
-      description: Value to set
-      example: 10
+      name: Value
+      description: Value to set state to.
+      required: true
+      example: '10'
+      selector:
+        text:
 
 set_available:
-  description: Set availability of a entity.
+  name: Set Availability
+  description: Set availability of an entity.
+  target:
+    entity:
+      integration: virtual
   fields:
-    entity_id:
-      description: Name(s) of entities to set
-      example: 'switch.virtual_switch_1'
     value:
-      description: Value to set
+      name: Value
+      description: Is the entity available.
       example: false
+      required: true
+      selector:
+        boolean:
+
+move:
+  name: Move
+  description: Move a device tracker to a new location.
+  target:
+    entity:
+      integration: virtual
+      domain: device_tracker
+  fields:
+    location:
+      name: Location
+      description: Where to move the device tracker to.
+      required: true
+      example: 'home'
+      selector:
+        text:

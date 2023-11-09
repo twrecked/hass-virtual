@@ -14,7 +14,6 @@ jobs:
     name: HACS Validation
     runs-on: "ubuntu-latest"
     steps:
-      - uses: "actions/checkout@v2"
       - name: HACS Validation
         uses: "hacs/action@main"
         with:

@@ -1,16 +1,84 @@
 # hass-virtual
-### Virtual Components for Home Assistant
+![icon](images/virtual-icon.png)
+
+## Virtual Components for Home Assistant
+
 Virtual components for testing Home Assistant systems.
 
-## Version 0.8
+## Version 0.8?
 
-### **Breaking Changes**
+**This documentation is for the 0.9.x version, you can find the
+0.8.x version** [here](https://github.com/twrecked/hass-virtual/tree/version-0.8.x#readme).
 
-I've added persistent support to `binary_sensor`, `fan`, `light`, `lock`,
-`sensor`, `switch`, `cover` and `device_tracker`. The persistent saving of state is
-turned *on* by default. If you do not want this set `persistent: False` in the
-entity configuration.
+## New Features in 0.9.0
 
+### Config Flow
+
+Finally. After sitting on it for far too long I decided to do the work I
+needed to, this integration now acts much like every integration, splitting
+down by entity, device and integration.
+
+This means a lot of this documentation is now out of date, I will upgrade it
+when all the changes have been finalised, for now I will just add a quick note
+inline.
+
+#### What pieces are done
+
+- _upgrade_; the code will upgrade a _0.8_ build to the _config flow_ system.
+  Your current configuration will be moved into 1 file, `virtual.yaml`. This
+  file contains all your virtual devices. Edit this file to add any type of
+  device.
+- _configuration_; the settings are still available you only need to edit them
+  in one place, `virtual.yaml`. The layout should be obvious after the
+  upgrade.
+- _device groupings_; for example, a motion detector can have a motion
+  detection entity and a battery entity, upgraded devices will have a one to
+  one relationship. For example, the following will create a motion device
+  with 2 entities. If you don't provide a name for an entity the system will
+  provide a default.
+- _multiple integration instances_; you can group virtual devices, each group
+  will use a different configuration file
+
+```yaml
+  Mezzaine Motion:
+    - platform: binary_sensor
+      initial_value: 'off'
+      class: motion
+    - platform: sensor
+      initial_value: 98
+      class: battery
+```
+
+#### What you need to be wary of
+
+- _device trackers_; the upgrade process is a little more complicated if you
+  have device trackers, because of the way _virtual_ created the old devices
+  you will end up with duplicates entries, you can fix it by running the
+  following steps
+  1. do the upgrade
+  2. comment out device virtual device trackers from `device_trackers.yaml`
+     and `known_devices.yaml`
+  3. restart _Home Assistant_
+  4. delete the virtual integration
+  5. add back the virtual integration in accepting the defaults
+
+#### What pieces need doing
+
+- _reload/reconfigure_; this somewhat works, but I need to deal with orphans
+  when devices are turned off
+- _documentation; the configuration is handled differently now
+
+#### What if it goes wrong?
+
+For now I recommend leaving your old configuration in place so you can revert
+back to a _0.8_ release if you encounter an issue. _Home Assistant_ will
+complain about the config but it's ok to ignore it.
+
+If you do encounter and issue if you can turn on debug an create an issue that
+would be great.
+
+
+## Version 0.9
 
 ## Table Of Contents
 1. [Notes](#Notes)
@@ -37,6 +105,8 @@ Many thanks to:
 
   [![JetBrains](/images/jetbrains.svg)](https://www.jetbrains.com/?from=hass-aarlo)
 
+* Icon from [iconscout](https://iconscout.com) by [twitter-inc](https://iconscout.com/contributors/twitter-inc)
+ 
 
 ## Installation
 
@@ -48,6 +118,8 @@ development branches this is the easiest way to install.
 
 
 ## Component Configuration
+
+**This is no longer valid, all config is in `virtual.yaml`.**
 
 Add the following to your `configuration.yaml` to enable the component:
 

@@ -5,38 +5,53 @@ This component provides support for a virtual switch.
 
 import logging
 import voluptuous as vol
+from collections.abc import Callable
 from typing import Any
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.switch import SwitchEntity, DOMAIN
+from homeassistant.components.switch import (
+    DOMAIN as PLATFORM_DOMAIN,
+    SwitchEntity,
+)
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
 from homeassistant.const import (
     ATTR_DEVICE_CLASS,
     STATE_ON,
 )
+from homeassistant.helpers.typing import HomeAssistantType
 
-from .const import (
-    COMPONENT_DOMAIN,
-    CONF_INITIAL_VALUE,
-    CONF_CLASS,
-)
+from . import get_entity_configs
+from .const import *
 from .entity import VirtualEntity, virtual_schema
 
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_INITIAL_VALUE = "off"
-
 DEPENDENCIES = [COMPONENT_DOMAIN]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_INITIAL_VALUE, {
+DEFAULT_SWITCH_VALUE = "off"
+
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_SWITCH_VALUE, {
+    vol.Optional(CONF_CLASS): cv.string,
+}))
+SWITCH_SCHEMA = vol.Schema(virtual_schema(DEFAULT_SWITCH_VALUE, {
     vol.Optional(CONF_CLASS): cv.string,
 }))
 
 
-async def async_setup_platform(_hass, config, async_add_entities, _discovery_info=None):
-    switches = [VirtualSwitch(config)]
-    async_add_entities(switches, True)
+async def async_setup_entry(
+        hass: HomeAssistantType,
+        entry: ConfigEntry,
+        async_add_entities: Callable[[list], None],
+) -> None:
+    _LOGGER.debug("setting up the entries...")
+
+    entities = []
+    for entity in get_entity_configs(hass, entry.data[ATTR_GROUP_NAME], PLATFORM_DOMAIN):
+        entity = SWITCH_SCHEMA(entity)
+        entities.append(VirtualSwitch(entity))
+    async_add_entities(entities)
 
 
 class VirtualSwitch(VirtualEntity, SwitchEntity):
@@ -44,11 +59,11 @@ class VirtualSwitch(VirtualEntity, SwitchEntity):
 
     def __init__(self, config):
         """Initialize the Virtual switch device."""
-        super().__init__(config, DOMAIN)
+        super().__init__(config, PLATFORM_DOMAIN)
 
         self._attr_device_class = config.get(CONF_CLASS)
 
-        _LOGGER.info('VirtualSwitch: {} created'.format(self.name))
+        _LOGGER.info(f"VirtualSwitch: {self.name} created")
 
     def _create_state(self, config):
         super()._create_state(config)
@@ -61,7 +76,7 @@ class VirtualSwitch(VirtualEntity, SwitchEntity):
         self._attr_is_on = state.state.lower() == STATE_ON
 
     def _update_attributes(self):
-        super()._update_attributes();
+        super()._update_attributes()
         self._attr_extra_state_attributes.update({
             name: value for name, value in (
                 (ATTR_DEVICE_CLASS, self._attr_device_class),

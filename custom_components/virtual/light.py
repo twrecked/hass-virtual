@@ -6,31 +6,32 @@ from __future__ import annotations
 
 import logging
 import pprint
-
 import voluptuous as vol
+from collections.abc import Callable
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.const import STATE_ON
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     ATTR_COLOR_MODE,
     ATTR_COLOR_TEMP,
-    ATTR_HS_COLOR,
     ATTR_EFFECT,
     ATTR_EFFECT_LIST,
-    DOMAIN,
+    ATTR_HS_COLOR,
+    ColorMode,
+    DOMAIN as PLATFORM_DOMAIN,
+    LightEntity,
     SUPPORT_BRIGHTNESS,
     SUPPORT_COLOR,
     SUPPORT_COLOR_TEMP,
     SUPPORT_EFFECT,
-    LightEntity,
-    ColorMode,
 )
-from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
-from .const import (
-    COMPONENT_DOMAIN,
-    CONF_INITIAL_VALUE,
-)
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import STATE_ON
+from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
+from homeassistant.helpers.typing import HomeAssistantType
+
+from . import get_entity_configs
+from .const import *
 from .entity import VirtualEntity, virtual_schema
 
 
@@ -50,7 +51,7 @@ CONF_SUPPORT_EFFECT = "support_effect"
 CONF_INITIAL_EFFECT = "initial_effect"
 CONF_INITIAL_EFFECT_LIST = "initial_effect_list"
 
-DEFAULT_INITIAL_VALUE = "on"
+DEFAULT_LIGHT_VALUE = "on"
 DEFAULT_SUPPORT_BRIGHTNESS = True
 DEFAULT_INITIAL_BRIGHTNESS = 255
 DEFAULT_SUPPORT_COLOR = False
@@ -63,8 +64,7 @@ DEFAULT_SUPPORT_EFFECT = False
 DEFAULT_INITIAL_EFFECT = "none"
 DEFAULT_INITIAL_EFFECT_LIST = ["rainbow", "none"]
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_INITIAL_VALUE, {
-
+BASE_SCHEMA = virtual_schema(DEFAULT_LIGHT_VALUE, {
     vol.Optional(CONF_SUPPORT_BRIGHTNESS, default=DEFAULT_SUPPORT_BRIGHTNESS): cv.boolean,
     vol.Optional(CONF_INITIAL_BRIGHTNESS, default=DEFAULT_INITIAL_BRIGHTNESS): cv.byte,
     vol.Optional(CONF_SUPPORT_COLOR, default=DEFAULT_SUPPORT_COLOR): cv.boolean,
@@ -76,19 +76,32 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_INITIAL_VALUE, {
     vol.Optional(CONF_SUPPORT_EFFECT, default=DEFAULT_SUPPORT_EFFECT): cv.boolean,
     vol.Optional(CONF_INITIAL_EFFECT, default=DEFAULT_INITIAL_EFFECT): cv.string,
     vol.Optional(CONF_INITIAL_EFFECT_LIST, default=DEFAULT_INITIAL_EFFECT_LIST): cv.ensure_list
-}))
+})
+
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(BASE_SCHEMA)
+
+LIGHT_SCHEMA = vol.Schema(BASE_SCHEMA)
 
 
-async def async_setup_platform(_hass, config, async_add_entities, _discovery_info=None):
-    lights = [VirtualLight(config)]
-    async_add_entities(lights, True)
+async def async_setup_entry(
+        hass: HomeAssistantType,
+        entry: ConfigEntry,
+        async_add_entities: Callable[[list], None],
+) -> None:
+    _LOGGER.debug("setting up the entries...")
+
+    entities = []
+    for entity in get_entity_configs(hass, entry.data[ATTR_GROUP_NAME], PLATFORM_DOMAIN):
+        entity = LIGHT_SCHEMA(entity)
+        entities.append(VirtualLight(entity))
+    async_add_entities(entities)
 
 
 class VirtualLight(VirtualEntity, LightEntity):
 
     def __init__(self, config):
         """Initialize a Virtual light."""
-        super().__init__(config, DOMAIN)
+        super().__init__(config, PLATFORM_DOMAIN)
 
         self._attr_supported_color_modes = {ColorMode.ONOFF}
         self._attr_supported_features = 0

@@ -1,3 +1,5 @@
+0.9.0a1: move to config flow and proper integration support
+
 0.8.0b1: move into beta...
 0.8.0a3: save device tracker location
 0.8.0a2: added locking/unlocking state to locks

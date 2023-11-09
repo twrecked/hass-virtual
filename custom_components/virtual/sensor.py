@@ -5,9 +5,15 @@ This component provides support for a virtual sensor.
 
 import logging
 import voluptuous as vol
+from collections.abc import Callable
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.sensor import DOMAIN, SensorDeviceClass
+from homeassistant.components.sensor import (
+    DOMAIN as PLATFORM_DOMAIN,
+    SensorDeviceClass
+)
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     ATTR_DEVICE_CLASS,
@@ -23,16 +29,11 @@ from homeassistant.const import (
     SIGNAL_STRENGTH_DECIBELS,
     VOLUME_CUBIC_METERS,
 )
-from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.typing import HomeAssistantType
 
-from . import get_entity_from_domain
-from .const import (
-    COMPONENT_DOMAIN,
-    COMPONENT_SERVICES,
-    CONF_CLASS,
-    CONF_INITIAL_VALUE,
-)
+from . import get_entity_from_domain, get_entity_configs
+from .const import *
 from .entity import VirtualEntity, virtual_schema
 
 
@@ -40,17 +41,21 @@ _LOGGER = logging.getLogger(__name__)
 
 DEPENDENCIES = [COMPONENT_DOMAIN]
 
-DEFAULT_INITIAL_VALUE = '0'
+DEFAULT_SENSOR_VALUE = "0"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_INITIAL_VALUE, {
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_SENSOR_VALUE, {
+    vol.Optional(CONF_CLASS): cv.string,
+    vol.Optional(CONF_UNIT_OF_MEASUREMENT, default=""): cv.string,
+}))
+SENSOR_SCHEMA = vol.Schema(virtual_schema(DEFAULT_SENSOR_VALUE, {
     vol.Optional(CONF_CLASS): cv.string,
     vol.Optional(CONF_UNIT_OF_MEASUREMENT, default=""): cv.string,
 }))
 
-SERVICE_SET = 'set'
+SERVICE_SET = "set"
 SERVICE_SCHEMA = vol.Schema({
     vol.Required(ATTR_ENTITY_ID): cv.comp_entity_ids,
-    vol.Required('value'): cv.string,
+    vol.Required(ATTR_VALUE): cv.string,
 })
 
 UNITS_OF_MEASUREMENT = {
@@ -83,9 +88,18 @@ UNITS_OF_MEASUREMENT = {
 }
 
 
-async def async_setup_platform(hass, config, async_add_entities, _discovery_info=None):
-    sensors = [VirtualSensor(config)]
-    async_add_entities(sensors, True)
+async def async_setup_entry(
+        hass: HomeAssistantType,
+        entry: ConfigEntry,
+        async_add_entities: Callable[[list], None],
+) -> None:
+    _LOGGER.debug("setting up the entries...")
+
+    entities = []
+    for entity in get_entity_configs(hass, entry.data[ATTR_GROUP_NAME], PLATFORM_DOMAIN):
+        entity = SENSOR_SCHEMA(entity)
+        entities.append(VirtualSensor(entity))
+    async_add_entities(entities)
 
     async def async_virtual_service(call):
         """Call virtual service handler."""
@@ -93,9 +107,9 @@ async def async_setup_platform(hass, config, async_add_entities, _discovery_info
         await async_virtual_set_service(hass, call)
 
     # Build up services...
-    if not hasattr(hass.data[COMPONENT_SERVICES], DOMAIN):
+    if not hasattr(hass.data[COMPONENT_SERVICES], PLATFORM_DOMAIN):
         _LOGGER.debug("installing handlers")
-        hass.data[COMPONENT_SERVICES][DOMAIN] = 'installed'
+        hass.data[COMPONENT_SERVICES][PLATFORM_DOMAIN] = "installed"
         hass.services.async_register(
             COMPONENT_DOMAIN, SERVICE_SET, async_virtual_service, schema=SERVICE_SCHEMA,
         )
@@ -106,7 +120,7 @@ class VirtualSensor(VirtualEntity, Entity):
 
     def __init__(self, config):
         """Initialize an Virtual Sensor."""
-        super().__init__(config, DOMAIN)
+        super().__init__(config, PLATFORM_DOMAIN)
 
         self._attr_device_class = config.get(CONF_CLASS)
 
@@ -115,7 +129,7 @@ class VirtualSensor(VirtualEntity, Entity):
         if not self._attr_unit_of_measurement and self._attr_device_class in UNITS_OF_MEASUREMENT.keys():
             self._attr_unit_of_measurement = UNITS_OF_MEASUREMENT[self._attr_device_class]
 
-        _LOGGER.info('VirtualSensor: %s created', self.name)
+        _LOGGER.info(f"VirtualSensor: {self.name} created")
 
     def _create_state(self, config):
         super()._create_state(config)
@@ -128,7 +142,7 @@ class VirtualSensor(VirtualEntity, Entity):
         self._attr_state = state.state
 
     def _update_attributes(self):
-        super()._update_attributes();
+        super()._update_attributes()
         self._attr_extra_state_attributes.update({
             name: value for name, value in (
                 (ATTR_DEVICE_CLASS, self._attr_device_class),
@@ -143,7 +157,7 @@ class VirtualSensor(VirtualEntity, Entity):
 
 
 async def async_virtual_set_service(hass, call):
-    for entity_id in call.data['entity_id']:
-        value = call.data['value']
+    for entity_id in call.data[ATTR_ENTITY_ID]:
+        value = call.data[ATTR_VALUE]
         _LOGGER.debug(f"setting {entity_id} to {value})")
-        get_entity_from_domain(hass, DOMAIN, entity_id).set(value)
+        get_entity_from_domain(hass, PLATFORM_DOMAIN, entity_id).set(value)
