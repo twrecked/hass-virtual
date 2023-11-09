@@ -11,8 +11,8 @@ on:
 
 jobs:
   validate:
-    name: HASS Validation
+    name: hassfest Validation
     runs-on: "ubuntu-latest"
     steps:
-        - uses: "actions/checkout@v2"
-        - uses: "home-assistant/actions/hassfest@master"
+      - uses: "actions/checkout@v2"
+      - uses: "home-assistant/actions/hassfest@master"
