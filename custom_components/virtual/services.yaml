@@ -26,7 +26,7 @@ set:
   fields:
     entity_id:
       description: Name(s) of entities to toggle
-      example: 'binary_sensor.virtual_motion_1'
+      example: 'sensor.virtual_motion_battery'
     value:
       description: Value to set
       example: 10
@@ -40,3 +40,13 @@ set_available:
     value:
       description: Value to set
       example: false
+
+move:
+  description: Move a device tracker to a new location
+  fields:
+    entity_id:
+      description: Name(s) of entities to set
+      example: 'device_tracker.kasandra'
+    location:
+      description: Where to move to
+      example: 'home'

@@ -8,10 +8,85 @@
     "step": {
       "user": {
         "title": "Virtual Database",
-        "description": "Enter the group name and path to a file containing the virtuyal devices. If it does not exist an empty one will be created.",
+        "description": "Enter the group name and path to a file containing the virtual devices. If it does not exist an empty one will be created.",
         "data": {
           "group_name": "Group",
           "file_name": "File"
+        }
+      }
+    }
+  },
+
+  "services": {
+    "turn_on": {
+      "name": "Turn On",
+      "description": "Turn on a binary sensor.",
+      "fields": {
+        "entity_id": {
+          "name": "Entity Id",
+          "description": "Name(s) of entities to set"
+        }
+      }
+    },
+    "turn_off": {
+      "name": "Turn Off",
+      "description": "Turn off a binary sensor.",
+      "fields": {
+        "entity_id": {
+          "name": "Entity Id",
+          "description": "Name(s) of entities to set"
+        }
+      }
+    },
+    "toggle": {
+      "name": "Toggle",
+      "description": "Toggle a binary sensor.",
+      "fields": {
+        "entity_id": {
+          "name": "Entity Id",
+          "description": "Name(s) of entities to set"
+        }
+      }
+    },
+    "set": {
+      "name": "Set",
+      "description": "Set the value of a sensor.",
+      "fields": {
+        "entity_id": {
+          "name": "Entity Id",
+          "description": "Name(s) of entities to set"
+        },
+        "value": {
+          "name": "Value",
+          "description": "Value to set state to."
+        }
+      }
+    },
+    "set_available": {
+      "name": "Set Availability",
+      "description": "Set availability of an entity.",
+      "fields": {
+        "entity_id": {
+          "name": "Entity Id",
+          "description": "Name(s) of entities to set"
+        },
+        "value": {
+          "name": "Value",
+          "description": "Value to set state availability to."
+        }
+      }
+    },
+    "move": {
+      "name": "Move",
+      "description": "Move a device tracker to a new location.",
+      "fields": {
+        "entity_id": {
+          "name": "Entity Id",
+          "description": "Name(s) of device tracker to move"
+        },
+        "location": {
+          "name": "Location",
+          "description": "Where the device tracker is."
         }
       }
     }
