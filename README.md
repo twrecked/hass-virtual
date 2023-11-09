@@ -31,16 +31,17 @@ inline.
 - _configuration_; the settings are still available you only need to edit them
   in one place, `virtual.yaml`. The layout should be obvious after the
   upgrade.
+- _multiple integration instances_; you can group virtual devices, each group
+  will use a different configuration file
+- _services_; they follow the _Home Assistant_ standard
 - _device groupings_; for example, a motion detector can have a motion
   detection entity and a battery entity, upgraded devices will have a one to
   one relationship. For example, the following will create a motion device
   with 2 entities. If you don't provide a name for an entity the system will
   provide a default.
-- _multiple integration instances_; you can group virtual devices, each group
-  will use a different configuration file
 
 ```yaml
-  Mezzaine Motion:
+  Mezzanine Motion:
     - platform: binary_sensor
       initial_value: 'off'
       class: motion
@@ -119,37 +120,75 @@ development branches this is the easiest way to install.
 
 ## Component Configuration
 
-**This is no longer valid, all config is in `virtual.yaml`.**
-
-Add the following to your `configuration.yaml` to enable the component:
-
-```yaml
-virtual:
-```
-
-To add multiple components repeat the platform.
+All component configuration is done through a _yaml_ file. There is a single
+file per integration instance. The default file, created on upgrade, is
+`/config/virtual.yaml`. An empty file looks like this:
 
 ```yaml
-switch:
-  - platform: virtual
-    name: Switch 1
-  - platform: virtual
-    name: Switch 2
+version: 1
+devices: {}
 ```
 
-### Naming
+- _version_; this is expected and is currently 1
+- _devices_; this is a list of devices and entities associated with that
+  device
 
-By default, the code creates entities with `virtual` as part of their name.
-`Switch 1` in the previous example will give an entity of
-`switch.virtual_switch_1`. If you don't want the `virtual_` prefix add a `!`
-to the device name. For example:
+This is a small example of an imported file: 
 
 ```yaml
-switch:
-  - platform: virtual
-    name: !Switch 1
+version: 1
+devices: 
+ Living Room Sensor:
+  - platform: binary_sensor
+    name: Living Room Motion
+    initial_value: 'off'
+    class: motion
+ Back Door Sensor:
+  - platform: binary_sensor
+    name: Back Door
+    initial_value: 'off'
+    class: door
 ```
 
+Note that these entities have explicit names, this is because these entities
+were imported and the integration will re-create the same entity and
+unique IDs as previous version. You do not need to assign a name on new
+entries, the system will provide a default suffix based on device class. But,
+you can also choose to provide names if you wish.
+
+This is the same file without the names:
+
+```yaml
+version: 1
+devices: 
+  Living Room Sensor:
+  - platform: binary_sensor
+    initial_value: 'off'
+    class: motion
+  Back Door Sensor:
+  - platform: binary_sensor
+    initial_value: 'off'
+    class: door
+```
+
+In this case it will create 2 entities, one called `Living Room Sensor motion`
+and `Back Door Sensor door`. The default naming can get a little hairy but you
+can alter it from the _Integration_ settings.
+
+_From now on I will exclude the `version` and `devices` keys._
+
+You can also define virtual multi sensors. In this example a multi sensor
+devices provides 2 entities.
+
+```yaml
+  Living Room Multi Sensor:
+  - platform: binary_sensor
+    initial_value: 'off'
+    class: motion
+  - platform: sensor
+    initial_value: '20'
+    class: temperature
+```
 
 ### Availability
 
@@ -169,7 +208,7 @@ If you have set an `initial_value` it will only be used if the device state is
 not restored. The following switch will always start _on_.
 
 ```yaml
-switch:
+  Test Switch:
   - platform: virtual
     name: Switch 1
     persistent: False
@@ -181,10 +220,8 @@ switch:
 To add a virtual switch use the following:
 
 ```yaml
-switch:
-  - platform: virtual
-    name: Switch 1
-    initial_availability: True
+  Test Switch:
+  - platform: switch
 ```
 
 
@@ -193,12 +230,10 @@ To add a virtual binary_sensor use the following. It supports all standard
 classes.
 
 ```yaml
-binary_sensor:
-  - platform: virtual
-    name: 'Binary Sensor 1'
+  Test Binary Sensor:
+  - platform: binary_sensor
     initial_value: 'on'
     class: presence
-    initial_availability: True
 ```
 
 Use the `virtual.turn_on`, `virtual.turn_off` and `virtual.toggle` services to
@@ -210,12 +245,11 @@ manipulate the binary sensors.
 To add a virtual sensor use the following:
 
 ```yaml
-- platform: virtual
-  name: 'Temperature 1'
-  class: temperature
-  initial_value: 37
-  initial_availability: true
-  unit_of_measurement: 'F'
+  Test Sensor:
+  - platform: sensor
+    class: temperature
+    initial_value: 37
+    unit_of_measurement: 'F'
 ```
 
 Use the `virtual.set` service to manipulate the sensor value.
@@ -230,9 +264,8 @@ be found here:
 To add a virtual light use the following:
 
 ```yaml
-light:
-  - platform: virtual
-    name: 'Light 1'
+  Test Lights:
+  - platform: light
     initial_value: 'on'
     support_brightness: true
     initial_brightness: 100
@@ -242,7 +275,6 @@ light:
     initial_color_temp: 255
     support_white_value: true
     initial_white_value: 240
-    initial_availability: true
 ```
 
 Only `name` is required.
@@ -257,21 +289,18 @@ _Note; *white_value is deprecated and will be removed in future releases._
 To add a virtual lock use the following:
 
 ```yaml
-lock:
-  - platform: virtual
+  Test Lock:
+  - platform: lock
     name: Front Door Lock
-    initial_availability: true
     initial_value: locked
     locking_time: 5
     jamming_test: 5
 ```
 
 - Persistent Configuration
-  - `initial_availibilty`: optional, default `True`; is device available at start up
   - `initial_value`: optional, default `locked`; any other value will result in the lock
     being unlocked at start up
 - Per Run Configuration
-  - `name`: _required_; device name
   - `locking_time`: optional, default `0` seconds; any positive value will result in a
     locking or unlocking phase that lasts `locking_time` seconds
   - `jamming_test`: optional, default `0` tries; any positive value will result in a
@@ -282,17 +311,15 @@ lock:
 To add a virtual fan use the following:
 
 ```yaml
-fan:
-  - platform: virtual
-    name: Office Fan
+  Test Fan:
+  - platform: fan
     speed: True
     speed_count: 5
     direction: True
     oscillate: True
-    initial_availability: true
 ```
 
-Only `name` is required. You only need one of `speed` or `speed_count`.
+You only need one of `speed` or `speed_count`.
 - `speed`; if `True` then fan can be set to low, medium and high speeds
 - `speed_count`; number of speeds to allow, these will be broken down into
   percentages. 4 speeds = 25, 50, 75 and 100%.
@@ -304,51 +331,29 @@ Only `name` is required. You only need one of `speed` or `speed_count`.
 To add a virtual cover use the following:
 
 ```yaml
-cover:
-  - platform: virtual
-    name: Window cover
+  Test Cover:
+  - platform: cover
     initial_value: 'closed'
-    initial_availability: true
-    persistent: false
 ```
 
-`name` is required. By the moment, only `open` (default `initial_value`)
-and `closed` states are supported and, therefore, only `cover.cover_open`
-and `cover.cover_close` services are available.
+At the moment, only `open` (default `initial_value`) and `closed` states are
+supported and, therefore, only `cover.cover_open` and `cover.cover_close`
+services are available.
 
 ### Device Tracking
 
 To add a virtual device tracker use the following:
 
 ```yaml
-device_tracker:
-  - platform: virtual
-    devices:
-      - name: virtual_user1
-        peristent: True
-        location: home
-      - name: virtual_user2
-        peristent: False
-        location: not_home
+  Test Device_Tracker:
+  - platform: device_tracker
+    initial_value: home
 ```
 
-Only `name` is required.
 - `persistent`: default `True`; if `True` then entity location is remembered
   across restarts otherwise entity always starts at `location`
 - `location`: default `home`; this sets the device location when it is created
   or if the device is not `persistent`
 
-Use the `device_tracker.see` service to change device locations.
+Use the `virtual.move` service to change device locations.
 
-
-#### Old Style Configuration
-The old style configuration will still work. They will be moved to home on
-initial creation and their location will survive restarts.
-
-```yaml
-device_tracker:
-  - platform: virtual
-    devices:
-      - virtual_user1
-      - virtual_user2
-```
