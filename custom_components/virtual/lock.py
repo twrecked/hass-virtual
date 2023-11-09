@@ -65,9 +65,9 @@ async def async_setup_entry(
 class VirtualLock(VirtualEntity, LockEntity):
     """Representation of a Virtual lock."""
 
-    _change_time: timedelta = timedelta(seconds=0)
-    _test_jamming: int = 0
-    
+    # _change_time: timedelta = timedelta(seconds=0)
+    # _test_jamming: int = 0
+    #
     def __init__(self, hass, config):
         """Initialize the Virtual lock device."""
         super().__init__(config, PLATFORM_DOMAIN)

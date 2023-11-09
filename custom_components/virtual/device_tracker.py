@@ -73,8 +73,6 @@ async def async_setup_entry(
 class VirtualDeviceTracker(TrackerEntity, VirtualEntity):
     """Represent a tracked device."""
 
-    _location: str | None = None
-
     def __init__(self, config):
         """Initialize a Virtual Device Tracker."""
 
@@ -84,6 +82,9 @@ class VirtualDeviceTracker(TrackerEntity, VirtualEntity):
             config[CONF_INITIAL_VALUE] = config.pop(CONF_LOCATION)
 
         super().__init__(config, PLATFORM_DOMAIN)
+
+        self._location = None
+
         _LOGGER.debug(f"{self._attr_name}, available={self._attr_available}")
         _LOGGER.debug(f"{self._attr_name}, entity={self.entity_id}")
 

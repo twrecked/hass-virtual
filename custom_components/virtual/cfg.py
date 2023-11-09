@@ -235,9 +235,9 @@ def _make_suffix(platform, device_class):
     """
     if platform == Platform.BINARY_SENSOR or platform == Platform.SENSOR:
         if device_class is None:
-            return "_unknown"
+            return "unknown"
         else:
-            return f"_{device_class}"
+            return f"{device_class}"
     return ""
 
 
@@ -248,18 +248,15 @@ class BlendedCfg(object):
     them with flow data and options.
     """
 
-    _group_name: str = ""
-    _file_name: str = ""
-    _changed: bool = False
-
-    _meta_data = {}
-    _devices = []
-    _entities = {}
-
     def __init__(self, flow_data):
         self._group_name = flow_data[ATTR_GROUP_NAME]
         self._file_name = flow_data[ATTR_FILE_NAME]
-        self.load()
+        self._changed: bool = False
+
+        self._meta_data = {}
+        self._orphaned_entities = {}
+        self._devices = []
+        self._entities = {}
 
     def _load_meta_data(self):
         return _load_meta_data(self._group_name)
@@ -270,11 +267,6 @@ class BlendedCfg(object):
 
     def _load_user_data(self):
         return _load_user_data(self._file_name)
-        # try:
-        #     entities = load_yaml(self._file_name).get(ATTR_DEVICES, [])
-        # except Exception as e:
-        #     _LOGGER.debug(f"failed to read virtual file {str(e)}")
-        # return entities
 
     def load(self):
         meta_data = self._load_meta_data()
@@ -282,6 +274,7 @@ class BlendedCfg(object):
 
         _LOGGER.debug(f"loaded-meta-data={meta_data}")
         _LOGGER.debug(f"loaded-devices={devices}")
+        _LOGGER.debug(f"entities={self._entities}")
 
         # Let's fix up the devices/entities
         for device_name, entities in devices.items():
@@ -294,6 +287,7 @@ class BlendedCfg(object):
 
             for entity in entities:
 
+                entity = copy.deepcopy(entity)
                 platform = entity.pop(CONF_PLATFORM)
                 device_class = entity.get(CONF_CLASS, None)
 
@@ -311,7 +305,7 @@ class BlendedCfg(object):
                     unique_id = _make_unique_id()
                     meta_data.update({name: {
                         ATTR_UNIQUE_ID: unique_id,
-                        ATTR_ENTITY_ID: _make_entity_id(device_class, name)
+                        ATTR_ENTITY_ID: _make_entity_id(platform, name)
                     }})
                     self._changed = True
 
@@ -333,30 +327,35 @@ class BlendedCfg(object):
 
                 # Now store in the correct place. Move off temporary meta
                 # data list.
+                # _LOGGER.debug(f"entities={self._entities}")
                 if platform not in self._entities:
+                    _LOGGER.debug(f"creating {platform}")
                     self._entities[platform] = []
                 self._entities[platform].append(entity)
                 self._meta_data.update({
                     name: meta_data.pop(name)
                 })
 
-        # # Create orphaned list. If we have anything here we need to update
-        # # the saved meta data.
-        # for switch, values in meta_data.items():
-        #     values[CONF_NAME] = switch
-        #     self._orphaned_switches.update({
-        #         values[ATTR_UNIQUE_ID]: values
-        #     })
-        #     self._changed = True
-        #
-        # # Make sure changes are kept.
-        # if self._changed:
-        #     self.save_meta_data()
+        # Create orphaned list. If we have anything here we need to update
+        # the saved meta data.
+        for switch, values in meta_data.items():
+            values[CONF_NAME] = switch
+            self._orphaned_entities.update({
+                values[ATTR_UNIQUE_ID]: values
+            })
+            self._changed = True
+
+        # Make sure changes are kept.
+        if self._changed:
+            self._save_meta_data()
+
         _LOGGER.debug(f"meta-data={self._meta_data}")
         _LOGGER.debug(f"devices={self._devices}")
         _LOGGER.debug(f"entities={self._entities}")
+        _LOGGER.debug(f"orphaned-entities={self._orphaned_entities}")
 
     def delete(self):
+        _LOGGER.debug(f"deleting {self._group_name}")
         _delete_meta_data(self._group_name)
 
     @property
@@ -365,7 +364,11 @@ class BlendedCfg(object):
 
     @property
     def entities(self):
-        return self._entities
+        return copy.deepcopy(self._entities)
+
+    @property
+    def orphaned_entities(self):
+        return self._orphaned_entities
 
     @property
     def binary_sensor_config(self):
