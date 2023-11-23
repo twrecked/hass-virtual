@@ -186,7 +186,11 @@ def _parse_old_config(devices, configs, platform):
       will only be one entity per device
     """
     for config in configs:
+        if not isinstance(config, dict):
+            _LOGGER.debug(f"not dictionary={config}")
+            continue
         if config[CONF_PLATFORM] != COMPONENT_DOMAIN:
+            _LOGGER.debug(f"not platform={config}")
             continue
 
         # Copy and fix up config.
