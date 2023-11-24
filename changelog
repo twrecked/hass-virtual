@@ -1,4 +1,5 @@
 0.9.0a3:
+  fix device tracker import issue
   Slovakian translations, thanks @misa1515
 0.9.0a2:
   add extra import debug
