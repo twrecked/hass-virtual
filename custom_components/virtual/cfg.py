@@ -411,10 +411,12 @@ class UpgradeCfg(object):
         for device_trackers in all_device_trackers:
             if device_trackers[CONF_PLATFORM] != COMPONENT_DOMAIN:
                 continue
-            for device_tracker in device_trackers.get("devices", []):
+            for device_tracker_name in device_trackers.get("devices", []):
+                if isinstance(device_tracker_name, dict):
+                    device_tracker_name = device_tracker_name[CONF_NAME]
                 devices = _parse_old_config(devices, [{
                     CONF_PLATFORM: COMPONENT_DOMAIN,
-                    CONF_NAME: device_tracker[CONF_NAME]
+                    CONF_NAME: device_tracker_name
                 }], str(Platform.DEVICE_TRACKER))
 
         _LOGGER.info(f"devices={devices}")
