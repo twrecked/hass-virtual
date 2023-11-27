@@ -52,6 +52,14 @@ SENSOR_SCHEMA = vol.Schema(virtual_schema(SENSOR_DEFAULT_INITIAL_VALUE, {
 DB_LOCK = threading.Lock()
 
 
+def _fix_value(value):
+    """ If needed, convert value into a type that can be stored in yaml.
+    """
+    if isinstance(value, timedelta):
+        return max(value.seconds, 1)
+    return value
+
+
 def _load_meta_data(group_name: str):
     """Read in meta data for a particular group.
     """
@@ -157,14 +165,6 @@ def _fix_config(config):
     return entries
 
 
-def _fix_value(value):
-    """ If needed, convert value into a type that can be stored in yaml.
-    """
-    if isinstance(value, timedelta):
-        return max(value.seconds, 1)
-    return value
-
-
 def _upgrade_name(name: str):
     """We're making the non virtual prefix the default so this flips the naming.
     """
@@ -196,6 +196,9 @@ def _parse_old_config(devices, configs, platform):
         config = copy.deepcopy(config)
         config[CONF_PLATFORM] = platform
         config[CONF_NAME] = _upgrade_name(config[CONF_NAME])
+
+        # Fix values that need to be saved in yaml
+        config = {k: _fix_value(v) for k, v in config.items()}
 
         # Insert or create a device for it.
         if config[CONF_NAME] in devices:
@@ -442,7 +445,7 @@ class UpgradeCfg(object):
         _save_meta_data(IMPORTED_GROUP_NAME, devices_meta_data)
 
     @staticmethod
-    def create_flow_data(config):
+    def create_flow_data(_config):
         """ Take the current aarlo config and make the new flow configuration.
         """
         return {
