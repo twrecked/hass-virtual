@@ -21,7 +21,7 @@ from .const import *
 from .cfg import BlendedCfg, UpgradeCfg
 
 
-__version__ = '0.9.0a2'
+__version__ = '0.9.0a4'
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -174,7 +174,7 @@ async def async_virtual_set_availability_service(hass, call):
     entity_id = call.data['entity_id']
     value = call.data['value']
 
-    if not type(value)==bool:
+    if not type(value) == bool:
         value = bool(util.strtobool(value))
     domain = entity_id.split(".")[0]
     _LOGGER.info("{} set_avilable(value={})".format(entity_id, value))
