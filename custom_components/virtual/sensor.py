@@ -17,6 +17,7 @@ from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     ATTR_DEVICE_CLASS,
+    ATTR_ICON,
     ATTR_UNIT_OF_MEASUREMENT,
     CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
     CONCENTRATION_PARTS_PER_MILLION,
@@ -46,10 +47,12 @@ DEFAULT_SENSOR_VALUE = "0"
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_SENSOR_VALUE, {
     vol.Optional(CONF_CLASS): cv.string,
     vol.Optional(CONF_UNIT_OF_MEASUREMENT, default=""): cv.string,
+    vol.Optional(CONF_ICON): cv.string,
 }))
 SENSOR_SCHEMA = vol.Schema(virtual_schema(DEFAULT_SENSOR_VALUE, {
     vol.Optional(CONF_CLASS): cv.string,
     vol.Optional(CONF_UNIT_OF_MEASUREMENT, default=""): cv.string,
+    vol.Optional(CONF_ICON): cv.string,
 }))
 
 SERVICE_SET = "set"
@@ -123,6 +126,7 @@ class VirtualSensor(VirtualEntity, Entity):
         super().__init__(config, PLATFORM_DOMAIN)
 
         self._attr_device_class = config.get(CONF_CLASS)
+        self._attr_icon = config.get(CONF_ICON)
 
         # Set unit of measurement
         self._attr_unit_of_measurement = config.get(CONF_UNIT_OF_MEASUREMENT)
@@ -147,6 +151,7 @@ class VirtualSensor(VirtualEntity, Entity):
             name: value for name, value in (
                 (ATTR_DEVICE_CLASS, self._attr_device_class),
                 (ATTR_UNIT_OF_MEASUREMENT, self._attr_unit_of_measurement),
+                (ATTR_ICON, self._attr_icon),
             ) if value is not None
         })
 

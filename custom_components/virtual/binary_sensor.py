@@ -13,7 +13,7 @@ from homeassistant.components.binary_sensor import (
     DOMAIN as PLATFORM_DOMAIN
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_ENTITY_ID, ATTR_DEVICE_CLASS, STATE_ON
+from homeassistant.const import ATTR_ENTITY_ID, ATTR_DEVICE_CLASS, ATTR_ICON, STATE_ON
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.helpers.typing import HomeAssistantType
 
@@ -30,9 +30,11 @@ DEFAULT_BINARY_SENSOR_VALUE = "off"
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_BINARY_SENSOR_VALUE, {
     vol.Optional(CONF_CLASS): cv.string,
+    vol.Optional(CONF_ICON): cv.string,
 }))
 BINARY_SENSOR_SCHEMA = vol.Schema(virtual_schema(DEFAULT_BINARY_SENSOR_VALUE, {
     vol.Optional(CONF_CLASS): cv.string,
+    vol.Optional(CONF_ICON): cv.string,
 }))
 
 SERVICE_ON = "turn_on"
@@ -89,6 +91,7 @@ class VirtualBinarySensor(VirtualEntity, BinarySensorEntity):
         super().__init__(config, PLATFORM_DOMAIN)
 
         self._attr_device_class = config.get(CONF_CLASS)
+        self._attr_icon = config.get(CONF_ICON)
 
         _LOGGER.info(f"VirtualBinarySensor: {self.name} created")
 
@@ -107,6 +110,7 @@ class VirtualBinarySensor(VirtualEntity, BinarySensorEntity):
         self._attr_extra_state_attributes.update({
             name: value for name, value in (
                 (ATTR_DEVICE_CLASS, self._attr_device_class),
+                (ATTR_ICON, self._attr_icon),
             ) if value is not None
         })
 
