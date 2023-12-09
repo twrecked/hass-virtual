@@ -1,0 +1,85 @@
+{
+  "title": "Virtuální Zařízení",
+  "config": {
+    "error": {
+      "group_name_used": "Tento název skupiny je již použit, zkuste jiný.",
+      "file_name_used": "Tento název souboru je již použit, zkuste jiný."
+    },
+    "step": {
+      "user": {
+        "title": "Virtuální Databáze",
+        "description": "Zadejte název skupiny a cestu k souboru obsahujícímu virtuální zařízení. Pokud nexistuje, vytvoří se nový.",
+        "data": {
+          "group_name": "Skupina",
+          "file_name": "Soubor"
+        }
+      }
+    }
+  },
+  "services": {
+    "turn_on": {
+      "name": "Zapnout",
+      "description": "Zapnout binární senzor.",
+      "fields": {
+        "entity_id": {
+          "name": "Id Entity",
+          "description": "Názvy entit, které se mají nastavit"
+        }
+      }
+    },
+    "turn_off": {
+      "name": "Vypnout",
+      "description": "Vypnout binární senzor.",
+      "fields": {
+        "entity_id": {
+          "name": "Entity Id",
+          "description": "Názvy entit, které se mají nastavit"
+        }
+      }
+    },
+    "toggle": {
+      "name": "Přepnout",
+      "description": "Přepnout binární senzor.",
+      "fields": {
+        "entity_id": {
+          "name": "Id Entity",
+          "description": "Názvy entit, které se mají nastavit"
+        }
+      }
+    },
+    "set": {
+      "name": "Nastavit",
+      "description": "Nastavit hodnotu senzoru.",
+      "fields": {
+        "entity_id": {
+          "name": "Id Entity",
+          "description": "Názvy entit, které se mají nastavit"
+        },
+        "value": {
+          "name": "Hodnota",
+          "description": "Hodnota, na kterou se má nastavit stav senzoru."
+        }
+      }
+    },
+    "set_available": {
+      "name": "Nastavit dostupnost.",
+      "description": "Nastavit dostupnost entity.",
+      "fields": {
+        "value": {
+          "name": "Hodnota",
+          "description": "Je entita dostupná.."
+        }
+      }
+    },
+    "move": {
+      "name": "Přesunout",
+      "description": "Přesune sledovač zařízení na novou pozici.",
+      "fields": {
+        "location": {
+          "name": "Pozice",
+          "description": "Kam přesunout sledovač zařízení."
+        }
+      }
+    }
+  }
+}
