@@ -21,7 +21,7 @@ from .const import *
 from .cfg import BlendedCfg, UpgradeCfg
 
 
-__version__ = ''
+__version__ = '0.9.0a5'
 
 _LOGGER = logging.getLogger(__name__)
 
