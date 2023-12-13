@@ -10,18 +10,26 @@ from distutils import util
 import homeassistant.helpers.config_validation as cv
 import homeassistant.helpers.device_registry as dr
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
+from homeassistant.helpers.issue_registry import (
+    async_create_issue,
+    IssueSeverity
+)
 from homeassistant.helpers.service import verify_domain_control
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.config_entries import ConfigEntry, SOURCE_IMPORT
 from homeassistant.const import ATTR_ENTITY_ID, CONF_SOURCE, Platform
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import (
+    DOMAIN as HOMEASSISTANT_DOMAIN,
+    HomeAssistant,
+    callback
+)
 from homeassistant.exceptions import HomeAssistantError
 
 from .const import *
 from .cfg import BlendedCfg, UpgradeCfg
 
 
-__version__ = '0.9.0a5'
+__version__ = '0.9.0a6'
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -64,6 +72,21 @@ def setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 data=config
             )
         )
+
+        async_create_issue(
+            hass,
+            HOMEASSISTANT_DOMAIN,
+            f"deprecated_yaml_{COMPONENT_DOMAIN}",
+            is_fixable=False,
+            issue_domain=COMPONENT_DOMAIN,
+            severity=IssueSeverity.WARNING,
+            translation_key="deprecated_yaml",
+            translation_placeholders={
+                "domain": COMPONENT_DOMAIN,
+                "integration_title": "Virtual",
+            },
+        )
+
         return True
 
     _LOGGER.debug('ignoring a YAML setup')

@@ -1,6 +1,8 @@
+0.9.0a6:
+  add an import notice
+  added Czech translation, thanks @Tony763
 0.9.0a5:
   fix availability service issue
-  added Czech translation, thanks @Tony763
 0.9.0a4:
   fix time delta import issue
 0.9.0a3:
