@@ -29,7 +29,7 @@ from .const import *
 from .cfg import BlendedCfg, UpgradeCfg
 
 
-__version__ = '0.9.0a6'
+__version__ = '0.9.0a7'
 
 _LOGGER = logging.getLogger(__name__)
 
