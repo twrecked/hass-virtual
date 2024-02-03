@@ -21,13 +21,18 @@ from homeassistant.const import (
     CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
     CONCENTRATION_PARTS_PER_MILLION,
     CONF_UNIT_OF_MEASUREMENT,
-    FREQUENCY_GIGAHERTZ,
+    LIGHT_LUX,
     PERCENTAGE,
-    POWER_VOLT_AMPERE,
     POWER_VOLT_AMPERE_REACTIVE,
-    PRESSURE_HPA,
     SIGNAL_STRENGTH_DECIBELS,
-    VOLUME_CUBIC_METERS,
+    UnitOfApparentPower,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfEnergy,
+    UnitOfFrequency,
+    UnitOfPower,
+    UnitOfPressure,
+    UnitOfVolume,
 )
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.typing import HomeAssistantType
@@ -59,12 +64,12 @@ SERVICE_SCHEMA = vol.Schema({
 })
 
 UNITS_OF_MEASUREMENT = {
-    SensorDeviceClass.APPARENT_POWER: POWER_VOLT_AMPERE,  # apparent power (VA)
+    SensorDeviceClass.APPARENT_POWER: UnitOfApparentPower.VOLT_AMPERE,  # apparent power (VA)
     SensorDeviceClass.BATTERY: PERCENTAGE,  # % of battery that is left
     SensorDeviceClass.CO: CONCENTRATION_PARTS_PER_MILLION,  # ppm of CO concentration
     SensorDeviceClass.CO2: CONCENTRATION_PARTS_PER_MILLION,  # ppm of CO2 concentration
     SensorDeviceClass.HUMIDITY: PERCENTAGE,  # % of humidity in the air
-    SensorDeviceClass.ILLUMINANCE: "lm",  # current light level (lx/lm)
+    SensorDeviceClass.ILLUMINANCE: LIGHT_LUX,  # current light level (lx/lm)
     SensorDeviceClass.NITROGEN_DIOXIDE: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of nitrogen dioxide
     SensorDeviceClass.NITROGEN_MONOXIDE: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of nitrogen monoxide
     SensorDeviceClass.NITROUS_OXIDE: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of nitrogen oxide
@@ -75,16 +80,16 @@ UNITS_OF_MEASUREMENT = {
     SensorDeviceClass.SIGNAL_STRENGTH: SIGNAL_STRENGTH_DECIBELS,  # signal strength (dB/dBm)
     SensorDeviceClass.SULPHUR_DIOXIDE: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of sulphur dioxide
     SensorDeviceClass.TEMPERATURE: "C",  # temperature (C/F)
-    SensorDeviceClass.PRESSURE: PRESSURE_HPA,  # pressure (hPa/mbar)
-    SensorDeviceClass.POWER: "kW",  # power (W/kW)
-    SensorDeviceClass.CURRENT: "A",  # current (A)
-    SensorDeviceClass.ENERGY: "kWh",  # energy (Wh/kWh/MWh)
-    SensorDeviceClass.FREQUENCY: FREQUENCY_GIGAHERTZ,  # energy (Hz/kHz/MHz/GHz)
+    SensorDeviceClass.PRESSURE: UnitOfPressure.HPA,  # pressure (hPa/mbar)
+    SensorDeviceClass.POWER: UnitOfPower.KILO_WATT,  # power (W/kW)
+    SensorDeviceClass.CURRENT: UnitOfElectricCurrent.AMPERE,  # current (A)
+    SensorDeviceClass.ENERGY: UnitOfEnergy.KILO_WATT_HOUR,  # energy (Wh/kWh/MWh)
+    SensorDeviceClass.FREQUENCY: UnitOfFrequency.GIGAHERTZ,  # energy (Hz/kHz/MHz/GHz)
     SensorDeviceClass.POWER_FACTOR: PERCENTAGE,  # power factor (no unit, min: -1.0, max: 1.0)
     SensorDeviceClass.REACTIVE_POWER: POWER_VOLT_AMPERE_REACTIVE,  # reactive power (var)
     SensorDeviceClass.VOLATILE_ORGANIC_COMPOUNDS: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of vocs
-    SensorDeviceClass.VOLTAGE: "V",  # voltage (V)
-    SensorDeviceClass.GAS: VOLUME_CUBIC_METERS,  # gas (m³)
+    SensorDeviceClass.VOLTAGE: UnitOfElectricPotential.VOLT,  # voltage (V)
+    SensorDeviceClass.GAS: UnitOfVolume.CUBIC_METERS,  # gas (m³)
 }
 
 
