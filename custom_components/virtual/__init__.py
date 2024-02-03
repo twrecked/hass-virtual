@@ -54,7 +54,7 @@ VIRTUAL_PLATFORMS = [
 ]
 
 
-def setup(hass: HomeAssistant, config: ConfigType) -> bool:
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up a virtual component.
     """
 
