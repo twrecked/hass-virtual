@@ -51,7 +51,7 @@ class VirtualFlowHandler(config_entries.ConfigFlow, domain=COMPONENT_DOMAIN):
             # Fill in some defaults.
             user_input = {
                 ATTR_GROUP_NAME: IMPORTED_GROUP_NAME,
-                ATTR_FILE_NAME: IMPORTED_YAML_FILE
+                ATTR_FILE_NAME: default_config_file(self.hass)
             }
 
         return self.async_show_form(
@@ -66,8 +66,8 @@ class VirtualFlowHandler(config_entries.ConfigFlow, domain=COMPONENT_DOMAIN):
         """Import momentary config from configuration.yaml."""
 
         _LOGGER.debug(f"importing aarlo YAML {import_data}")
-        UpgradeCfg.import_yaml(import_data)
-        data = UpgradeCfg.create_flow_data(import_data)
+        UpgradeCfg.import_yaml(self.hass, import_data)
+        data = UpgradeCfg.create_flow_data(self.hass, import_data)
 
         return self.async_create_entry(
             title=f"Imported Virtual Group",
