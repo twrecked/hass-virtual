@@ -1,3 +1,6 @@
+0.9.0a9:
+  I forgot to bump the revision
+  Fix set availability service
 0.9.0a8:
   fix upgrade issue #2, use config functions not hard coded directory locations
 0.9.0a7:
