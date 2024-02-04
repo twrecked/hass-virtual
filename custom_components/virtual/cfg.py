@@ -60,20 +60,20 @@ def _fix_value(value):
     return value
 
 
-def _load_meta_data(group_name: str):
+def _load_meta_data(hass, group_name: str):
     """Read in meta data for a particular group.
     """
     devices = {}
     with DB_LOCK:
         try:
-            with open(META_JSON_FILE, 'r') as meta_file:
+            with open(default_meta_file(hass), 'r') as meta_file:
                 devices = json.load(meta_file).get(ATTR_DEVICES, {})
         except Exception as e:
             _LOGGER.debug(f"no meta data yet {str(e)}")
     return devices.get(group_name, {})
 
 
-def _save_meta_data(group_name, meta_data):
+def _save_meta_data(hass, group_name, meta_data):
     """Save meta data for a particular group name.
     """
     with DB_LOCK:
@@ -81,7 +81,7 @@ def _save_meta_data(group_name, meta_data):
         # Read in current meta data
         devices = {}
         try:
-            with open(META_JSON_FILE, 'r') as meta_file:
+            with open(default_meta_file(hass), 'r') as meta_file:
                 devices = json.load(meta_file).get(ATTR_DEVICES, {})
         except Exception as e:
             _LOGGER.debug(f"no meta data yet {str(e)}")
@@ -95,7 +95,7 @@ def _save_meta_data(group_name, meta_data):
 
         # Write it back out.
         try:
-            with open(META_JSON_FILE, 'w') as meta_file:
+            with open(default_meta_file(hass), 'w') as meta_file:
                 json.dump({
                     ATTR_VERSION: 1,
                     ATTR_DEVICES: devices
@@ -104,7 +104,7 @@ def _save_meta_data(group_name, meta_data):
             _LOGGER.debug(f"couldn't save meta data {str(e)}")
 
 
-def _delete_meta_data(group_name):
+def _delete_meta_data(hass, group_name):
     """Save meta data for a particular group name.
     """
     with DB_LOCK:
@@ -112,7 +112,7 @@ def _delete_meta_data(group_name):
         # Read in current meta data
         devices = {}
         try:
-            with open(META_JSON_FILE, 'r') as meta_file:
+            with open(default_meta_file(hass), 'r') as meta_file:
                 devices = json.load(meta_file).get(ATTR_DEVICES, {})
         except Exception as e:
             _LOGGER.debug(f"no meta data yet {str(e)}")
@@ -124,13 +124,13 @@ def _delete_meta_data(group_name):
 
         # Write it back out.
         try:
-            with open(META_JSON_FILE, 'w') as meta_file:
+            with open(default_meta_file(hass), 'w') as meta_file:
                 json.dump({
                     ATTR_VERSION: 1,
                     ATTR_DEVICES: devices
                 }, meta_file, indent=4)
         except Exception as e:
-            _LOGGER.debug(f"couldn't save meta data {str(e)}")
+            _LOGGER.error(f"couldn't save meta data {str(e)}")
 
 
 def _save_user_data(file_name, devices):
@@ -140,7 +140,7 @@ def _save_user_data(file_name, devices):
             ATTR_DEVICES: devices
         })
     except Exception as e:
-        _LOGGER.debug(f"couldn't save user data {str(e)}")
+        _LOGGER.error(f"couldn't save user data {str(e)}")
 
 
 def _load_user_data(file_name):
@@ -148,7 +148,7 @@ def _load_user_data(file_name):
     try:
         entities = load_yaml(file_name).get(ATTR_DEVICES, [])
     except Exception as e:
-        _LOGGER.debug(f"failed to read virtual file {str(e)}")
+        _LOGGER.error(f"failed to read virtual file {str(e)}")
     return entities
 
 
@@ -254,7 +254,8 @@ class BlendedCfg(object):
     them with flow data and options.
     """
 
-    def __init__(self, flow_data):
+    def __init__(self, hass, flow_data):
+        self._hass = hass
         self._group_name = flow_data[ATTR_GROUP_NAME]
         self._file_name = flow_data[ATTR_FILE_NAME]
         self._changed: bool = False
@@ -265,10 +266,10 @@ class BlendedCfg(object):
         self._entities = {}
 
     def _load_meta_data(self):
-        return _load_meta_data(self._group_name)
+        return _load_meta_data(self._hass, self._group_name)
 
     def _save_meta_data(self):
-        _save_meta_data(self._group_name, self._meta_data)
+        _save_meta_data(self._hass, self._group_name, self._meta_data)
         self._changed = False
 
     def _load_user_data(self):
@@ -359,7 +360,7 @@ class BlendedCfg(object):
 
     def delete(self):
         _LOGGER.debug(f"deleting {self._group_name}")
-        _delete_meta_data(self._group_name)
+        _delete_meta_data(self._hass, self._group_name)
 
     @property
     def devices(self):
@@ -391,7 +392,7 @@ class UpgradeCfg(object):
     """
 
     @staticmethod
-    def import_yaml(config):
+    def import_yaml(hass, config):
         """ Take the current virtual config and make the new yaml file.
 
         Virtual needs a lot of fine tuning so rather than get rid of the
@@ -441,14 +442,17 @@ class UpgradeCfg(object):
 
         _LOGGER.debug(f"devices-meta-data={devices_meta_data}")
 
-        _save_user_data(IMPORTED_YAML_FILE, devices)
-        _save_meta_data(IMPORTED_GROUP_NAME, devices_meta_data)
+        _save_user_data(default_config_file(hass), devices)
+        _save_meta_data(hass, IMPORTED_GROUP_NAME, devices_meta_data)
 
     @staticmethod
-    def create_flow_data(_config):
+    def create_flow_data(hass, _config):
         """ Take the current aarlo config and make the new flow configuration.
         """
+        _LOGGER.debug(f"new-config-file={default_config_file(hass)}")
+        _LOGGER.debug(f"new-meta-file={default_meta_file(hass)}")
+
         return {
             ATTR_GROUP_NAME: IMPORTED_GROUP_NAME,
-            ATTR_FILE_NAME: IMPORTED_YAML_FILE
+            ATTR_FILE_NAME: default_config_file(hass)
         }

@@ -112,7 +112,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Get the config.
     _LOGGER.debug(f"creating new cfg")
-    vcfg = BlendedCfg(entry.data)
+    vcfg = BlendedCfg(hass, entry.data)
     vcfg.load()
 
     # create the devices.
@@ -155,7 +155,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # _LOGGER.debug(f"before hass={hass.data[COMPONENT_DOMAIN]}")
     unload_ok = await hass.config_entries.async_unload_platforms(entry, VIRTUAL_PLATFORMS)
     if unload_ok:
-        bcfg = BlendedCfg(entry.data)
+        bcfg = BlendedCfg(hass, entry.data)
         bcfg.delete()
         hass.data[COMPONENT_DOMAIN].pop(entry.data[ATTR_GROUP_NAME])
     # _LOGGER.debug(f"after hass={hass.data[COMPONENT_DOMAIN]}")

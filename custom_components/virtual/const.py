@@ -27,5 +27,11 @@ DEFAULT_AVAILABILITY = True
 DEFAULT_PERSISTENT = True
 
 IMPORTED_GROUP_NAME = "imported"
-IMPORTED_YAML_FILE = "/config/virtual.yaml"
-META_JSON_FILE = "/config/.storage/virtual.meta.json"
+
+
+def default_config_file(hass) -> str:
+    return hass.config.path("virtual.yaml")
+
+
+def default_meta_file(hass) -> str:
+    return hass.config.path(".storage/virtual.meta.json")
