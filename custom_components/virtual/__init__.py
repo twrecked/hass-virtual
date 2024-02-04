@@ -144,7 +144,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not hasattr(hass.data[COMPONENT_SERVICES], COMPONENT_DOMAIN):
         _LOGGER.debug("installing handlers")
         hass.data[COMPONENT_SERVICES][COMPONENT_DOMAIN] = 'installed'
-        hass.services.async_register(COMPONENT_DOMAIN, SERVICE_AVAILABILE, async_virtual_service_set_available)
+        hass.services.async_register(COMPONENT_DOMAIN, SERVICE_AVAILABILE,
+                                     async_virtual_service_set_available, schema=SERVICE_SCHEMA)
 
     return True
 
@@ -194,13 +195,11 @@ def get_entity_from_domain(hass, domain, entity_id):
 
 
 async def async_virtual_set_availability_service(hass, call):
-    entities = call.data['entity_id']
     value = call.data['value']
-
     if type(value) is not bool:
         value = bool(util.strtobool(value))
 
-    for entity_id in entities:
+    for entity_id in call.data['entity_id']:
         domain = entity_id.split(".")[0]
         _LOGGER.info("{} set_avilable(value={})".format(entity_id, value))
         get_entity_from_domain(hass, domain, entity_id).set_available(value)
