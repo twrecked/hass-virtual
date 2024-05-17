@@ -19,7 +19,7 @@ from homeassistant.const import (
     ATTR_DEVICE_CLASS,
     STATE_ON,
 )
-from homeassistant.helpers.typing import HomeAssistantType
+from homeassistant.core import HomeAssistant
 
 from . import get_entity_configs
 from .const import *
@@ -41,7 +41,7 @@ SWITCH_SCHEMA = vol.Schema(virtual_schema(DEFAULT_SWITCH_VALUE, {
 
 
 async def async_setup_entry(
-        hass: HomeAssistantType,
+        hass: HomeAssistant,
         entry: ConfigEntry,
         async_add_entities: Callable[[list], None],
 ) -> None:
