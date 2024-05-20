@@ -17,10 +17,10 @@ from homeassistant.components.lock import (
     LockEntity,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.const import STATE_LOCKED
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.helpers.event import track_point_in_time
-from homeassistant.helpers.typing import HomeAssistantType
 
 from . import get_entity_configs
 from .const import *
@@ -49,7 +49,7 @@ LOCK_SCHEMA = vol.Schema(virtual_schema(DEFAULT_LOCK_VALUE, {
 
 
 async def async_setup_entry(
-        hass: HomeAssistantType,
+        hass: HomeAssistant,
         entry: ConfigEntry,
         async_add_entities: Callable[[list], None],
 ) -> None:

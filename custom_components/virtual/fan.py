@@ -21,8 +21,8 @@ from homeassistant.components.fan import (
     FanEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
-from homeassistant.helpers.typing import HomeAssistantType
 
 from . import get_entity_configs
 from .const import *
@@ -56,7 +56,7 @@ FAN_SCHEMA = vol.Schema(BASE_SCHEMA)
 
 
 async def async_setup_entry(
-        hass: HomeAssistantType,
+        hass: HomeAssistant,
         entry: ConfigEntry,
         async_add_entities: Callable[[list], None],
 ) -> None:

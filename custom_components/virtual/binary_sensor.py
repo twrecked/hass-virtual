@@ -14,8 +14,8 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ENTITY_ID, ATTR_DEVICE_CLASS, STATE_ON
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
-from homeassistant.helpers.typing import HomeAssistantType
 
 from . import get_entity_from_domain, get_entity_configs
 from .const import *
@@ -44,7 +44,7 @@ SERVICE_SCHEMA = vol.Schema({
 
 
 async def async_setup_entry(
-        hass: HomeAssistantType,
+        hass: HomeAssistant,
         entry: ConfigEntry,
         async_add_entities: Callable[[list], None],
 ) -> None:
