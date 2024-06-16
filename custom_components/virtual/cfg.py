@@ -14,10 +14,10 @@ There are 2 pieces:
   layout.
 """
 
+import aiofiles
 import copy
 import logging
 import json
-import threading
 import voluptuous as vol
 import uuid
 from datetime import timedelta
@@ -30,7 +30,7 @@ from homeassistant.const import (
 )
 from homeassistant.helpers import config_validation as cv
 from homeassistant.util import slugify
-from homeassistant.util.yaml import load_yaml, save_yaml
+from homeassistant.util.yaml import parse_yaml, dump
 
 from .const import *
 from .entity import virtual_schema
@@ -49,8 +49,6 @@ SENSOR_SCHEMA = vol.Schema(virtual_schema(SENSOR_DEFAULT_INITIAL_VALUE, {
     vol.Optional(CONF_UNIT_OF_MEASUREMENT, default=""): cv.string,
 }))
 
-DB_LOCK = threading.Lock()
-
 
 def _fix_value(value):
     """ If needed, convert value into a type that can be stored in yaml.
@@ -60,96 +58,110 @@ def _fix_value(value):
     return value
 
 
-def _load_meta_data(hass, group_name: str):
+async def _async_load_json(file_name):
+    _LOGGER.debug("_async_load_yaml1 file_name for %s", file_name)
+    try:
+        async with aiofiles.open(file_name, 'r') as meta_file:
+            _LOGGER.debug("_async_load_yaml2 file_name for %s", file_name)
+            contents = await meta_file.read()
+            _LOGGER.debug("_async_load_yaml3 file_name for %s", file_name)
+            return json.loads(contents)
+    except Exception as e:
+        _LOGGER.debug("_async_load_yaml3 file_name for %s", file_name)
+        return {}
+
+
+async def _async_save_json(file_name, data):
+    _LOGGER.debug("_async_save_yaml1 file_name for %s", file_name)
+    try:
+        async with aiofiles.open(file_name, 'w') as meta_file:
+            data = json.dumps(data, indent=4)
+            await meta_file.write(data)
+    except Exception as e:
+        _LOGGER.debug("_async_load_yaml3 file_name for %s", file_name)
+
+
+async def _async_load_yaml(file_name):
+    _LOGGER.debug("_async_load_yaml1 file_name for %s", file_name)
+    try:
+        async with aiofiles.open(file_name, 'r') as meta_file:
+            _LOGGER.debug("_async_load_yaml2 file_name for %s", file_name)
+            contents = await meta_file.read()
+            _LOGGER.debug("_async_load_yaml3 file_name for %s", file_name)
+            return parse_yaml(contents)
+    except Exception as e:
+        _LOGGER.debug("_async_load_yaml3 file_name for %s", file_name)
+        return {}
+
+
+async def _async_save_yaml(file_name, data):
+    _LOGGER.debug("_async_save_yaml1 file_name for %s", file_name)
+    try:
+        async with aiofiles.open(file_name, 'w') as meta_file:
+            data = dump(data)
+            await meta_file.write(data)
+    except Exception as e:
+        _LOGGER.debug("_async_load_yaml3 file_name for %s", file_name)
+
+
+async def _load_meta_data(hass, group_name: str):
     """Read in meta data for a particular group.
     """
-    devices = {}
-    with DB_LOCK:
-        try:
-            with open(default_meta_file(hass), 'r') as meta_file:
-                devices = json.load(meta_file).get(ATTR_DEVICES, {})
-        except Exception as e:
-            _LOGGER.debug(f"no meta data yet {str(e)}")
-    return devices.get(group_name, {})
+    data = await _async_load_json(default_meta_file(hass))
+    return data.get(ATTR_DEVICES, {}).get(group_name, {})
 
 
-def _save_meta_data(hass, group_name, meta_data):
+async def _save_meta_data(hass, group_name, meta_data):
     """Save meta data for a particular group name.
     """
-    with DB_LOCK:
+    # Read in current meta data
+    devices = await _async_load_json(default_meta_file(hass))
+    devices = devices.get(ATTR_DEVICES, {})
 
-        # Read in current meta data
-        devices = {}
-        try:
-            with open(default_meta_file(hass), 'r') as meta_file:
-                devices = json.load(meta_file).get(ATTR_DEVICES, {})
-        except Exception as e:
-            _LOGGER.debug(f"no meta data yet {str(e)}")
+    # Update (or add) the group piece.
+    _LOGGER.debug(f"meta before {devices}")
+    devices.update({
+        group_name: meta_data
+    })
+    _LOGGER.debug(f"meta after {devices}")
 
-        # Update (or add) the group piece.
-        _LOGGER.debug(f"meta before {devices}")
-        devices.update({
-            group_name: meta_data
-        })
-        _LOGGER.debug(f"meta after {devices}")
-
-        # Write it back out.
-        try:
-            with open(default_meta_file(hass), 'w') as meta_file:
-                json.dump({
-                    ATTR_VERSION: 1,
-                    ATTR_DEVICES: devices
-                }, meta_file, indent=4)
-        except Exception as e:
-            _LOGGER.debug(f"couldn't save meta data {str(e)}")
+    # Write it back out.
+    await _async_save_json(default_meta_file(hass), {
+        ATTR_VERSION: 1,
+        ATTR_DEVICES: devices
+    })
 
 
-def _delete_meta_data(hass, group_name):
+async def _delete_meta_data(hass, group_name):
     """Save meta data for a particular group name.
     """
-    with DB_LOCK:
 
-        # Read in current meta data
-        devices = {}
-        try:
-            with open(default_meta_file(hass), 'r') as meta_file:
-                devices = json.load(meta_file).get(ATTR_DEVICES, {})
-        except Exception as e:
-            _LOGGER.debug(f"no meta data yet {str(e)}")
+    # Read in current meta data
+    devices = await _async_load_json(default_meta_file(hass))
+    devices = devices.get(ATTR_DEVICES, {})
 
-        # Delete the group piece.
-        _LOGGER.debug(f"meta before {devices}")
-        devices.pop(group_name)
-        _LOGGER.debug(f"meta after {devices}")
+    # Delete the group piece.
+    _LOGGER.debug(f"meta before {devices}")
+    devices.pop(group_name)
+    _LOGGER.debug(f"meta after {devices}")
 
-        # Write it back out.
-        try:
-            with open(default_meta_file(hass), 'w') as meta_file:
-                json.dump({
-                    ATTR_VERSION: 1,
-                    ATTR_DEVICES: devices
-                }, meta_file, indent=4)
-        except Exception as e:
-            _LOGGER.error(f"couldn't save meta data {str(e)}")
+    # Write it back out.
+    await _async_save_json(default_meta_file(hass), {
+        ATTR_VERSION: 1,
+        ATTR_DEVICES: devices
+    })
 
 
-def _save_user_data(file_name, devices):
-    try:
-        save_yaml(file_name, {
-            ATTR_VERSION: 1,
-            ATTR_DEVICES: devices
-        })
-    except Exception as e:
-        _LOGGER.error(f"couldn't save user data {str(e)}")
+async def _save_user_data(file_name, devices):
+    await _async_save_yaml(file_name, {
+        ATTR_VERSION: 1,
+        ATTR_DEVICES: devices
+    })
 
 
-def _load_user_data(file_name):
-    entities = {}
-    try:
-        entities = load_yaml(file_name).get(ATTR_DEVICES, [])
-    except Exception as e:
-        _LOGGER.error(f"failed to read virtual file {str(e)}")
-    return entities
+async def _load_user_data(file_name):
+    entities = await _async_load_yaml(file_name)
+    return entities.get(ATTR_DEVICES, {})
 
 
 def _fix_config(config):
@@ -258,26 +270,16 @@ class BlendedCfg(object):
         self._hass = hass
         self._group_name = flow_data[ATTR_GROUP_NAME]
         self._file_name = flow_data[ATTR_FILE_NAME]
-        self._changed: bool = False
 
         self._meta_data = {}
         self._orphaned_entities = {}
         self._devices = []
         self._entities = {}
 
-    def _load_meta_data(self):
-        return _load_meta_data(self._hass, self._group_name)
-
-    def _save_meta_data(self):
-        _save_meta_data(self._hass, self._group_name, self._meta_data)
-        self._changed = False
-
-    def _load_user_data(self):
-        return _load_user_data(self._file_name)
-
-    def load(self):
-        meta_data = self._load_meta_data()
-        devices = self._load_user_data()
+    async def async_load(self):
+        meta_data = await _load_meta_data(self._hass, self._group_name)
+        devices = await _load_user_data(self._file_name)
+        changed = False
 
         _LOGGER.debug(f"loaded-meta-data={meta_data}")
         _LOGGER.debug(f"loaded-devices={devices}")
@@ -312,7 +314,7 @@ class BlendedCfg(object):
                         ATTR_UNIQUE_ID: unique_id,
                         ATTR_ENTITY_ID: _make_entity_id(platform, name)
                     }})
-                    self._changed = True
+                    changed = True
 
                 # Now copy over the entity id of the device. Not having this is a
                 # bug.
@@ -347,20 +349,20 @@ class BlendedCfg(object):
             self._orphaned_entities.update({
                 values[ATTR_UNIQUE_ID]: values
             })
-            self._changed = True
+            changed = True
 
         # Make sure changes are kept.
-        if self._changed:
-            self._save_meta_data()
+        if changed:
+            await _save_meta_data(self._hass, self._group_name, self._meta_data)
 
         _LOGGER.debug(f"meta-data={self._meta_data}")
         _LOGGER.debug(f"devices={self._devices}")
         _LOGGER.debug(f"entities={self._entities}")
         _LOGGER.debug(f"orphaned-entities={self._orphaned_entities}")
 
-    def delete(self):
+    async def async_delete(self):
         _LOGGER.debug(f"deleting {self._group_name}")
-        _delete_meta_data(self._hass, self._group_name)
+        await _delete_meta_data(self._hass, self._group_name)
 
     @property
     def devices(self):
@@ -392,7 +394,7 @@ class UpgradeCfg(object):
     """
 
     @staticmethod
-    def import_yaml(hass, config):
+    async def async_import_yaml(hass, config):
         """ Take the current virtual config and make the new yaml file.
 
         Virtual needs a lot of fine tuning so rather than get rid of the
@@ -442,8 +444,8 @@ class UpgradeCfg(object):
 
         _LOGGER.debug(f"devices-meta-data={devices_meta_data}")
 
-        _save_user_data(default_config_file(hass), devices)
-        _save_meta_data(hass, IMPORTED_GROUP_NAME, devices_meta_data)
+        await _save_user_data(default_config_file(hass), devices)
+        await _save_meta_data(hass, IMPORTED_GROUP_NAME, devices_meta_data)
 
     @staticmethod
     def create_flow_data(hass, _config):
