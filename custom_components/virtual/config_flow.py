@@ -66,7 +66,7 @@ class VirtualFlowHandler(config_entries.ConfigFlow, domain=COMPONENT_DOMAIN):
         """Import momentary config from configuration.yaml."""
 
         _LOGGER.debug(f"importing aarlo YAML {import_data}")
-        UpgradeCfg.import_yaml(self.hass, import_data)
+        await UpgradeCfg.async_import_yaml(self.hass, import_data)
         data = UpgradeCfg.create_flow_data(self.hass, import_data)
 
         return self.async_create_entry(
