@@ -21,6 +21,8 @@ CONF_CLASS = "class"
 CONF_INITIAL_AVAILABILITY = "initial_availability"
 CONF_INITIAL_VALUE = "initial_value"
 CONF_NAME = "name"
+CONF_OPEN_CLOSE_DURATION = "open_close_duration"
+CONF_OPEN_CLOSE_TICK = "open_close_tick"
 CONF_PERSISTENT = "persistent"
 
 DEFAULT_AVAILABILITY = True

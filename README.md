@@ -326,7 +326,7 @@ You only need one of `speed` or `speed_count`.
 - `direction`; if `True` then fan can run in 2 directions
 - `oscillate`; if `True` then fan can be set to oscillate
 
-### Covers _(in development)_
+### Covers
 
 To add a virtual cover use the following:
 
@@ -334,11 +334,13 @@ To add a virtual cover use the following:
   Test Cover:
   - platform: cover
     initial_value: 'closed'
+    open_close_duration: 10
+    open_close_tick: 1
 ```
 
-At the moment, only `open` (default `initial_value`) and `closed` states are
-supported and, therefore, only `cover.cover_open` and `cover.cover_close`
-services are available.
+Supports `open`, `close`, `stop` and `set_position`. Opening and closing of the cover is emulated with timed events, and the timing can be controlled with
+- `open_close_duration`: The time it take to go from fully open to fully closed, or back
+- `open_close_tick`: The update interval when opening and closing
 
 ### Device Tracking
 
