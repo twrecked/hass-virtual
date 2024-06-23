@@ -109,12 +109,14 @@ class VirtualCover(VirtualEntity, CoverEntity):
         _LOGGER.info(f"opening {self.name}")
         self._attr_is_opening = True
         self._attr_is_closing = False
+        self._target_cover_position = 100
         self._tick()
 
     def close_cover(self, **kwargs: Any) -> None:
         _LOGGER.info(f"closing {self.name}")
         self._attr_is_opening = False
         self._attr_is_closing = True
+        self._target_cover_position = 0
         self._tick()
 
     def stop_cover(self, **kwargs: Any) -> None:
@@ -129,7 +131,7 @@ class VirtualCover(VirtualEntity, CoverEntity):
         else:
             self._attr_is_closed = True
             
-        self.async_write_ha_state()
+        self.schedule_update_ha_state()
         
     def set_cover_position(self, **kwargs: Any) -> None:
         _LOGGER.info(f"setting {self.name} position {kwargs['position']}")
@@ -141,7 +143,7 @@ class VirtualCover(VirtualEntity, CoverEntity):
         elif self._target_cover_position > self._attr_current_cover_position:
             self.open_cover()
 
-    def _update_cover_position(self, *args: Any) -> None:
+    async def _update_cover_position(self, *args: Any) -> None:
         if self._target_cover_position is not None:
             if self._attr_is_closing and self._attr_current_cover_position <= self._target_cover_position :
                 self.stop_cover()
