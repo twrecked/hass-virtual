@@ -159,7 +159,7 @@ class VirtualLight(VirtualEntity, LightEntity):
 
     def _update_attributes(self):
         """Return the state attributes."""
-        super()._update_attributes();
+        super()._update_attributes()
         self._attr_extra_state_attributes.update({
             name: value for name, value in (
                 (ATTR_BRIGHTNESS, self._attr_brightness),
