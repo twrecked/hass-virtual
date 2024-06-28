@@ -1,4 +1,5 @@
 0.9.0b11:
+  Fix up light support.
   Fix race condition in meta data write
   Fix reload issue that just doubled up the devices
 0.9.0b10:
