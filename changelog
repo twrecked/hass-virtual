@@ -1,3 +1,6 @@
+0.9.0b11:
+  Fix race condition in meta data write
+  Fix reload issue that just doubled up the devices
 0.9.0b10:
   Fix IO in event loop issues
 0.9.0a9:

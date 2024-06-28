@@ -15,6 +15,7 @@ There are 2 pieces:
 """
 
 import aiofiles
+import asyncio
 import copy
 import logging
 import json
@@ -48,6 +49,8 @@ SENSOR_SCHEMA = vol.Schema(virtual_schema(SENSOR_DEFAULT_INITIAL_VALUE, {
     vol.Optional(CONF_CLASS): cv.string,
     vol.Optional(CONF_UNIT_OF_MEASUREMENT, default=""): cv.string,
 }))
+
+_meta_lock = asyncio.Lock()
 
 
 def _fix_value(value):
@@ -107,49 +110,53 @@ async def _async_save_yaml(file_name, data):
 async def _load_meta_data(hass, group_name: str):
     """Read in meta data for a particular group.
     """
-    data = await _async_load_json(default_meta_file(hass))
-    return data.get(ATTR_DEVICES, {}).get(group_name, {})
+    async with _meta_lock:
+        data = await _async_load_json(default_meta_file(hass))
+        return data.get(ATTR_DEVICES, {}).get(group_name, {})
 
 
 async def _save_meta_data(hass, group_name, meta_data):
     """Save meta data for a particular group name.
     """
-    # Read in current meta data
-    devices = await _async_load_json(default_meta_file(hass))
-    devices = devices.get(ATTR_DEVICES, {})
+    async with _meta_lock:
 
-    # Update (or add) the group piece.
-    _LOGGER.debug(f"meta before {devices}")
-    devices.update({
-        group_name: meta_data
-    })
-    _LOGGER.debug(f"meta after {devices}")
+        # Read in current meta data
+        devices = await _async_load_json(default_meta_file(hass))
+        devices = devices.get(ATTR_DEVICES, {})
 
-    # Write it back out.
-    await _async_save_json(default_meta_file(hass), {
-        ATTR_VERSION: 1,
-        ATTR_DEVICES: devices
-    })
+        # Update (or add) the group piece.
+        _LOGGER.debug(f"meta before {devices}")
+        devices.update({
+            group_name: meta_data
+        })
+        _LOGGER.debug(f"meta after {devices}")
+
+        # Write it back out.
+        await _async_save_json(default_meta_file(hass), {
+            ATTR_VERSION: 1,
+            ATTR_DEVICES: devices
+        })
 
 
 async def _delete_meta_data(hass, group_name):
     """Save meta data for a particular group name.
     """
+    async with _meta_lock:
 
-    # Read in current meta data
-    devices = await _async_load_json(default_meta_file(hass))
-    devices = devices.get(ATTR_DEVICES, {})
+        # Read in current meta data
+        devices = await _async_load_json(default_meta_file(hass))
+        devices = devices.get(ATTR_DEVICES, {})
 
-    # Delete the group piece.
-    _LOGGER.debug(f"meta before {devices}")
-    devices.pop(group_name)
-    _LOGGER.debug(f"meta after {devices}")
+        # Delete the group piece.
+        _LOGGER.debug(f"meta before {devices}")
+        devices.pop(group_name)
+        _LOGGER.debug(f"meta after {devices}")
 
-    # Write it back out.
-    await _async_save_json(default_meta_file(hass), {
-        ATTR_VERSION: 1,
-        ATTR_DEVICES: devices
-    })
+        # Write it back out.
+        await _async_save_json(default_meta_file(hass), {
+            ATTR_VERSION: 1,
+            ATTR_DEVICES: devices
+        })
 
 
 async def _save_user_data(file_name, devices):
@@ -312,7 +319,8 @@ class BlendedCfg(object):
                     unique_id = _make_unique_id()
                     meta_data.update({name: {
                         ATTR_UNIQUE_ID: unique_id,
-                        ATTR_ENTITY_ID: _make_entity_id(platform, name)
+                        ATTR_ENTITY_ID: _make_entity_id(platform, name),
+                        ATTR_DEVICE_ID: device_name
                     }})
                     changed = True
 
@@ -322,6 +330,12 @@ class BlendedCfg(object):
                 if entity_id is None:
                     _LOGGER.info(f"problem creating {name}, no entity id")
                     continue
+
+                # Add device entry
+                if meta_data.get(name, {}).get(ATTR_DEVICE_ID, None) is None:
+                    _LOGGER.info(f"problem creating {name}, no device id")
+                    meta_data[name][ATTR_DEVICE_ID] = device_name
+                    changed = True
 
                 # Update the entity.
                 entity.update({
