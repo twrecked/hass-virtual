@@ -6,11 +6,19 @@ This class adds persistence to an entity.
 
 import logging
 import pprint
+from datetime import datetime
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.const import ATTR_ENTITY_ID
+from homeassistant.components.cover import ATTR_CURRENT_POSITION
+from homeassistant.const import (
+    ATTR_DEVICE_CLASS,
+    ATTR_ENTITY_ID,
+    STATE_CLOSED,
+)
+from homeassistant.core import callback
 from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
 
@@ -112,3 +120,108 @@ class VirtualEntity(RestoreEntity):
         self._attr_available = value
         self._update_attributes()
         self.async_schedule_update_ha_state()
+
+
+class VirtualOpenableEntity(VirtualEntity):
+    """Representation of a Virtual openable.
+
+    This can handle cover and valve devices. If they diverge too much in the
+    future we will need to rethink this.
+    """
+
+    def __init__(self, config, domain):
+        """Initialize the Virtual openable device."""
+        _LOGGER.debug(f"creating-virtual-openable-{domain}={config}")
+        super().__init__(config, domain)
+
+        self._attr_device_class = config.get(CONF_CLASS)
+        self._open_close_duration = config.get(CONF_OPEN_CLOSE_DURATION)
+        self._open_close_tick = config.get(CONF_OPEN_CLOSE_TICK)
+
+        self._open_close_operation_started = None
+        self._current_position = 0
+        self._target_position = None
+
+        _LOGGER.info(f"VirtualOpenable: {self.name} created")
+
+    def _create_state(self, config):
+        super()._create_state(config)
+
+        self._attr_is_closed = config.get(CONF_INITIAL_VALUE).lower() == STATE_CLOSED
+        if self._attr_is_closed:
+            self._current_position = 0
+        else:
+            self._current_position = 100
+
+    def _restore_state(self, state, config):
+        super()._restore_state(state, config)
+
+        # Cover and valve use the same position state. If this changes we will
+        # need to add this into the derived class.
+        if ATTR_CURRENT_POSITION in state.attributes:
+            self._current_position = state.attributes[ATTR_CURRENT_POSITION]
+        self._attr_is_closed = state.state.lower() == STATE_CLOSED
+
+    def _update_attributes(self):
+        super()._update_attributes()
+        self._attr_extra_state_attributes.update({
+            name: value for name, value in (
+                (ATTR_DEVICE_CLASS, self._attr_device_class),
+            ) if value is not None
+        })
+
+    def _stop(self) -> None:
+        _LOGGER.info(f"stopping {self.name}")
+        self._open_close_operation_started = None
+        self._target_position = None
+        self._attr_is_opening = False
+        self._attr_is_closing = False
+
+        if self._current_position > 0:
+            self._attr_is_closed = False
+        else:
+            self._attr_is_closed = True
+
+        self.schedule_update_ha_state()
+
+    def _set_position(self, position) -> None:
+        _LOGGER.info(f"setting {self.name} position {position}")
+
+        self._target_position = position
+        if self._target_position == self._current_position:
+            return
+        elif self._target_position < self._current_position:
+            self._attr_is_opening = False
+            self._attr_is_closing = True
+        else:
+            self._attr_is_opening = True
+            self._attr_is_closing = False
+        self._tick()
+        self.schedule_update_ha_state()
+
+    @callback
+    def _update_position(self, _now) -> None:
+        _LOGGER.info(f"updating {self.name} position {self._current_position}")
+        if self._target_position is not None:
+            if self._attr_is_closing and self._current_position <= self._target_position :
+                self._stop()
+            elif self._attr_is_opening and self._current_position >= self._target_position:
+                self._stop()
+
+        if self._target_position is None:
+            return
+
+        running_time_delta = datetime.now() - self._open_close_operation_started
+        percent_moved = int((running_time_delta.total_seconds() / self._open_close_duration)*100)
+
+        if self._attr_is_closing:
+            self._current_position = max(0, self._current_position - percent_moved)
+        elif self._attr_is_opening:
+            self._current_position = min(100, self._current_position + percent_moved)
+
+        self.async_write_ha_state()
+        self._tick()
+
+    def _tick(self):
+        self._open_close_operation_started = datetime.now()
+        async_call_later(self.hass, self._open_close_tick, self._update_position)

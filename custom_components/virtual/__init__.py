@@ -30,7 +30,7 @@ from .const import *
 from .cfg import BlendedCfg, UpgradeCfg
 
 
-__version__ = '0.9.0b12'
+__version__ = '0.9.0b13'
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -51,7 +51,8 @@ VIRTUAL_PLATFORMS = [
     Platform.LIGHT,
     Platform.LOCK,
     Platform.SENSOR,
-    Platform.SWITCH
+    Platform.SWITCH,
+    Platform.VALVE
 ]
 
 
