@@ -87,7 +87,8 @@ class VirtualFan(VirtualEntity, FanEntity):
         if config.get(CONF_SPEED, False):
             self._attr_speed_count = 3
 
-        self._attr_supported_features = 0
+        self._enable_turn_on_off_backwards_compatibility = False
+        self._attr_supported_features = FanEntityFeature.TURN_ON | FanEntityFeature.TURN_OFF
         if self._attr_speed_count > 0:
             self._attr_supported_features |= FanEntityFeature.SET_SPEED
         if config.get(CONF_OSCILLATE, False):
