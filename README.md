@@ -464,7 +464,8 @@ This service will turn off a binary sensor.
 **Name: `virtual.move`**
 
 *Parameters:*
-`location`; a named location
-`gps`; GPS coordinates
+
+- `location`; a named location
+- `gps`; GPS coordinates
 
 Move a device tracker. You use one of the parameters.
