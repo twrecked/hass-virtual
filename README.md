@@ -432,12 +432,16 @@ The component provides the following services:
 
 This will change the availability setting of any virtual device.
 
+---
+
 **Name: `virtual.turn_on`**
 
 *Parameters:*
 - `entity_id`; The entity id of the binary sensor to turn on.
 
-- This service will turn on a binary sensor.
+This service will turn on a binary sensor.
+
+---
 
 **Name: `virtual.turn_off`**
 
@@ -446,6 +450,8 @@ This will change the availability setting of any virtual device.
 
 This service will turn off a binary sensor.
 
+---
+
 **Name: `virtual.toggle`**
 
 *Parameters:*
@@ -453,6 +459,7 @@ This service will turn off a binary sensor.
 
 - This service will toggle a binary sensor.
 
+---
 
 **Name: `virtual.move`**
 
