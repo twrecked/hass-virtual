@@ -168,7 +168,8 @@ async def _save_user_data(file_name, devices):
 
 async def _load_user_data(file_name):
     entities = await _async_load_yaml(file_name)
-    return entities.get(ATTR_DEVICES, {})
+    # make devices: optional.
+    return entities.get(ATTR_DEVICES, entities)
 
 
 def _fix_config(config):
