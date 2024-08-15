@@ -1,9 +1,49 @@
-# hass-virtual
+# **Virtual devices for Home Assistant**
+
+_Virtual_ is a component that provides virtual entities for _Home Assistant_.
+
 ![icon](images/virtual-icon.png)
 
-## Virtual Components for Home Assistant
+# Table Of Contents
 
-Virtual components for testing Home Assistant systems.
+<!-- TOC -->
+* [**Virtual devices for Home Assistant**](#virtual-devices-for-home-assistant)
+* [Table Of Contents](#table-of-contents)
+* [Introduction](#introduction)
+  * [Notes](#notes)
+  * [Version 0.8?](#version-08)
+  * [New Features in 0.9.0](#new-features-in-090)
+    * [Config Flow](#config-flow)
+      * [What pieces are done](#what-pieces-are-done)
+      * [What you need to be wary of](#what-you-need-to-be-wary-of)
+      * [What pieces need doing](#what-pieces-need-doing)
+      * [What if it goes wrong?](#what-if-it-goes-wrong)
+  * [Thanks](#thanks)
+* [Installation](#installation)
+  * [HACS](#hacs)
+* [Component Configuration](#component-configuration)
+    * [Availability](#availability)
+    * [Persistence](#persistence)
+  * [Platforms](#platforms)
+    * [Switches](#switches)
+    * [Binary Sensors](#binary-sensors)
+    * [Sensors](#sensors)
+    * [Lights](#lights)
+    * [Locks](#locks)
+    * [Fans](#fans)
+    * [Covers](#covers)
+    * [Valves](#valves)
+    * [Device Tracking](#device-tracking)
+<!-- TOC -->
+
+# Introduction
+
+Virtual provides virtual components for testing Home Assistant systems.
+
+## Notes
+Wherever you see `/config` in this README it refers to your home-assistant
+configuration directory. For me, for example, it's `/home/steve/ha` that is
+mapped to `/config` inside my docker container.
 
 ## Version 0.8?
 
@@ -19,7 +59,7 @@ needed to, this integration now acts much like every integration, splitting
 down by entity, device and integration.
 
 This means a lot of this documentation is now out of date, I will upgrade it
-when all the changes have been finalised, for now I will just add a quick note
+when all the changes have been finalized, for now I will just add a quick note
 inline.
 
 #### What pieces are done
@@ -46,7 +86,7 @@ inline.
       initial_value: 'off'
       class: motion
     - platform: sensor
-      initial_value: 98
+      initial_value: '98'
       class: battery
 ```
 
@@ -67,36 +107,16 @@ inline.
 
 - _reload/reconfigure_; this somewhat works, but I need to deal with orphans
   when devices are turned off
-- _documentation; the configuration is handled differently now
+- _documentation_; the configuration is handled differently now
 
 #### What if it goes wrong?
 
 For now I recommend leaving your old configuration in place so you can revert
 back to a _0.8_ release if you encounter an issue. _Home Assistant_ will
-complain about the config but it's ok to ignore it.
+complain about the config but it's OK to ignore it.
 
 If you do encounter and issue if you can turn on debug an create an issue that
 would be great.
-
-
-## Version 0.9
-
-## Table Of Contents
-1. [Notes](#Notes)
-2. [Thanks](#Thanks)
-3. [Installation](#Installation)
-4. [Component Configuration](#Component-Configuration)
-   1. [Naming](#Naming)
-   2. [Availability](#Availability)
-   3. [Peristence](#Persistence)
-   4. [The Components...](#Switches)
-
-
-## Notes
-Wherever you see `/config` in this README it refers to your home-assistant
-configuration directory. For me, for example, it's `/home/steve/ha` that is
-mapped to `/config` inside my docker container.
-
 
 ## Thanks
 Many thanks to:
@@ -109,16 +129,16 @@ Many thanks to:
 * Icon from [iconscout](https://iconscout.com) by [twitter-inc](https://iconscout.com/contributors/twitter-inc)
  
 
-## Installation
+# Installation
 
-### HACS
+## HACS
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/hacs/integration)
 
 Virtual is part of the default HACS store. If you're not interested in
 development branches this is the easiest way to install.
 
 
-## Component Configuration
+# Component Configuration
 
 All component configuration is done through a _yaml_ file. There is a single
 file per integration instance. The default file, created on upgrade, is
@@ -129,9 +149,12 @@ version: 1
 devices: {}
 ```
 
-- _version_; this is expected and is currently 1
+- _version_; this is currently 1
 - _devices_; this is a list of devices and entities associated with that
   device
+
+These two entries are optional. If you remove them then remove the indentation
+from the following device entries.
 
 This is a small example of an imported file: 
 
@@ -148,6 +171,21 @@ devices:
     name: Back Door
     initial_value: 'off'
     class: door
+```
+
+This is an example of a file without the preamble.
+
+```yaml
+Living Room Sensor:
+- platform: binary_sensor
+  name: Living Room Motion
+  initial_value: 'off'
+  class: motion
+Back Door Sensor:
+- platform: binary_sensor
+  name: Back Door
+  initial_value: 'off'
+  class: door
 ```
 
 Note that these entities have explicit names, this is because these entities
@@ -175,22 +213,20 @@ In this case it will create 2 entities, one called `Living Room Sensor motion`
 and `Back Door Sensor door`. The default naming can get a little hairy but you
 can alter it from the _Integration_ settings.
 
-_From now on I will exclude the `version` and `devices` keys._
-
 You can also define virtual multi sensors. In this example a multi sensor
 devices provides 2 entities.
 
 ```yaml
-  Living Room Multi Sensor:
-  - platform: binary_sensor
-    initial_value: 'off'
-    class: motion
-  - platform: sensor
-    initial_value: '20'
-    class: temperature
+Living Room Multi Sensor:
+- platform: binary_sensor
+  initial_value: 'off'
+  class: motion
+- platform: sensor
+  initial_value: '20'
+  class: temperature
 ```
 
-### Availability
+## Availability
 
 By default, all devices are market as available. As shown below in each domain,
 adding `initial_availability: false` to configuration can override default and
@@ -200,7 +236,7 @@ the `virtual.set_available` with value `true` or `false`.
 This is fully optional and `initial_availability` is not required to be set.
 
 
-### Persistence
+## Persistence
 By default, all device states are persistent. You can change this behaviour with
 the `persistent` configuration option.
 
@@ -208,48 +244,50 @@ If you have set an `initial_value` it will only be used if the device state is
 not restored. The following switch will always start _on_.
 
 ```yaml
-  Test Switch:
-  - platform: virtual
-    name: Switch 1
-    persistent: False
-    initial_value: on
+Test Switch:
+- platform: virtual
+  name: Switch 1
+  persistent: False
+  initial_value: on
 ```
 
-### Switches
+# Platforms
+
+## Switches
 
 To add a virtual switch use the following:
 
 ```yaml
-  Test Switch:
-  - platform: switch
+Test Switch:
+- platform: switch
 ```
 
 
-### Binary Sensors
+## Binary Sensors
 To add a virtual binary_sensor use the following. It supports all standard
 classes.
 
 ```yaml
-  Test Binary Sensor:
-  - platform: binary_sensor
-    initial_value: 'on'
-    class: presence
+Test Binary Sensor:
+- platform: binary_sensor
+  initial_value: 'on'
+  class: presence
 ```
 
 Use the `virtual.turn_on`, `virtual.turn_off` and `virtual.toggle` services to
 manipulate the binary sensors.
 
 
-### Sensors
+## Sensors
 
 To add a virtual sensor use the following:
 
 ```yaml
-  Test Sensor:
-  - platform: sensor
-    class: temperature
-    initial_value: 37
-    unit_of_measurement: 'F'
+Test Sensor:
+- platform: sensor
+  class: temperature
+  initial_value: 37
+  unit_of_measurement: 'F'
 ```
 
 Use the `virtual.set` service to manipulate the sensor value.
@@ -259,22 +297,22 @@ class. This is optional ans any string is accepted. List of standard units can
 be found here:
 [Sensor Entity](https://developers.home-assistant.io/docs/core/entity/sensor/)
 
-### Lights
+## Lights
 
 To add a virtual light use the following:
 
 ```yaml
-  Test Lights:
-  - platform: light
-    initial_value: 'on'
-    support_brightness: true
-    initial_brightness: 100
-    support_color: true
-    initial_color: [0,255]
-    support_color_temp: true
-    initial_color_temp: 255
-    support_white_value: true
-    initial_white_value: 240
+Test Lights:
+- platform: light
+  initial_value: 'on'
+  support_brightness: true
+  initial_brightness: 100
+  support_color: true
+  initial_color: [0,255]
+  support_color_temp: true
+  initial_color_temp: 255
+  support_white_value: true
+  initial_white_value: 240
 ```
 
 Only `name` is required.
@@ -284,17 +322,18 @@ Only `name` is required.
 
 _Note; *white_value is deprecated and will be removed in future releases._
 
-### Locks
+
+## Locks
 
 To add a virtual lock use the following:
 
 ```yaml
-  Test Lock:
-  - platform: lock
-    name: Front Door Lock
-    initial_value: locked
-    locking_time: 5
-    jamming_test: 5
+Test Lock:
+- platform: lock
+  name: Front Door Lock
+  initial_value: locked
+  locking_time: 5
+  jamming_test: 5
 ```
 
 - Persistent Configuration
@@ -306,17 +345,18 @@ To add a virtual lock use the following:
   - `jamming_test`: optional, default `0` tries; any positive value will result in a
     jamming failure approximately once per `jamming_test` tries
 
-### Fans
+
+## Fans
 
 To add a virtual fan use the following:
 
 ```yaml
-  Test Fan:
-  - platform: fan
-    speed: True
-    speed_count: 5
-    direction: True
-    oscillate: True
+Test Fan:
+- platform: fan
+  speed: True
+  speed_count: 5
+  direction: True
+  oscillate: True
 ```
 
 You only need one of `speed` or `speed_count`.
@@ -326,30 +366,51 @@ You only need one of `speed` or `speed_count`.
 - `direction`; if `True` then fan can run in 2 directions
 - `oscillate`; if `True` then fan can be set to oscillate
 
-### Covers
+
+## Covers
 
 To add a virtual cover use the following:
 
 ```yaml
-  Test Cover:
-  - platform: cover
-    initial_value: 'closed'
-    open_close_duration: 10
-    open_close_tick: 1
+Test Cover:
+- platform: cover
+  initial_value: 'closed'
+  open_close_duration: 10
+  open_close_tick: 1
 ```
 
-Supports `open`, `close`, `stop` and `set_position`. Opening and closing of the cover is emulated with timed events, and the timing can be controlled with
+Supports `open`, `close`, `stop` and `set_position`. Opening and closing of
+the cover is emulated with timed events, and the timing can be controlled with
 - `open_close_duration`: The time it take to go from fully open to fully closed, or back
 - `open_close_tick`: The update interval when opening and closing
 
-### Device Tracking
+
+## Valves
+
+To add a virtual valve use the following:
+
+```yaml
+Test Valve:
+- platform: valve
+  initial_value: 'closed'
+  open_close_duration: 10
+  open_close_tick: 1
+```
+
+Supports `open`, `close`, `stop` and `set_position`. Opening and closing of
+the valve is emulated with timed events, and the timing can be controlled with
+- `open_close_duration`: The time it take to go from fully open to fully closed, or back
+- `open_close_tick`: The update interval when opening and closing
+
+
+## Device Tracking
 
 To add a virtual device tracker use the following:
 
 ```yaml
-  Test Device_Tracker:
-  - platform: device_tracker
-    initial_value: home
+Test Device_Tracker:
+- platform: device_tracker
+  initial_value: home
 ```
 
 - `persistent`: default `True`; if `True` then entity location is remembered
@@ -359,3 +420,35 @@ To add a virtual device tracker use the following:
 
 Use the `virtual.move` service to change device locations.
 
+# Services
+
+The component provides the following services:
+
+## `virtual.set_availability`
+
+This will change the availability setting of any virtual device.
+
+## `virtual.turn_on`
+
+This service will turn on a binary sensor.
+
+- `entity_id`; The entity id of the binary sensor to turn on.
+
+## `virtual.turn_off`
+
+This service will turn off a binary sensor.
+
+- `entity_id`; The entity id of the binary sensor to turn off.
+
+## `virtual.toggle`
+
+This service will toggle a binary sensor.
+
+- `entity_id`; The entity id of the binary sensor to toggle.
+
+## `virtual.move`
+
+Move a device tracker. You use one of these parameters.
+
+`location`; a named location
+`gps`; GPS coordinates
