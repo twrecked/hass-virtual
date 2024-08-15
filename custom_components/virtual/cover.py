@@ -107,17 +107,11 @@ class VirtualCover(VirtualEntity, CoverEntity):
 
     def open_cover(self, **kwargs: Any) -> None:
         _LOGGER.info(f"opening {self.name}")
-        self._attr_is_opening = True
-        self._attr_is_closing = False
-        self._target_cover_position = 100
-        self._tick()
+        self.set_cover_position(position=100)
 
     def close_cover(self, **kwargs: Any) -> None:
         _LOGGER.info(f"closing {self.name}")
-        self._attr_is_opening = False
-        self._attr_is_closing = True
-        self._target_cover_position = 0
-        self._tick()
+        self.set_cover_position(position=0)
 
     def stop_cover(self, **kwargs: Any) -> None:
         _LOGGER.info(f"stopping {self.name}")
@@ -139,9 +133,12 @@ class VirtualCover(VirtualEntity, CoverEntity):
         if self._target_cover_position == self._attr_current_cover_position:
             return
         elif self._target_cover_position < self._attr_current_cover_position:
-            self.close_cover()
-        elif self._target_cover_position > self._attr_current_cover_position:
-            self.open_cover()
+            self._attr_is_opening = False
+            self._attr_is_closing = True
+        else:
+            self._attr_is_opening = True
+            self._attr_is_closing = False
+        self._tick()
 
     async def _update_cover_position(self, *args: Any) -> None:
         if self._target_cover_position is not None:
@@ -150,7 +147,7 @@ class VirtualCover(VirtualEntity, CoverEntity):
             elif self._attr_is_opening and self._attr_current_cover_position >= self._target_cover_position:
                 self.stop_cover()
 
-        if self._virtual_operation_started is None:
+        if self._target_cover_position is None:
             return
         
         running_time_delta = datetime.now() - self._virtual_operation_started
