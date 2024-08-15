@@ -1,5 +1,6 @@
 0.9.0b12:
   Fix fan support.
+  Fix cover service calls.
 0.9.0b11:
   Fix up light support.
   Fix race condition in meta data write
