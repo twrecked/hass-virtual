@@ -22,18 +22,19 @@ _Virtual_ is a component that provides virtual entities for _Home Assistant_.
 * [Installation](#installation)
   * [HACS](#hacs)
 * [Component Configuration](#component-configuration)
-    * [Availability](#availability)
-    * [Persistence](#persistence)
-  * [Platforms](#platforms)
-    * [Switches](#switches)
-    * [Binary Sensors](#binary-sensors)
-    * [Sensors](#sensors)
-    * [Lights](#lights)
-    * [Locks](#locks)
-    * [Fans](#fans)
-    * [Covers](#covers)
-    * [Valves](#valves)
-    * [Device Tracking](#device-tracking)
+  * [Availability](#availability)
+  * [Persistence](#persistence)
+* [Platforms](#platforms)
+  * [Switches](#switches)
+  * [Binary Sensors](#binary-sensors)
+  * [Sensors](#sensors)
+  * [Lights](#lights)
+  * [Locks](#locks)
+  * [Fans](#fans)
+  * [Covers](#covers)
+  * [Valves](#valves)
+  * [Device Tracking](#device-tracking)
+* [Services](#services)
 <!-- TOC -->
 
 # Introduction
@@ -424,31 +425,39 @@ Use the `virtual.move` service to change device locations.
 
 The component provides the following services:
 
-## `virtual.set_availability`
+**Name: `virtual.set_availability`**
+
+*Parameters:*
+- `entity_id`; The entity id of the binary sensor to turn on.
 
 This will change the availability setting of any virtual device.
 
-## `virtual.turn_on`
+**Name: `virtual.turn_on`**
 
-This service will turn on a binary sensor.
-
+*Parameters:*
 - `entity_id`; The entity id of the binary sensor to turn on.
 
-## `virtual.turn_off`
+- This service will turn on a binary sensor.
+
+**Name: `virtual.turn_off`**
+
+*Parameters:*
+- `entity_id`; The entity id of the binary sensor to turn off.
 
 This service will turn off a binary sensor.
 
-- `entity_id`; The entity id of the binary sensor to turn off.
+**Name: `virtual.toggle`**
 
-## `virtual.toggle`
-
-This service will toggle a binary sensor.
-
+*Parameters:*
 - `entity_id`; The entity id of the binary sensor to toggle.
 
-## `virtual.move`
+- This service will toggle a binary sensor.
 
-Move a device tracker. You use one of these parameters.
 
+**Name: `virtual.move`**
+
+*Parameters:*
 `location`; a named location
 `gps`; GPS coordinates
+
+Move a device tracker. You use one of the parameters.
