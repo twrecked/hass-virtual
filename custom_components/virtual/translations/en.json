@@ -77,7 +77,11 @@
       "fields": {
         "location": {
           "name": "Location",
-          "description": "Where to move the device tracker to."
+          "description": "A named location to move the device tracker to."
+        },
+        "gps": {
+          "name": "GPS",
+          "description": "Which coordinates to move the device tracker to."
         }
       }
     }
