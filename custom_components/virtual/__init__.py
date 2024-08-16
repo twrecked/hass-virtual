@@ -30,12 +30,17 @@ from .const import *
 from .cfg import BlendedCfg, UpgradeCfg
 
 
-__version__ = '0.9.0b13'
+__version__ = '0.9.0b14'
 
 _LOGGER = logging.getLogger(__name__)
 
-# Purely to quieten down the checks.
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({})
+CONFIG_SCHEMA = vol.Schema({
+        COMPONENT_DOMAIN: vol.Schema({
+            vol.Optional(CONF_YAML_CONFIG, default=False): cv.boolean,
+        }),
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 SERVICE_AVAILABILE = 'set_available'
 SERVICE_SCHEMA = vol.Schema({
@@ -55,43 +60,68 @@ VIRTUAL_PLATFORMS = [
     Platform.VALVE
 ]
 
+async def async_setup(hass, config):
+    """Set up a virtual components.
 
-async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up a virtual component.
+    This uses the old mechanism and has to be enabled with 'yaml_config: True'
     """
 
-    hass.data[COMPONENT_DOMAIN] = {}
-    hass.data[COMPONENT_SERVICES] = {}
+    # Set up hass data if necessary
+    if COMPONENT_DOMAIN not in hass.data:
+        hass.data[COMPONENT_DOMAIN] = {}
+        hass.data[COMPONENT_SERVICES] = {}
+        hass.data[COMPONENT_CONFIG] = {}
 
-    # See if we have already imported the data. If we haven't then do it now.
-    config_entry = _async_find_matching_config_entry(hass)
-    if not config_entry:
-        _LOGGER.debug('importing a YAML setup')
-        hass.async_create_task(
-            hass.config_entries.flow.async_init(
-                COMPONENT_DOMAIN,
-                context={CONF_SOURCE: SOURCE_IMPORT},
-                data=config
+    # See if yaml support was enabled.
+    if not config.get(COMPONENT_DOMAIN, {}).get(CONF_YAML_CONFIG, False):
+
+        # New style. We import old config if needed.
+        _LOGGER.debug("setting up new virtual components")
+        hass.data[COMPONENT_CONFIG][CONF_YAML_CONFIG] = False
+
+        # See if we have already imported the data. If we haven't then do it now.
+        config_entry = _async_find_matching_config_entry(hass)
+        if not config_entry:
+            _LOGGER.debug('importing a YAML setup')
+            hass.async_create_task(
+                hass.config_entries.flow.async_init(
+                    COMPONENT_DOMAIN,
+                    context={CONF_SOURCE: SOURCE_IMPORT},
+                    data=config
+                )
             )
-        )
 
-        async_create_issue(
-            hass,
-            HOMEASSISTANT_DOMAIN,
-            f"deprecated_yaml_{COMPONENT_DOMAIN}",
-            is_fixable=False,
-            issue_domain=COMPONENT_DOMAIN,
-            severity=IssueSeverity.WARNING,
-            translation_key="deprecated_yaml",
-            translation_placeholders={
-                "domain": COMPONENT_DOMAIN,
-                "integration_title": "Virtual",
-            },
-        )
+            async_create_issue(
+                hass,
+                HOMEASSISTANT_DOMAIN,
+                f"deprecated_yaml_{COMPONENT_DOMAIN}",
+                is_fixable=False,
+                issue_domain=COMPONENT_DOMAIN,
+                severity=IssueSeverity.WARNING,
+                translation_key="deprecated_yaml",
+                translation_placeholders={
+                    "domain": COMPONENT_DOMAIN,
+                    "integration_title": "Virtual",
+                },
+            )
 
-        return True
+        else:
+            _LOGGER.debug('ignoring a YAML setup')
 
-    _LOGGER.debug('ignoring a YAML setup')
+    else:
+
+        # Original style. We just use the entities as now.
+        _LOGGER.debug("setting up old virtual components")
+        hass.data[COMPONENT_CONFIG][CONF_YAML_CONFIG] = True
+
+        @verify_domain_control(hass, COMPONENT_DOMAIN)
+        async def async_virtual_service_set_available(call) -> None:
+            """Call virtual service handler."""
+            _LOGGER.info("{} service called".format(call.service))
+            await async_virtual_set_availability_service(hass, call)
+
+        hass.services.async_register(COMPONENT_DOMAIN, SERVICE_AVAILABILE, async_virtual_service_set_available)
+
     return True
 
 
@@ -111,6 +141,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if COMPONENT_DOMAIN not in hass.data:
         hass.data[COMPONENT_DOMAIN] = {}
         hass.data[COMPONENT_SERVICES] = {}
+        hass.data[COMPONENT_CONFIG] = {}
 
     # Get the config.
     _LOGGER.debug(f"creating new cfg")

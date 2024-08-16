@@ -14,12 +14,14 @@ from homeassistant.components.switch import (
     SwitchEntity,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
 from homeassistant.const import (
     ATTR_DEVICE_CLASS,
     STATE_ON,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import get_entity_configs
 from .const import *
@@ -40,6 +42,19 @@ SWITCH_SCHEMA = vol.Schema(virtual_schema(DEFAULT_SWITCH_VALUE, {
 }))
 
 
+async def async_setup_platform(
+        hass: HomeAssistant,
+        config: ConfigType,
+        async_add_entities: AddEntitiesCallback,
+        _discovery_info: DiscoveryInfoType | None = None,
+) -> None:
+    if hass.data[COMPONENT_CONFIG].get(CONF_YAML_CONFIG, False):
+        _LOGGER.debug("setting up old config...")
+
+        switches = [VirtualSwitch(config, True)]
+        async_add_entities(switches, True)
+
+
 async def async_setup_entry(
         hass: HomeAssistant,
         entry: ConfigEntry,
@@ -50,16 +65,16 @@ async def async_setup_entry(
     entities = []
     for entity in get_entity_configs(hass, entry.data[ATTR_GROUP_NAME], PLATFORM_DOMAIN):
         entity = SWITCH_SCHEMA(entity)
-        entities.append(VirtualSwitch(entity))
+        entities.append(VirtualSwitch(entity, False))
     async_add_entities(entities)
 
 
 class VirtualSwitch(VirtualEntity, SwitchEntity):
     """Representation of a Virtual switch."""
 
-    def __init__(self, config):
+    def __init__(self, config, old_style : bool):
         """Initialize the Virtual switch device."""
-        super().__init__(config, PLATFORM_DOMAIN)
+        super().__init__(config, PLATFORM_DOMAIN, old_style)
 
         self._attr_device_class = config.get(CONF_CLASS)
 
