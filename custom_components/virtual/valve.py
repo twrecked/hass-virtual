@@ -5,7 +5,6 @@ This component provides support for a virtual valve.
 
 import logging
 import voluptuous as vol
-from typing import Any
 from collections.abc import Callable
 
 import homeassistant.helpers.config_validation as cv
@@ -93,18 +92,18 @@ class VirtualValve(VirtualOpenableEntity, ValveEntity):
     def current_valve_position(self) -> int | None:
         return self._current_position
 
-    def open_valve(self, **kwargs: Any) -> None:
+    async def async_open_valve(self) -> None:
         _LOGGER.info(f"opening {self.name}")
         self._set_position(100)
 
-    def close_valve(self, **kwargs: Any) -> None:
+    async def async_close_valve(self) -> None:
         _LOGGER.info(f"closing {self.name}")
         self._set_position(0)
 
-    def stop_valve(self, **kwargs: Any) -> None:
+    async def async_stop_valve(self) -> None:
         _LOGGER.info(f"stopping {self.name}")
         self._stop()
 
-    def set_valve_position(self, position: int) -> None:
+    async def async_set_valve_position(self, position: int) -> None:
         _LOGGER.info(f"setting {self.name} position {position}")
         self._set_position(position)

@@ -86,18 +86,18 @@ class VirtualCover(VirtualOpenableEntity, CoverEntity):
     def current_cover_position(self) -> int | None:
         return self._current_position
 
-    def open_cover(self, **kwargs: Any) -> None:
+    async def async_open_cover(self, **kwargs: Any) -> None:
         _LOGGER.info(f"opening {self.name}")
         self._set_position(100)
 
-    def close_cover(self, **kwargs: Any) -> None:
+    async def async_close_cover(self, **kwargs: Any) -> None:
         _LOGGER.info(f"closing {self.name}")
         self._set_position(0)
 
-    def stop_cover(self, **kwargs: Any) -> None:
+    async def async_stop_cover(self, **kwargs: Any) -> None:
         _LOGGER.info(f"stopping {self.name}")
         self._stop()
 
-    def set_cover_position(self, **kwargs: Any) -> None:
+    async def async_set_cover_position(self, **kwargs: Any) -> None:
         _LOGGER.info(f"setting {self.name} position {kwargs['position']}")
         self._set_position(kwargs['position'])
