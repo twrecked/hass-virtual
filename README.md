@@ -4,14 +4,28 @@ _Virtual_ is a component that provides virtual entities for _Home Assistant_.
 
 ![icon](images/virtual-icon.png)
 
+
+# !!!BREAKING CHANGES!!!
+
+Version 0.9 supports adding virtual devices using _config flow_. By default it
+will move your existing devices into a single file `virtual.yaml`. If you
+**DO NOT** want this behaviour add this to your virtual configuration.
+
+```yaml
+virtual:
+  yaml_config: True
+```
+
+
 # Table Of Contents
 
 <!-- TOC -->
 * [**Virtual devices for Home Assistant**](#virtual-devices-for-home-assistant)
+* [!!!BREAKING CHANGES!!!](#breaking-changes)
 * [Table Of Contents](#table-of-contents)
 * [Introduction](#introduction)
   * [Notes](#notes)
-  * [Version 0.8?](#version-08)
+  * [Version 0.8 Documentation](#version-08-documentation)
   * [New Features in 0.9.0](#new-features-in-090)
     * [Config Flow](#config-flow)
       * [What pieces are done](#what-pieces-are-done)
@@ -21,6 +35,7 @@ _Virtual_ is a component that provides virtual entities for _Home Assistant_.
   * [Thanks](#thanks)
 * [Installation](#installation)
   * [HACS](#hacs)
+* [Platform Configuration](#platform-configuration)
 * [Component Configuration](#component-configuration)
   * [Availability](#availability)
   * [Persistence](#persistence)
@@ -46,7 +61,7 @@ Wherever you see `/config` in this README it refers to your home-assistant
 configuration directory. For me, for example, it's `/home/steve/ha` that is
 mapped to `/config` inside my docker container.
 
-## Version 0.8?
+## Version 0.8 Documentation
 
 **This documentation is for the 0.9.x version, you can find the
 0.8.x version** [here](https://github.com/twrecked/hass-virtual/tree/version-0.8.x#readme).
@@ -138,8 +153,19 @@ Many thanks to:
 Virtual is part of the default HACS store. If you're not interested in
 development branches this is the easiest way to install.
 
-
 # Component Configuration
+
+- `yaml_config`; set to `True` to enable backwards compatability, set to `False`
+  to disable it. The default is `False`.
+
+For example, this enable backwards compatability.
+
+```yaml
+virtual:
+  yaml_config: True
+```
+
+# Entity Configuration
 
 All component configuration is done through a _yaml_ file. There is a single
 file per integration instance. The default file, created on upgrade, is
@@ -227,7 +253,9 @@ Living Room Multi Sensor:
   class: temperature
 ```
 
-## Availability
+## Common Attributes
+
+### Availability
 
 By default, all devices are market as available. As shown below in each domain,
 adding `initial_availability: false` to configuration can override default and
@@ -236,8 +264,7 @@ the `virtual.set_available` with value `true` or `false`.
 
 This is fully optional and `initial_availability` is not required to be set.
 
-
-## Persistence
+### Persistence
 By default, all device states are persistent. You can change this behaviour with
 the `persistent` configuration option.
 
@@ -251,8 +278,6 @@ Test Switch:
   persistent: False
   initial_value: on
 ```
-
-# Platforms
 
 ## Switches
 
@@ -469,3 +494,8 @@ This service will turn off a binary sensor.
 - `gps`; GPS coordinates
 
 Move a device tracker. You use one of the parameters.
+
+# Old Style Entity Configuration
+
+For now; look at [the 0.8](https://github.com/twrecked/hass-virtual/tree/version-0.8.x?tab=readme-ov-file#component-configuration) documentation.
+
