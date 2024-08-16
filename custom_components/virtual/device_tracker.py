@@ -3,8 +3,10 @@ This component provides support for a virtual device tracker.
 
 """
 
+import aiofiles
 import logging
 import voluptuous as vol
+import json
 from collections.abc import Callable
 
 import homeassistant.helpers.config_validation as cv
@@ -18,10 +20,12 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     ATTR_LATITUDE,
-    ATTR_LONGITUDE
+    ATTR_LONGITUDE,
+    CONF_DEVICES
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
+from homeassistant.helpers.event import async_track_state_change_event
 
 from . import get_entity_from_domain, get_entity_configs
 from .const import *
@@ -35,9 +39,14 @@ DEPENDENCIES = [COMPONENT_DOMAIN]
 CONF_LOCATION = 'location'
 CONF_GPS = 'gps'
 DEFAULT_DEVICE_TRACKER_VALUE = 'home'
+DEFAULT_LOCATION = 'home'
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_DEVICE_TRACKER_VALUE, {
-}))
+STATE_FILE = "/config/.storage/virtual.restore_state"
+
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
+    vol.Required(CONF_DEVICES, default=[]): cv.ensure_list
+})
+
 DEVICE_TRACKER_SCHEMA = vol.Schema(virtual_schema(DEFAULT_DEVICE_TRACKER_VALUE, {
 }))
 
@@ -51,6 +60,91 @@ SERVICE_SCHEMA = vol.Schema({
         vol.Optional(ATTR_RADIUS): cv.string,
     },
 })
+
+tracker_states = {}
+
+async def _async_load_json(file_name):
+    try:
+        async with aiofiles.open(file_name, 'r') as state_file:
+            contents = await state_file.read()
+            return json.loads(contents)
+    except Exception as e:
+        return {}
+
+
+def _write_state():
+    global tracker_states
+    try:
+        with open(STATE_FILE, 'w') as f:
+            json.dump(tracker_states, f)
+    except:
+        pass
+
+def _state_changed(event):
+    entity_id = event.data.get('entity_id', None)
+    new_state = event.data.get('new_state', None)
+    if entity_id is None or new_state is None:
+        _LOGGER.info(f'state changed error')
+        return
+
+    # update database
+    _LOGGER.info(f"moving {entity_id} to {new_state.state}")
+    global tracker_states
+    tracker_states[entity_id] = new_state.state
+    _write_state()
+
+
+def _shutting_down(event):
+    _LOGGER.info(f'shutting down {event}')
+    _write_state()
+
+
+async def async_setup_scanner(hass, config, async_see, _discovery_info=None):
+    """Set up the virtual tracker."""
+
+    if not hass.data[COMPONENT_CONFIG].get(CONF_YAML_CONFIG, False):
+        return True
+    _LOGGER.debug("setting up old device trackers...")
+
+    # Read in the last known states.
+    old_tracker_states = await _async_load_json(STATE_FILE)
+
+    new_tracker_states = {}
+    for device in config[CONF_DEVICES]:
+        if not isinstance(device, dict):
+            device = {
+                CONF_NAME: device,
+            }
+
+        name = device.get(CONF_NAME, 'unknown')
+        location = device.get(CONF_LOCATION, DEFAULT_LOCATION)
+        peristent = device.get(CONF_PERSISTENT, DEFAULT_PERSISTENT)
+        entity_id = f"{PLATFORM_DOMAIN}.{name}"
+
+        if peristent:
+            location = old_tracker_states.get(entity_id, location)
+            new_tracker_states[entity_id] = location
+            _LOGGER.info(f"setting persistent {entity_id} to {location}")
+        else:
+            _LOGGER.info(f"setting ephemeral {entity_id} to {location}")
+
+        see_args = {
+            "dev_id": name,
+            "source_type": COMPONENT_DOMAIN,
+            "location_name": location,
+        }
+        hass.async_create_task(async_see(**see_args))
+
+    # Start listening if there are persistent entities.
+    global tracker_states
+    tracker_states = new_tracker_states
+    if tracker_states:
+        async_track_state_change_event(hass, tracker_states.keys(), _state_changed)
+        hass.bus.async_listen("homeassistant_stop", _shutting_down)
+    else:
+        _write_state()
+
+    return True
 
 
 async def async_setup_entry(
