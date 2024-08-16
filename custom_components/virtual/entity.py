@@ -195,7 +195,7 @@ class VirtualOpenableEntity(VirtualEntity):
         else:
             self._attr_is_closed = True
 
-        self.schedule_update_ha_state()
+        self.async_write_ha_state()
 
     def _set_position(self, position) -> None:
         _LOGGER.info(f"setting {self.name} position {position}")
@@ -209,8 +209,10 @@ class VirtualOpenableEntity(VirtualEntity):
         else:
             self._attr_is_opening = True
             self._attr_is_closing = False
-        self._tick()
-        self.schedule_update_ha_state()
+
+        self.async_write_ha_state()
+        self._open_close_operation_started = datetime.now()
+        async_call_later(self.hass, self._open_close_tick, self._update_position)
 
     @callback
     def _update_position(self, _now) -> None:
@@ -233,8 +235,5 @@ class VirtualOpenableEntity(VirtualEntity):
             self._current_position = min(100, self._current_position + percent_moved)
 
         self.async_write_ha_state()
-        self._tick()
-
-    def _tick(self):
         self._open_close_operation_started = datetime.now()
         async_call_later(self.hass, self._open_close_tick, self._update_position)

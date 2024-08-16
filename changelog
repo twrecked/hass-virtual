@@ -1,3 +1,5 @@
+0.9.0b15:
+  Fix threading issue with cover and valve.
 0.9.0b14:
   Restore previous YAML config support.
 0.9.0b13:
