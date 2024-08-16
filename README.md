@@ -9,7 +9,7 @@ _Virtual_ is a component that provides virtual entities for _Home Assistant_.
 
 Version 0.9 supports adding virtual devices using _config flow_. By default it
 will move your existing devices into a single file `virtual.yaml`. If you
-**DO NOT** want this behaviour add this to your virtual configuration.
+**DO NOT** want this behaviour add this to your `virtual` configuration.
 
 ```yaml
 virtual:
@@ -35,11 +35,11 @@ virtual:
   * [Thanks](#thanks)
 * [Installation](#installation)
   * [HACS](#hacs)
-* [Platform Configuration](#platform-configuration)
 * [Component Configuration](#component-configuration)
-  * [Availability](#availability)
-  * [Persistence](#persistence)
-* [Platforms](#platforms)
+* [Entity Configuration](#entity-configuration)
+  * [Common Attributes](#common-attributes)
+    * [Availability](#availability)
+    * [Persistence](#persistence)
   * [Switches](#switches)
   * [Binary Sensors](#binary-sensors)
   * [Sensors](#sensors)
@@ -49,8 +49,10 @@ virtual:
   * [Covers](#covers)
   * [Valves](#valves)
   * [Device Tracking](#device-tracking)
+* [Old Style Entity Configuration](#old-style-entity-configuration)
 * [Services](#services)
 <!-- TOC -->
+
 
 # Introduction
 
@@ -153,6 +155,7 @@ Many thanks to:
 Virtual is part of the default HACS store. If you're not interested in
 development branches this is the easiest way to install.
 
+
 # Component Configuration
 
 - `yaml_config`; set to `True` to enable backwards compatability, set to `False`
@@ -164,6 +167,7 @@ For example, this enable backwards compatability.
 virtual:
   yaml_config: True
 ```
+
 
 # Entity Configuration
 
@@ -288,7 +292,6 @@ Test Switch:
 - platform: switch
 ```
 
-
 ## Binary Sensors
 To add a virtual binary_sensor use the following. It supports all standard
 classes.
@@ -302,7 +305,6 @@ Test Binary Sensor:
 
 Use the `virtual.turn_on`, `virtual.turn_off` and `virtual.toggle` services to
 manipulate the binary sensors.
-
 
 ## Sensors
 
@@ -348,7 +350,6 @@ Only `name` is required.
 
 _Note; *white_value is deprecated and will be removed in future releases._
 
-
 ## Locks
 
 To add a virtual lock use the following:
@@ -371,7 +372,6 @@ Test Lock:
   - `jamming_test`: optional, default `0` tries; any positive value will result in a
     jamming failure approximately once per `jamming_test` tries
 
-
 ## Fans
 
 To add a virtual fan use the following:
@@ -392,7 +392,6 @@ You only need one of `speed` or `speed_count`.
 - `direction`; if `True` then fan can run in 2 directions
 - `oscillate`; if `True` then fan can be set to oscillate
 
-
 ## Covers
 
 To add a virtual cover use the following:
@@ -409,7 +408,6 @@ Supports `open`, `close`, `stop` and `set_position`. Opening and closing of
 the cover is emulated with timed events, and the timing can be controlled with
 - `open_close_duration`: The time it take to go from fully open to fully closed, or back
 - `open_close_tick`: The update interval when opening and closing
-
 
 ## Valves
 
@@ -428,7 +426,6 @@ the valve is emulated with timed events, and the timing can be controlled with
 - `open_close_duration`: The time it take to go from fully open to fully closed, or back
 - `open_close_tick`: The update interval when opening and closing
 
-
 ## Device Tracking
 
 To add a virtual device tracker use the following:
@@ -445,6 +442,12 @@ Test Device_Tracker:
   or if the device is not `persistent`
 
 Use the `virtual.move` service to change device locations.
+
+
+# Old Style Entity Configuration
+
+For now; look at [the 0.8](https://github.com/twrecked/hass-virtual/tree/version-0.8.x?tab=readme-ov-file#component-configuration) documentation.
+
 
 # Services
 
@@ -494,8 +497,4 @@ This service will turn off a binary sensor.
 - `gps`; GPS coordinates
 
 Move a device tracker. You use one of the parameters.
-
-# Old Style Entity Configuration
-
-For now; look at [the 0.8](https://github.com/twrecked/hass-virtual/tree/version-0.8.x?tab=readme-ov-file#component-configuration) documentation.
 
