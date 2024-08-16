@@ -44,6 +44,14 @@ COVER_SCHEMA = vol.Schema(virtual_schema(DEFAULT_COVER_VALUE, {
 }))
 
 
+async def async_setup_platform(hass, config, async_add_entities, _discovery_info=None):
+    if hass.data[COMPONENT_CONFIG].get(CONF_YAML_CONFIG, False):
+        _LOGGER.debug("setting up old config...")
+
+        sensors = [VirtualCover(config, True)]
+        async_add_entities(sensors, True)
+
+
 async def async_setup_entry(
         hass: HomeAssistant,
         entry: ConfigEntry,
@@ -54,16 +62,16 @@ async def async_setup_entry(
     entities = []
     for entity in get_entity_configs(hass, entry.data[ATTR_GROUP_NAME], PLATFORM_DOMAIN):
         entity = COVER_SCHEMA(entity)
-        entities.append(VirtualCover(entity))
+        entities.append(VirtualCover(entity, False))
     async_add_entities(entities)
 
 
 class VirtualCover(VirtualOpenableEntity, CoverEntity):
     """Representation of a Virtual cover."""
 
-    def __init__(self, config):
+    def __init__(self, config, old_style : bool):
         """Initialize the Virtual cover device."""
-        super().__init__(config, PLATFORM_DOMAIN)
+        super().__init__(config, PLATFORM_DOMAIN, old_style)
 
         self._attr_supported_features = CoverEntityFeature(
             CoverEntityFeature.OPEN |

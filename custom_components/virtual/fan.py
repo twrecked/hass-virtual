@@ -23,6 +23,8 @@ from homeassistant.components.fan import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import get_entity_configs
 from .const import *
@@ -55,6 +57,19 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(BASE_SCHEMA)
 FAN_SCHEMA = vol.Schema(BASE_SCHEMA)
 
 
+async def async_setup_platform(
+        hass: HomeAssistant,
+        config: ConfigType,
+        async_add_entities: AddEntitiesCallback,
+        _discovery_info: DiscoveryInfoType | None = None,
+) -> None:
+    if hass.data[COMPONENT_CONFIG].get(CONF_YAML_CONFIG, False):
+        _LOGGER.debug("setting up old config...")
+
+        fans = [VirtualFan(config, True)]
+        async_add_entities(fans, True)
+
+
 async def async_setup_entry(
         hass: HomeAssistant,
         entry: ConfigEntry,
@@ -65,16 +80,16 @@ async def async_setup_entry(
     entities = []
     for entity in get_entity_configs(hass, entry.data[ATTR_GROUP_NAME], PLATFORM_DOMAIN):
         entity = FAN_SCHEMA(entity)
-        entities.append(VirtualFan(entity))
+        entities.append(VirtualFan(entity, False))
     async_add_entities(entities)
 
 
 class VirtualFan(VirtualEntity, FanEntity):
     """A demonstration fan component."""
 
-    def __init__(self, config):
+    def __init__(self, config, old_style: bool):
         """Initialize the entity."""
-        super().__init__(config, PLATFORM_DOMAIN)
+        super().__init__(config, PLATFORM_DOMAIN, old_style)
 
         # Modes if supported
         self._attr_preset_modes = config.get(CONF_MODES)

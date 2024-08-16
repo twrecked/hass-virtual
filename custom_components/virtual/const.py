@@ -2,6 +2,7 @@
 
 COMPONENT_DOMAIN = "virtual"
 COMPONENT_SERVICES = "virtual-services"
+COMPONENT_CONFIG = "virtual-config"
 COMPONENT_MANUFACTURER = "twrecked"
 COMPONENT_MODEL = "virtual"
 
@@ -24,6 +25,7 @@ CONF_NAME = "name"
 CONF_OPEN_CLOSE_DURATION = "open_close_duration"
 CONF_OPEN_CLOSE_TICK = "open_close_tick"
 CONF_PERSISTENT = "persistent"
+CONF_YAML_CONFIG = "yaml_config"
 
 DEFAULT_AVAILABILITY = True
 DEFAULT_PERSISTENT = True

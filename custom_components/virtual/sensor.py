@@ -13,7 +13,6 @@ from homeassistant.components.sensor import (
     SensorDeviceClass
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     ATTR_DEVICE_CLASS,
@@ -35,7 +34,10 @@ from homeassistant.const import (
     UnitOfVolume,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import get_entity_from_domain, get_entity_configs
 from .const import *
@@ -93,18 +95,7 @@ UNITS_OF_MEASUREMENT = {
 }
 
 
-async def async_setup_entry(
-        hass: HomeAssistant,
-        entry: ConfigEntry,
-        async_add_entities: Callable[[list], None],
-) -> None:
-    _LOGGER.debug("setting up the entries...")
-
-    entities = []
-    for entity in get_entity_configs(hass, entry.data[ATTR_GROUP_NAME], PLATFORM_DOMAIN):
-        entity = SENSOR_SCHEMA(entity)
-        entities.append(VirtualSensor(entity))
-    async_add_entities(entities)
+def setup_services(hass: HomeAssistant) -> None:
 
     async def async_virtual_service(call):
         """Call virtual service handler."""
@@ -120,12 +111,41 @@ async def async_setup_entry(
         )
 
 
+async def async_setup_platform(
+        hass: HomeAssistant,
+        config: ConfigType,
+        async_add_entities: AddEntitiesCallback,
+        _discovery_info: DiscoveryInfoType | None = None,
+) -> None:
+    if hass.data[COMPONENT_CONFIG].get(CONF_YAML_CONFIG, False):
+        _LOGGER.debug("setting up old config...")
+
+        sensors = [VirtualSensor(config, True)]
+        async_add_entities(sensors, True)
+        setup_services(hass)
+
+
+async def async_setup_entry(
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        async_add_entities: Callable[[list], None],
+) -> None:
+    _LOGGER.debug("setting up the entries...")
+
+    entities = []
+    for entity in get_entity_configs(hass, entry.data[ATTR_GROUP_NAME], PLATFORM_DOMAIN):
+        entity = SENSOR_SCHEMA(entity)
+        entities.append(VirtualSensor(entity, False))
+    async_add_entities(entities)
+    setup_services(hass)
+
+
 class VirtualSensor(VirtualEntity, Entity):
     """An implementation of a Virtual Sensor."""
 
-    def __init__(self, config):
+    def __init__(self, config, old_style: bool):
         """Initialize an Virtual Sensor."""
-        super().__init__(config, PLATFORM_DOMAIN)
+        super().__init__(config, PLATFORM_DOMAIN, old_style)
 
         self._attr_device_class = config.get(CONF_CLASS)
 

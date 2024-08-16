@@ -20,7 +20,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_LOCKED
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import track_point_in_time
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import get_entity_configs
 from .const import *
@@ -48,6 +50,19 @@ LOCK_SCHEMA = vol.Schema(virtual_schema(DEFAULT_LOCK_VALUE, {
 }))
 
 
+async def async_setup_platform(
+        hass: HomeAssistant,
+        config: ConfigType,
+        async_add_entities: AddEntitiesCallback,
+        _discovery_info: DiscoveryInfoType | None = None,
+) -> None:
+    if hass.data[COMPONENT_CONFIG].get(CONF_YAML_CONFIG, False):
+        _LOGGER.debug("setting up old config...")
+
+        locks = [VirtualLock(hass, config, True)]
+        async_add_entities(locks, True)
+
+
 async def async_setup_entry(
         hass: HomeAssistant,
         entry: ConfigEntry,
@@ -58,16 +73,16 @@ async def async_setup_entry(
     entities = []
     for entity in get_entity_configs(hass, entry.data[ATTR_GROUP_NAME], PLATFORM_DOMAIN):
         entity = LOCK_SCHEMA(entity)
-        entities.append(VirtualLock(hass, entity))
+        entities.append(VirtualLock(hass, entity, False))
     async_add_entities(entities)
 
 
 class VirtualLock(VirtualEntity, LockEntity):
     """Representation of a Virtual lock."""
 
-    def __init__(self, hass, config):
+    def __init__(self, hass, config, old_style: bool):
         """Initialize the Virtual lock device."""
-        super().__init__(config, PLATFORM_DOMAIN)
+        super().__init__(config, PLATFORM_DOMAIN, old_style)
 
         self._hass = hass
         self._change_time = config.get(CONF_CHANGE_TIME)

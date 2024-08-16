@@ -49,36 +49,49 @@ class VirtualEntity(RestoreEntity):
     # Are we saving/restoring this entity
     _persistent: bool = True
 
-    def __init__(self, config, domain):
+    def __init__(self, config, domain, old_style : bool = False):
         """Initialize an Virtual Sensor."""
         _LOGGER.debug(f"creating-virtual-{domain}={config}")
         self._config = config
         self._persistent = config.get(CONF_PERSISTENT)
 
-        # Build name, entity id and unique id. We do this because historically
-        # the non-domain piece of the entity_id was prefixed with virtual_ so
-        # we build the pieces manually to make sure.
-        self._attr_name = config.get(CONF_NAME)
-
-        self.entity_id = config.get(ATTR_ENTITY_ID)
-        if self.entity_id == "NOTYET":
-            if self._attr_name.startswith("+"):
+        if old_style:
+            # Build name, entity id and unique id. We do this because historically
+            # the non-domain piece of the entity_id was prefixed with virtual_ so
+            # we build the pieces manually to make sure.
+            self._attr_name = config.get(CONF_NAME)
+            if self._attr_name.startswith("!"):
                 self._attr_name = self._attr_name[1:]
-                self.entity_id = f'{domain}.{COMPONENT_DOMAIN}_{slugify(self._attr_name)}'
-            else:
                 self.entity_id = f'{domain}.{slugify(self._attr_name)}'
-
-        self._attr_unique_id = config.get(ATTR_UNIQUE_ID, None)
-        if self._attr_unique_id == "NOTYET":
+            else:
+                self.entity_id = f'{domain}.{COMPONENT_DOMAIN}_{slugify(self._attr_name)}'
             self._attr_unique_id = slugify(self._attr_name)
 
-        if config.get(ATTR_DEVICE_ID) != "NOTYET":
-            _LOGGER.debug("setting up device info")
-            self._attr_device_info = DeviceInfo(
-                identifiers={(COMPONENT_DOMAIN, config.get(ATTR_DEVICE_ID))},
-                manufacturer=COMPONENT_MANUFACTURER,
-                model=COMPONENT_MODEL,
-            )
+        else:
+            # Build name, entity id and unique id. We do this because historically
+            # the non-domain piece of the entity_id was prefixed with virtual_ so
+            # we build the pieces manually to make sure.
+            self._attr_name = config.get(CONF_NAME)
+
+            self.entity_id = config.get(ATTR_ENTITY_ID)
+            if self.entity_id == "NOTYET":
+                if self._attr_name.startswith("+"):
+                    self._attr_name = self._attr_name[1:]
+                    self.entity_id = f'{domain}.{COMPONENT_DOMAIN}_{slugify(self._attr_name)}'
+                else:
+                    self.entity_id = f'{domain}.{slugify(self._attr_name)}'
+
+            self._attr_unique_id = config.get(ATTR_UNIQUE_ID, None)
+            if self._attr_unique_id == "NOTYET":
+                self._attr_unique_id = slugify(self._attr_name)
+
+            if config.get(ATTR_DEVICE_ID) != "NOTYET":
+                _LOGGER.debug("setting up device info")
+                self._attr_device_info = DeviceInfo(
+                    identifiers={(COMPONENT_DOMAIN, config.get(ATTR_DEVICE_ID))},
+                    manufacturer=COMPONENT_MANUFACTURER,
+                    model=COMPONENT_MODEL,
+                )
 
         _LOGGER.info(f'VirtualEntity {self._attr_name} created')
 
@@ -129,10 +142,10 @@ class VirtualOpenableEntity(VirtualEntity):
     future we will need to rethink this.
     """
 
-    def __init__(self, config, domain):
+    def __init__(self, config, domain, old_style: bool):
         """Initialize the Virtual openable device."""
         _LOGGER.debug(f"creating-virtual-openable-{domain}={config}")
-        super().__init__(config, domain)
+        super().__init__(config, domain, old_style)
 
         self._attr_device_class = config.get(CONF_CLASS)
         self._open_close_duration = config.get(CONF_OPEN_CLOSE_DURATION)

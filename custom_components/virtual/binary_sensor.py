@@ -43,18 +43,7 @@ SERVICE_SCHEMA = vol.Schema({
 })
 
 
-async def async_setup_entry(
-        hass: HomeAssistant,
-        entry: ConfigEntry,
-        async_add_entities: Callable[[list], None],
-) -> None:
-    _LOGGER.debug("setting up the entries...")
-
-    entities = []
-    for entity in get_entity_configs(hass, entry.data[ATTR_GROUP_NAME], PLATFORM_DOMAIN):
-        entity = BINARY_SENSOR_SCHEMA(entity)
-        entities.append(VirtualBinarySensor(entity))
-    async_add_entities(entities)
+def setup_services(hass: HomeAssistant) -> None:
 
     async def async_virtual_service(call):
         """Call virtual service handler."""
@@ -68,7 +57,7 @@ async def async_setup_entry(
 
     # Build up services...
     if not hasattr(hass.data[COMPONENT_SERVICES], PLATFORM_DOMAIN):
-        _LOGGER.debug("installing handlers")
+        _LOGGER.debug("installing binary_service handlers")
         hass.data[COMPONENT_SERVICES][PLATFORM_DOMAIN] = 'installed'
         hass.services.async_register(
             COMPONENT_DOMAIN, SERVICE_ON, async_virtual_service, schema=SERVICE_SCHEMA,
@@ -81,12 +70,36 @@ async def async_setup_entry(
         )
 
 
+async def async_setup_platform(hass, config, async_add_entities, _discovery_info=None):
+    if hass.data[COMPONENT_CONFIG].get(CONF_YAML_CONFIG, False):
+        _LOGGER.debug("setting up old config...")
+
+        sensors = [VirtualBinarySensor(config, True)]
+        async_add_entities(sensors, True)
+        setup_services(hass)
+
+
+async def async_setup_entry(
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        async_add_entities: Callable[[list], None],
+) -> None:
+    _LOGGER.debug("setting up the entries...")
+
+    entities = []
+    for entity in get_entity_configs(hass, entry.data[ATTR_GROUP_NAME], PLATFORM_DOMAIN):
+        entity = BINARY_SENSOR_SCHEMA(entity)
+        entities.append(VirtualBinarySensor(entity, False))
+    async_add_entities(entities)
+    setup_services(hass)
+
+
 class VirtualBinarySensor(VirtualEntity, BinarySensorEntity):
     """An implementation of a Virtual Binary Sensor."""
 
-    def __init__(self, config):
+    def __init__(self, config, old_style: bool):
         """Initialize a Virtual Binary Sensor."""
-        super().__init__(config, PLATFORM_DOMAIN)
+        super().__init__(config, PLATFORM_DOMAIN, old_style)
 
         self._attr_device_class = config.get(CONF_CLASS)
 
@@ -103,7 +116,7 @@ class VirtualBinarySensor(VirtualEntity, BinarySensorEntity):
         self._attr_is_on = state.state.lower() == STATE_ON
 
     def _update_attributes(self):
-        super()._update_attributes();
+        super()._update_attributes()
         self._attr_extra_state_attributes.update({
             name: value for name, value in (
                 (ATTR_DEVICE_CLASS, self._attr_device_class),
