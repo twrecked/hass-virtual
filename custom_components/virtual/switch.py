@@ -98,10 +98,10 @@ class VirtualSwitch(VirtualEntity, SwitchEntity):
             ) if value is not None
         })
 
-    def turn_on(self, **kwargs: Any) -> None:
+    async def async_turn_on(self, **kwargs: Any) -> None:
         _LOGGER.debug(f"turning {self.name} on")
         self._attr_is_on = True
 
-    def turn_off(self, **kwargs: Any) -> None:
+    async def async_turn_off(self, **kwargs: Any) -> None:
         _LOGGER.debug(f"turning {self.name} off")
         self._attr_is_on = False

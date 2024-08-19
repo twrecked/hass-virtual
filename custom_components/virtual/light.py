@@ -8,6 +8,7 @@ import logging
 import pprint
 import voluptuous as vol
 from collections.abc import Callable
+from typing import Any
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.light import (
@@ -186,7 +187,7 @@ class VirtualLight(VirtualEntity, LightEntity):
             ) if value is not None
         })
 
-    def turn_on(self, **kwargs):
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the light on."""
         _LOGGER.debug(f"turning {self.name} on {pprint.pformat(kwargs)}")
         hs_color = kwargs.get(ATTR_HS_COLOR, None)
@@ -210,7 +211,7 @@ class VirtualLight(VirtualEntity, LightEntity):
         self._attr_is_on = True
         self._update_attributes()
 
-    def turn_off(self, **kwargs):
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the light off."""
         _LOGGER.debug(f"turning {self.name} off {pprint.pformat(kwargs)}")
         self._attr_is_on = False

@@ -11,17 +11,16 @@ from datetime import timedelta
 from typing import Any
 
 import homeassistant.helpers.config_validation as cv
-import homeassistant.util.dt as dt_util
 from homeassistant.components.lock import (
     DOMAIN as PLATFORM_DOMAIN,
     LockEntity,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_LOCKED
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.event import track_point_in_time
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import get_entity_configs
@@ -136,6 +135,7 @@ class VirtualLock(VirtualEntity, LockEntity):
         self._attr_is_locked = False
         self._attr_is_jammed = True
 
+    @callback
     async def _finish_operation(self, _point_in_time) -> None:
         if self.is_locking:
             self._lock()
@@ -144,22 +144,22 @@ class VirtualLock(VirtualEntity, LockEntity):
         self.async_schedule_update_ha_state()
 
     def _start_operation(self):
-        track_point_in_time(self._hass, self._finish_operation, dt_util.utcnow() + self._change_time)
+        async_call_later(self.hass, self._change_time, self._finish_operation)
 
-    def lock(self, **kwargs: Any) -> None:
+    async def async_lock(self, **kwargs: Any) -> None:
         if self._change_time == DEFAULT_CHANGE_TIME:
             self._lock()
         else:
             self._locking()
             self._start_operation()
 
-    def unlock(self, **kwargs: Any) -> None:
+    async def async_unlock(self, **kwargs: Any) -> None:
         if self._change_time == DEFAULT_CHANGE_TIME:
             self._unlock()
         else:
             self._unlocking()
             self._start_operation()
 
-    def open(self, **kwargs: Any) -> None:
+    async def async_open(self, **kwargs: Any) -> None:
         _LOGGER.debug(f"opening {self.name}")
         self.unlock()
