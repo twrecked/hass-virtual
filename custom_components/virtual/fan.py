@@ -7,6 +7,8 @@ Borrowed heavily from components/demo/fan.py
 from __future__ import annotations
 
 import logging
+from typing import Any
+
 import voluptuous as vol
 from collections.abc import Callable
 
@@ -134,7 +136,7 @@ class VirtualFan(VirtualEntity, FanEntity):
         self._attr_preset_mode = state.attributes.get(ATTR_PRESET_MODE)
 
     def _update_attributes(self):
-        super()._update_attributes();
+        super()._update_attributes()
         self._attr_extra_state_attributes.update({
             name: value for name, value in (
                 (ATTR_DIRECTION, self._attr_current_direction),
@@ -144,16 +146,12 @@ class VirtualFan(VirtualEntity, FanEntity):
             ) if value is not None
         })
 
-    def set_percentage(self, percentage: int) -> None:
-        """Set the speed of the fan, as a percentage."""
-        _LOGGER.debug(f"setting {self.name} pcent to {percentage}")
+    def _set_percentage(self, percentage: int) -> None:
         self._attr_percentage = percentage
         self._attr_preset_mode = None
         self._update_attributes()
 
-    def set_preset_mode(self, preset_mode: str) -> None:
-        """Set new preset mode."""
-        _LOGGER.debug(f"setting {self.name} mode to {preset_mode}")
+    def _set_preset_mode(self, preset_mode: str) -> None:
         if preset_mode in self.preset_modes:
             self._attr_preset_mode = preset_mode
             self._attr_percentage = None
@@ -161,35 +159,44 @@ class VirtualFan(VirtualEntity, FanEntity):
         else:
             raise ValueError(f"Invalid preset mode: {preset_mode}")
 
-    def turn_on(
-        self,
-        speed: str = None,
-        percentage: int = None,
-        preset_mode: str = None,
-        **kwargs,
+    async def async_set_percentage(self, percentage: int) -> None:
+        """Set the speed of the fan, as a percentage."""
+        _LOGGER.debug(f"setting {self.name} pcent to {percentage}")
+        self._set_percentage(percentage)
+
+    async def async_set_preset_mode(self, preset_mode: str) -> None:
+        """Set new preset mode."""
+        _LOGGER.debug(f"setting {self.name} mode to {preset_mode}")
+        self._set_preset_mode(preset_mode)
+
+    async def async_turn_on(
+            self,
+            percentage: int | None = None,
+            preset_mode: str | None = None,
+            **kwargs: Any,
     ) -> None:
         """Turn on the entity."""
         _LOGGER.debug(f"turning {self.name} on")
         if preset_mode:
-            self.set_preset_mode(preset_mode)
+            self._set_preset_mode(preset_mode)
             return
 
         if percentage is None:
             percentage = 67
-        self.set_percentage(percentage)
+        self._set_percentage(percentage)
 
-    def turn_off(self, **kwargs) -> None:
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the entity."""
         _LOGGER.debug(f"turning {self.name} off")
-        self.set_percentage(0)
+        self._set_percentage(0)
 
-    def set_direction(self, direction: str) -> None:
+    async def async_set_direction(self, direction: str) -> None:
         """Set the direction of the fan."""
         _LOGGER.debug(f"setting direction of {self.name} to {direction}")
         self._attr_current_direction = direction
         self._update_attributes()
 
-    def oscillate(self, oscillating: bool) -> None:
+    async def async_oscillate(self, oscillating: bool) -> None:
         """Set oscillation."""
         _LOGGER.debug(f"setting oscillate of {self.name} to {oscillating}")
         self._attr_oscillating = oscillating
