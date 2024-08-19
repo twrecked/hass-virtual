@@ -1,5 +1,6 @@
 0.9.0b16:
   Use async interfaces where possible.
+  Add github stale action.
 0.9.0b15:
   Fix threading issue with cover and valve.
 0.9.0b14:
