@@ -227,6 +227,8 @@ class VirtualDeviceTracker(TrackerEntity, VirtualEntity):
 
     @property
     def source_type(self) -> SourceType | str:
+        if self._coords:
+            return "gps"
         return "virtual"
 
     @property
