@@ -1,3 +1,7 @@
+0.9.0b17:
+  Switch device tracker to GPS if needed
+  Fix warning about POWER_VOLT_AMPERE_REACTIVE
+  Fix restore state of lights
 0.9.0b16:
   Use async interfaces where possible.
   Add github stale action.
