@@ -189,7 +189,6 @@ class VirtualLight(VirtualEntity, LightEntity):
         """Turn the light on."""
         _LOGGER.debug(f"turning {self.name} on {pprint.pformat(kwargs)}")
         hs_color = kwargs.get(ATTR_HS_COLOR, None)
-        # self._attr_color_mode = ColorMode.UNKNOWN
 
         if hs_color is not None and ColorMode.HS in self._attr_supported_color_modes:
             _LOGGER.debug(f"hs mode!")
