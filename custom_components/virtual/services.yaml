@@ -76,3 +76,9 @@ move:
       selector:
         location:
           radius: false
+    gps_accuracy:
+      selector:
+        number:
+          min: 0
+          mode: box
+          unit_of_measurement: "m"

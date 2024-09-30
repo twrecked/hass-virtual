@@ -82,6 +82,10 @@
         "gps": {
           "name": "GPS",
           "description": "Which coordinates to move the device tracker to."
+        },
+        "gps_accuracy": {
+          "name": "GPS accuracy",
+          "description": "Accuracy of the GPS coordinates."
         }
       }
     }

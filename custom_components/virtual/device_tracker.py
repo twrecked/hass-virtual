@@ -38,6 +38,7 @@ DEPENDENCIES = [COMPONENT_DOMAIN]
 
 CONF_LOCATION = 'location'
 CONF_GPS = 'gps'
+CONF_GPS_ACCURACY = 'gps_accuracy'
 DEFAULT_DEVICE_TRACKER_VALUE = 'home'
 DEFAULT_LOCATION = 'home'
 
@@ -59,6 +60,7 @@ SERVICE_SCHEMA = vol.Schema({
         vol.Required(ATTR_LONGITUDE): cv.longitude,
         vol.Optional(ATTR_RADIUS): cv.string,
     },
+    vol.Optional(CONF_GPS_ACCURACY): cv.positive_int,
 })
 
 tracker_states = {}
@@ -190,6 +192,7 @@ class VirtualDeviceTracker(TrackerEntity, VirtualEntity):
 
         self._location = None
         self._coords = {}
+        self._gps_accuracy = 0
 
         _LOGGER.debug(f"{self._attr_name}, available={self._attr_available}")
         _LOGGER.debug(f"{self._attr_name}, entity={self.entity_id}")
@@ -241,16 +244,21 @@ class VirtualDeviceTracker(TrackerEntity, VirtualEntity):
         """Return longitude value of the device."""
         return self._coords.get(ATTR_LONGITUDE, None)
 
+    @property
+    def location_accuracy(self) -> int:
+        return self._gps_accuracy
+
     def move_to_location(self, new_location):
         _LOGGER.debug(f"{self._attr_name} moving to {new_location}")
         self._location = new_location
         self._coords = {}
         self.async_schedule_update_ha_state()
 
-    def move_to_coords(self, new_coords):
-        _LOGGER.debug(f"{self._attr_name} moving via GPS to {new_coords}")
+    def move_to_coords(self, new_coords, accuracy):
+        _LOGGER.debug(f"{self._attr_name} moving via GPS to {new_coords} ({accuracy}m)")
         self._location = None
         self._coords = new_coords
+        self._gps_accuracy = accuracy
         self.async_schedule_update_ha_state()
 
 
@@ -268,7 +276,8 @@ async def async_virtual_move_service(hass, call):
         if location is not None:
             entity.move_to_location(location)
         elif coords is not None:
-            entity.move_to_coords(coords)
+            accuracy = call.data.get(CONF_GPS_ACCURACY, 0)
+            entity.move_to_coords(coords, accuracy)
         else:
             _LOGGER.debug(f"not moving {entity_id}")
 
