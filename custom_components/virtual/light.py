@@ -191,7 +191,6 @@ class VirtualLight(VirtualEntity, LightEntity):
         hs_color = kwargs.get(ATTR_HS_COLOR, None)
 
         if hs_color is not None and ColorMode.HS in self._attr_supported_color_modes:
-            _LOGGER.debug(f"hs mode!")
             self._attr_color_mode = ColorMode.HS
             self._attr_hs_color = hs_color
             self._attr_color_temp = None
