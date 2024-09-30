@@ -159,15 +159,13 @@ class VirtualLight(VirtualEntity, LightEntity):
 
         self._attr_is_on = state.state.lower() == STATE_ON
 
-        if ColorMode.BRIGHTNESS in self._attr_supported_color_modes:
-            self._attr_color_mode = ColorMode.BRIGHTNESS
+        self._attr_color_mode = state.attributes.get(ATTR_COLOR_MODE, ColorMode.ONOFF)
+        if self._attr_color_mode == ColorMode.BRIGHTNESS:
             self._attr_brightness = state.attributes.get(ATTR_BRIGHTNESS, config.get(CONF_INITIAL_BRIGHTNESS))
-        if ColorMode.HS in self._attr_supported_color_modes:
-            self._attr_color_mode = ColorMode.HS
+        if self._attr_color_mode == ColorMode.HS:
             self._attr_hs_color = state.attributes.get(ATTR_HS_COLOR, config.get(CONF_INITIAL_COLOR))
             self._attr_brightness = state.attributes.get(ATTR_BRIGHTNESS, config.get(CONF_INITIAL_BRIGHTNESS))
-        if ColorMode.COLOR_TEMP in self._attr_supported_color_modes:
-            self._attr_color_mode = ColorMode.COLOR_TEMP
+        if self._attr_color_mode == ColorMode.COLOR_TEMP:
             self._attr_color_temp = state.attributes.get(ATTR_COLOR_TEMP, config.get(CONF_INITIAL_COLOR_TEMP))
             self._attr_brightness = state.attributes.get(ATTR_BRIGHTNESS, config.get(CONF_INITIAL_BRIGHTNESS))
         if self._attr_supported_features & SUPPORT_EFFECT:
@@ -191,18 +189,28 @@ class VirtualLight(VirtualEntity, LightEntity):
         """Turn the light on."""
         _LOGGER.debug(f"turning {self.name} on {pprint.pformat(kwargs)}")
         hs_color = kwargs.get(ATTR_HS_COLOR, None)
+        # self._attr_color_mode = ColorMode.UNKNOWN
+
         if hs_color is not None and ColorMode.HS in self._attr_supported_color_modes:
+            _LOGGER.debug(f"hs mode!")
+            self._attr_color_mode = ColorMode.HS
             self._attr_hs_color = hs_color
             self._attr_color_temp = None
 
         ct = kwargs.get(ATTR_COLOR_TEMP, None)
         if ct is not None and ColorMode.COLOR_TEMP in self._attr_supported_color_modes:
+            self._attr_color_mode = ColorMode.COLOR_TEMP
             self._attr_color_temp = ct
             self._attr_hs_color = None
 
         brightness = kwargs.get(ATTR_BRIGHTNESS, None)
         if brightness is not None:
+            if self._attr_color_mode == ColorMode.UNKNOWN:
+                self._attr_color_mode = ColorMode.BRIGHTNESS
             self._attr_brightness = brightness
+
+        if self._attr_color_mode == ColorMode.UNKNOWN:
+            self._attr_color_mode = ColorMode.ONOFF
 
         effect = kwargs.get(ATTR_EFFECT, None)
         if effect is not None and self._attr_supported_features & SUPPORT_EFFECT:
