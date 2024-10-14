@@ -55,6 +55,7 @@ VIRTUAL_PLATFORMS = [
     Platform.FAN,
     Platform.LIGHT,
     Platform.LOCK,
+    Platform.NUMBER,
     Platform.SENSOR,
     Platform.SWITCH,
     Platform.VALVE
