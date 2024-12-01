@@ -78,6 +78,14 @@
         "location": {
           "name": "Umiestnenie",
           "description": "Kam presunúť sledovač zariadení."
+        },
+        "gps": {
+          "name": "GPS",
+          "description": "Na ktoré súradnice presunúť sledovač zariadenia."
+        },
+        "gps_accuracy": {
+          "name": "GPS presnosť",
+          "description": "Presnosť súradníc GPS."
         }
       }
     }
