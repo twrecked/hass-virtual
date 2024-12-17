@@ -8,8 +8,8 @@ _Virtual_ is a component that provides virtual entities for _Home Assistant_.
 # !!!BREAKING CHANGES!!!
 
 Version 0.9 supports adding virtual devices using _config flow_. By default it
-will move your existing devices into a single file `virtual.yaml`. If you
-**DO NOT** want this behaviour add this to your `virtual` configuration.
+will move your existing devices into a single file `virtual.yaml`. If you **DO
+NOT** want this behaviour add this to your current `virtual` configuration.
 
 ```yaml
 virtual:
@@ -19,39 +19,46 @@ virtual:
 
 # Table Of Contents
 
-<!-- TOC -->
-* [**Virtual devices for Home Assistant**](#virtual-devices-for-home-assistant)
-* [!!!BREAKING CHANGES!!!](#breaking-changes)
-* [Table Of Contents](#table-of-contents)
-* [Introduction](#introduction)
-  * [Notes](#notes)
-  * [Version 0.8 Documentation](#version-08-documentation)
-  * [New Features in 0.9.0](#new-features-in-090)
-    * [Config Flow](#config-flow)
-      * [What pieces are done](#what-pieces-are-done)
-      * [What you need to be wary of](#what-you-need-to-be-wary-of)
-      * [What pieces need doing](#what-pieces-need-doing)
-      * [What if it goes wrong?](#what-if-it-goes-wrong)
-  * [Thanks](#thanks)
-* [Installation](#installation)
-  * [HACS](#hacs)
-* [Component Configuration](#component-configuration)
-* [Entity Configuration](#entity-configuration)
-  * [Common Attributes](#common-attributes)
-    * [Availability](#availability)
-    * [Persistence](#persistence)
-  * [Switches](#switches)
-  * [Binary Sensors](#binary-sensors)
-  * [Sensors](#sensors)
-  * [Lights](#lights)
-  * [Locks](#locks)
-  * [Fans](#fans)
-  * [Covers](#covers)
-  * [Valves](#valves)
-  * [Device Tracking](#device-tracking)
-* [Old Style Entity Configuration](#old-style-entity-configuration)
-* [Services](#services)
-<!-- TOC -->
+
+<!--toc:start-->
+- [**Virtual devices for Home Assistant**](#virtual-devices-for-home-assistant)
+- [!!!BREAKING CHANGES!!!](#breaking-changes)
+- [Table Of Contents](#table-of-contents)
+- [Introduction](#introduction)
+  - [Notes](#notes)
+  - [Version 0.8 Documentation](#version-08-documentation)
+  - [New Features in 0.9.0](#new-features-in-090)
+    - [Config Flow](#config-flow)
+      - [What pieces are done](#what-pieces-are-done)
+      - [What you need to be wary of](#what-you-need-to-be-wary-of)
+      - [What if it goes wrong?](#what-if-it-goes-wrong)
+  - [Thanks](#thanks)
+- [Installation](#installation)
+  - [Getting the Software](#getting-the-software)
+    - [HACS](#hacs)
+  - [Adding the Integration](#adding-the-integration)
+    - [After a Fresh Install](#after-a-fresh-install)
+    - [After an Upgrade](#after-an-upgrade)
+  - [I don't want the New Behaviour!!!](#i-dont-want-the-new-behaviour)
+  - [Adding More Entries](#adding-more-entries)
+- [Component Configuration](#component-configuration)
+- [Entity Configuration](#entity-configuration)
+  - [File Layout](#file-layout)
+  - [Common Attributes](#common-attributes)
+    - [Availability](#availability)
+    - [Persistence](#persistence)
+  - [Switches](#switches)
+  - [Binary Sensors](#binary-sensors)
+  - [Sensors](#sensors)
+  - [Lights](#lights)
+  - [Locks](#locks)
+  - [Fans](#fans)
+  - [Covers](#covers)
+  - [Valves](#valves)
+  - [Device Tracking](#device-tracking)
+- [Old Style Entity Configuration](#old-style-entity-configuration)
+- [Services](#services)
+<!--toc:end-->
 
 
 # Introduction
@@ -76,22 +83,15 @@ Finally. After sitting on it for far too long I decided to do the work I
 needed to, this integration now acts much like every integration, splitting
 down by entity, device and integration.
 
-This means a lot of this documentation is now out of date, I will upgrade it
-when all the changes have been finalized, for now I will just add a quick note
-inline.
-
 #### What pieces are done
 
 - _upgrade_; the code will upgrade a _0.8_ build to the _config flow_ system.
   Your current configuration will be moved into 1 file, `virtual.yaml`. This
   file contains all your virtual devices. Edit this file to add any type of
   device.
-- _configuration_; the settings are still available you only need to edit them
-  in one place, `virtual.yaml`. The layout should be obvious after the
-  upgrade.
-- _multiple integration instances_; you can group virtual devices, each group
-  will use a different configuration file
 - _services_; they follow the _Home Assistant_ standard
+- _multiple integrations_; the integration can be added several times and you
+  can spread your devices across several files
 - _device groupings_; for example, a motion detector can have a motion
   detection entity and a battery entity, upgraded devices will have a one to
   one relationship. For example, the following will create a motion device
@@ -121,12 +121,6 @@ inline.
   4. delete the virtual integration
   5. add back the virtual integration in accepting the defaults
 
-#### What pieces need doing
-
-- _reload/reconfigure_; this somewhat works, but I need to deal with orphans
-  when devices are turned off
-- _documentation_; the configuration is handled differently now
-
 #### What if it goes wrong?
 
 For now I recommend leaving your old configuration in place so you can revert
@@ -149,19 +143,56 @@ Many thanks to:
 
 # Installation
 
-## HACS
+## Getting the Software
+
+### HACS
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/hacs/integration)
 
 Virtual is part of the default HACS store. If you're not interested in
 development branches this is the easiest way to install.
 
+## Adding the Integration 
+
+### After a Fresh Install
+
+When you have created your initial configuration file do the following:
+
+- go to `Settings` -> `Devices and Integrations` -> `+ ADD INTEGRATION`
+- search for _virtual_ and choose the integration
+- give your configuration a name and point it at your newly created file
+
+Then you click OK 
+
+### After an Upgrade
+
+All your devices will be moved to a group called _import_ and put into
+`/config/virtual.yaml`. The system will create a single _virtual_ integration.
+
+## I don't want the New Behaviour!!!
+
+If you want to keep your existing behaviour change your current `virtual`
+entry in `configuration.yaml` to this:
+
+```yaml
+virtual:
+  yaml_config: True
+```
+
+## Adding More Entries
+
+You can add more than one integration by selecting `Add Entry` on the
+_virtual_ integration page. You will need to give this new entity group a name
+and point it to the new file.
+
 
 # Component Configuration
 
-- `yaml_config`; set to `True` to enable backwards compatability, set to `False`
+You set this to enable backwards compatibility. 
+
+- `yaml_config`; set to `True` to enable backwards compatibility, set to `False`
   to disable it. The default is `False`.
 
-For example, this enable backwards compatability.
+For example, this enable backwards compatibility.
 
 ```yaml
 virtual:
@@ -171,10 +202,18 @@ virtual:
 
 # Entity Configuration
 
-All component configuration is done through a _yaml_ file. There is a single
-file per integration instance. The default file, created on upgrade, is
-`/config/virtual.yaml`. An empty file looks like this:
+All component configuration is done through _yaml_ files. You can put all of
+your virtual devices into a single _yaml_ file or you can group devices
+together in multiple file.
 
+If this is a fresh install you will need to install a _virtual_ integration
+instance and tell it about your file. If you are upgrading from _0.8_ the system will
+create a single instance and copy all your current devices into a
+`/config/virtual.yaml`.
+
+## File Layout
+
+An empty file looks like this:
 ```yaml
 version: 1
 devices: {}
