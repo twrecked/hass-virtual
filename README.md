@@ -161,7 +161,7 @@ When you have created your initial configuration file do the following:
 - search for _virtual_ and choose the integration
 - give your configuration a name and point it at your newly created file
 
-When you click OK 
+Then you click OK 
 
 ### After an Upgrade
 
