@@ -151,6 +151,12 @@ Many thanks to:
 Virtual is part of the default HACS store. If you're not interested in
 development branches this is the easiest way to install.
 
+- Go to `HACS` -> Search for `Virtual Components`
+- Click on `Virtual Components` to view the details and download button, or use the 3 dots to tghe right and press `Download`
+- Virtual Components `v0.8.0.1` will be downloaded by default. Recommended: Select `Need a different version?`
+- Select the latest version `(v0.9.0b or higher)` to use the new confiog flow. 
+- Press `download` and **restart your Home Assistant**
+
 ## Adding the Integration 
 
 ### After a Fresh Install
@@ -162,6 +168,8 @@ When you have created your initial configuration file do the following:
 - give your configuration a name and point it at your newly created file
 
 Then you click OK 
+
+**Warning:** Check your /config/ folder if a virtual.yml file has been added. If not, make this file yourself.
 
 ### After an Upgrade
 
