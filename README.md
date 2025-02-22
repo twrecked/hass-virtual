@@ -460,7 +460,7 @@ Test Valve:
   open_close_tick: 1
 ```
 
-Supports `open`, `close`, `stop` and `set_position`. Opening and closing of
+Supports `open_valve`, `close_valve`, `stop_valve` and `set_valve_position`. Opening and closing of
 the valve is emulated with timed events, and the timing can be controlled with
 - `open_close_duration`: The time it take to go from fully open to fully closed, or back
 - `open_close_tick`: The update interval when opening and closing
