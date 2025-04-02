@@ -6,7 +6,6 @@ This component provides support for virtual components.
 import logging
 import voluptuous as vol
 import asyncio
-from distutils import util
 
 import homeassistant.helpers.config_validation as cv
 import homeassistant.helpers.device_registry as dr
@@ -30,7 +29,7 @@ from .const import *
 from .cfg import BlendedCfg, UpgradeCfg
 
 
-__version__ = '0.9.1'
+__version__ = '0.9.2'
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -60,6 +59,16 @@ VIRTUAL_PLATFORMS = [
     Platform.SWITCH,
     Platform.VALVE
 ]
+
+
+def str_to_bool(value) -> bool:
+    value = value.lower()
+    if value in ["y", "yes", "t", "true", "on", "1"]:
+        return True
+    if value in ["n", "no", "f", "false", "off", "0"]:
+        return False
+    raise ValueError
+
 
 async def async_setup(hass, config):
     """Set up a virtual components.
@@ -157,9 +166,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await asyncio.sleep(1)
 
     # Delete orphaned devices.
-    for switch, values in vcfg.orphaned_entities.items():
-        _LOGGER.debug(f"would try to delete {switch}/{values}")
-        # await _async_delete_momentary_device_from_registry(hass, entry, switch, values)
+    for switch, device in vcfg.orphaned_entities.items():
+        _LOGGER.debug(f"deleting {switch}/{device}")
+        await _async_delete_virtual_device_from_registry(hass, entry, device)
 
     # Update the component data.
     hass.data[COMPONENT_DOMAIN].update({
@@ -194,34 +203,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     _LOGGER.debug(f"unloading virtual group {entry.data[ATTR_GROUP_NAME]}")
-    _LOGGER.debug(f"before hass={hass.data[COMPONENT_DOMAIN]}")
+    # _LOGGER.debug(f"before hass={hass.data[COMPONENT_DOMAIN]}")
     unload_ok = await hass.config_entries.async_unload_platforms(entry, VIRTUAL_PLATFORMS)
     if unload_ok:
-        bcfg = BlendedCfg(hass, entry.data)
-        await bcfg.async_delete()
-        ocfg = hass.data[COMPONENT_DOMAIN].pop(entry.data[ATTR_GROUP_NAME])
-        _LOGGER.debug(f"ocfg={ocfg}")
-        for device in ocfg[ATTR_DEVICES]:
-            _LOGGER.debug(f"del-device={device}")
-            await _async_delete_momentary_device_from_registry(hass, entry, device[ATTR_DEVICE_ID], device[CONF_NAME])
-        await asyncio.sleep(1)
-    _LOGGER.debug(f"after hass={hass.data[COMPONENT_DOMAIN]}")
+        _LOGGER.debug("unloaded ok")
+        hass.data[COMPONENT_DOMAIN].pop(entry.data[ATTR_GROUP_NAME])
+        # _LOGGER.debug(f"ocfg={ocfg}")
+    # _LOGGER.debug(f"after hass={hass.data[COMPONENT_DOMAIN]}")
 
     return unload_ok
-
-
-async def _async_get_or_create_virtual_device_in_registry(
-        hass: HomeAssistant, entry: ConfigEntry, device
-) -> None:
-    device_registry = dr.async_get(hass)
-    device_registry.async_get_or_create(
-        config_entry_id=entry.entry_id,
-        identifiers={(COMPONENT_DOMAIN, device[ATTR_DEVICE_ID])},
-        manufacturer=COMPONENT_MANUFACTURER,
-        model=COMPONENT_MODEL,
-        name=device[CONF_NAME],
-        sw_version=__version__
-    )
 
 
 def get_entity_configs(hass, group_name, domain):
@@ -243,7 +233,7 @@ def get_entity_from_domain(hass, domain, entity_id):
 async def async_virtual_set_availability_service(hass, call):
     value = call.data['value']
     if type(value) is not bool:
-        value = bool(util.strtobool(value))
+        value = str_to_bool(value)
 
     for entity_id in call.data['entity_id']:
         domain = entity_id.split(".")[0]
@@ -251,15 +241,29 @@ async def async_virtual_set_availability_service(hass, call):
         get_entity_from_domain(hass, domain, entity_id).set_available(value)
 
 
-async def _async_delete_momentary_device_from_registry(
-        hass: HomeAssistant, _entry: ConfigEntry, device_id, _name
+async def _async_get_or_create_virtual_device_in_registry(
+        hass: HomeAssistant, entry: ConfigEntry, device
 ) -> None:
-    device_registry = dr.async_get(hass)
-    device = device_registry.async_get_device(
-        identifiers={(COMPONENT_DOMAIN, device_id)},
+    registry = dr.async_get(hass)
+    registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(COMPONENT_DOMAIN, device[ATTR_DEVICE_ID])},
+        manufacturer=COMPONENT_MANUFACTURER,
+        model=COMPONENT_MODEL,
+        name=device[CONF_NAME],
+        sw_version=__version__
     )
-    if device:
-        _LOGGER.debug(f"found something to delete! {device.id}")
-        device_registry.async_remove_device(device.id)
+
+
+async def _async_delete_virtual_device_from_registry(
+        hass: HomeAssistant, _entry: ConfigEntry, device
+) -> None:
+    registery = dr.async_get(hass)
+    device_in_registry = registery.async_get_device(
+        identifiers={(COMPONENT_DOMAIN, device[ATTR_DEVICE_ID])},
+    )
+    if device_in_registry:
+        _LOGGER.debug(f"found something to delete! {device_in_registry.id}")
+        registery.async_remove_device(device_in_registry.id)
     else:
-        _LOGGER.info(f"have orphaned device in meta {device_id}")
+        _LOGGER.info(f"have orphaned device in meta {device[ATTR_DEVICE_ID]}")
