@@ -6,7 +6,7 @@ This class adds persistence to an entity.
 
 import logging
 import pprint
-from datetime import datetime
+
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
@@ -27,6 +27,7 @@ from .const import *
 
 _LOGGER = logging.getLogger(__name__)
 
+positive_tick = vol.All(vol.Coerce(float), vol.Range(min=0, min_included=False))
 
 def virtual_schema(default_initial_value: str, extra_attrs):
     schema = {
@@ -142,6 +143,14 @@ class VirtualOpenableEntity(VirtualEntity):
     future we will need to rethink this.
     """
 
+    _current_position: float
+    _target_position: float | None
+    _positions_per_tick: float | None
+    _open_close_duration: int
+    _open_close_tick: float
+    _open_close_operation_started: bool | None
+    _attr_is_closed: bool
+
     def __init__(self, config, domain, old_style: bool):
         """Initialize the Virtual openable device."""
         _LOGGER.debug(f"creating-virtual-openable-{domain}={config}")
@@ -154,6 +163,7 @@ class VirtualOpenableEntity(VirtualEntity):
         self._open_close_operation_started = None
         self._current_position = 0
         self._target_position = None
+        self._positions_per_tick = None
 
         _LOGGER.info(f"VirtualOpenable: {self.name} created")
 
@@ -183,57 +193,89 @@ class VirtualOpenableEntity(VirtualEntity):
             ) if value is not None
         })
 
+    def _cancel_timer(self) -> None:
+        """Cancel the current movement timer if active."""
+        if hasattr(self, '_timer_handle') and self._timer_handle:
+            self._timer_handle()
+            self._timer_handle = None
+
     def _stop(self) -> None:
-        _LOGGER.info(f"stopping {self.name}")
-        self._open_close_operation_started = None
+        _LOGGER.info(f"stopping {self.name} at position {self._current_position}")
+
+        self._cancel_timer()
+
         self._target_position = None
+        self._positions_per_tick = None
         self._attr_is_opening = False
         self._attr_is_closing = False
 
-        if self._current_position > 0:
-            self._attr_is_closed = False
-        else:
-            self._attr_is_closed = True
+        self._attr_is_closed = (self._current_position == 0)
 
         self.async_write_ha_state()
 
-    def _set_position(self, position) -> None:
-        _LOGGER.info(f"setting {self.name} position {position}")
-
-        self._target_position = position
-        if self._target_position == self._current_position:
-            return
-        elif self._target_position < self._current_position:
-            self._attr_is_opening = False
+    def _set_direction_flags(self, target_position: float) -> None:
+        """Set opening/closing flags based on target position."""
+        if target_position < self._current_position:
             self._attr_is_closing = True
+            self._attr_is_opening = False
         else:
             self._attr_is_opening = True
             self._attr_is_closing = False
 
         self.async_write_ha_state()
-        self._open_close_operation_started = datetime.now()
-        async_call_later(self.hass, self._open_close_tick, self._update_position)
+
+    def _set_position(self, position: int) -> None:
+        _LOGGER.info(f"setting {self.name} position {position}")
+
+        self._cancel_timer()
+
+        position = max(0, min(100, int(position)))
+
+        self._target_position = position
+
+        if self._target_position == self._current_position:
+            return
+
+        if self._open_close_tick > self._open_close_duration:
+            _LOGGER.warning(f"Tick duration {self._open_close_tick} > total duration {self._open_close_duration}, capping to {self._open_close_duration}")
+            self._open_close_tick = self._open_close_duration
+
+        if self._open_close_duration == 0:
+            # Transition through opening/closing state for automations
+            self._set_direction_flags(self._target_position)
+
+            # Immediately set final state
+            self._current_position = self._target_position
+            self._attr_is_opening = False
+            self._attr_is_closing = False
+            self._attr_is_closed = (self._current_position == 0)
+            self._target_position = None
+
+            self.async_schedule_update_ha_state(force_refresh=True)
+            return
+
+        distance = abs(self._target_position - self._current_position)
+        movement_duration = (distance / 100.0) * self._open_close_duration
+        total_ticks = max(1, int(movement_duration / self._open_close_tick))
+        self._positions_per_tick = distance / total_ticks
+
+        self._set_direction_flags(self._target_position)
+        self._timer_handle = async_call_later(self.hass, self._open_close_tick, self._update_position)
 
     @callback
     def _update_position(self, _now) -> None:
-        _LOGGER.info(f"updating {self.name} position {self._current_position}")
-        if self._target_position is not None:
-            if self._attr_is_closing and self._current_position <= self._target_position :
-                self._stop()
-            elif self._attr_is_opening and self._current_position >= self._target_position:
-                self._stop()
-
         if self._target_position is None:
             return
 
-        running_time_delta = datetime.now() - self._open_close_operation_started
-        percent_moved = int((running_time_delta.total_seconds() / self._open_close_duration)*100)
-
         if self._attr_is_closing:
-            self._current_position = max(0, self._current_position - percent_moved)
-        elif self._attr_is_opening:
-            self._current_position = min(100, self._current_position + percent_moved)
+            next_pos = max(self._target_position, self._current_position - self._positions_per_tick)
+        else:
+            next_pos = min(self._target_position, self._current_position + self._positions_per_tick)
 
-        self.async_write_ha_state()
-        self._open_close_operation_started = datetime.now()
-        async_call_later(self.hass, self._open_close_tick, self._update_position)
+        self._current_position = next_pos
+
+        if self._current_position == self._target_position:
+            self._stop()
+        else:
+            self.async_write_ha_state()
+            self._timer_handle = async_call_later(self.hass, self._open_close_tick, self._update_position)
