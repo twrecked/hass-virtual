@@ -14,9 +14,9 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.components.lock import (
     DOMAIN as PLATFORM_DOMAIN,
     LockEntity,
+    LockState,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_LOCKED
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -92,12 +92,12 @@ class VirtualLock(VirtualEntity, LockEntity):
     def _create_state(self, config):
         super()._create_state(config)
 
-        self._attr_is_locked = config.get(CONF_INITIAL_VALUE).lower() == STATE_LOCKED
+        self._attr_is_locked = config.get(CONF_INITIAL_VALUE).lower() == LockState.LOCKED
 
     def _restore_state(self, state, config):
         super()._restore_state(state, config)
 
-        self._attr_is_locked = state.state == STATE_LOCKED
+        self._attr_is_locked = state.state == LockState.LOCKED
 
     def _lock(self) -> None:
         if self._test_jamming == 0 or random.randint(0, self._test_jamming) > 0:
