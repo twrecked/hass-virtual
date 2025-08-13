@@ -132,12 +132,6 @@ would be great.
 
 ## Thanks
 Many thanks to:
-* [JetBrains](https://www.jetbrains.com/?from=hass-aarlo) for the excellent
-  **PyCharm IDE** and providing me with an open source licence to speed up the
-  project development.
-
-  [![JetBrains](/images/jetbrains.svg)](https://www.jetbrains.com/?from=hass-aarlo)
-
 * Icon from [iconscout](https://iconscout.com) by [twitter-inc](https://iconscout.com/contributors/twitter-inc)
  
 
@@ -150,12 +144,6 @@ Many thanks to:
 
 Virtual is part of the default HACS store. If you're not interested in
 development branches this is the easiest way to install.
-
-- Go to `HACS` -> Search for `Virtual Components`
-- Click on `Virtual Components` to view the details and download button, or use the 3 dots to tghe right and press `Download`
-- Virtual Components `v0.8.0.1` will be downloaded by default. Recommended: Select `Need a different version?`
-- Select the latest version `(v0.9.0b or higher)` to use the new confiog flow. 
-- Press `download` and **restart your Home Assistant**
 
 ## Adding the Integration 
 
