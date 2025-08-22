@@ -53,6 +53,7 @@ virtual:
   - [Lights](#lights)
   - [Locks](#locks)
   - [Fans](#fans)
+  - [Climate](#climate)
   - [Covers](#covers)
   - [Valves](#valves)
   - [Device Tracking](#device-tracking)
@@ -63,7 +64,7 @@ virtual:
 
 # Introduction
 
-Virtual provides virtual components for testing Home Assistant systems.
+Virtual provides virtual components for testing Home Assistant systems, including switches, sensors, lights, locks, fans, climate devices, covers, valves, and device trackers.
 
 ## Notes
 Wherever you see `/config` in this README it refers to your home-assistant
@@ -420,6 +421,79 @@ Test Fan:
   oscillate: True
 ```
 
+## Climate
+
+To add a virtual climate device (HVAC system, air conditioner, etc.) use the following:
+
+```yaml
+Living Room AC:
+- platform: climate
+  name: Living Room Air Conditioner
+  initial_value: 'off'
+  hvac_modes: ['heat', 'cool', 'heat_cool', 'dry', 'fan_only', 'off']
+  fan_modes: ['auto', 'low', 'medium', 'high']
+  preset_modes: ['none', 'eco', 'boost']
+  swing_modes: ['off', 'vertical', 'horizontal', 'both']
+  min_temp: 16.0
+  max_temp: 30.0
+  target_temp_step: 0.5
+  current_temperature: 22.0
+  current_humidity: 45
+  target_temperature: 24.0
+  target_temperature_high: 26.0
+  target_temperature_low: 18.0
+  humidity: 50
+  fan_mode: 'auto'
+  preset_mode: 'none'
+  swing_mode: 'off'
+  hvac_action: 'idle'
+```
+
+**Required Parameters:**
+- `platform`: Must be set to `climate`
+
+**Optional Parameters (all have sensible defaults):**
+
+**Mode Support:**
+- `hvac_modes`: List of supported HVAC modes. Default: `['heat', 'cool', 'heat_cool', 'dry', 'fan_only', 'off']`
+- `fan_modes`: List of supported fan modes. Default: `['auto', 'low', 'medium', 'high']`
+- `preset_modes`: List of supported preset modes. Default: `['none', 'eco', 'boost']`
+- `swing_modes`: List of supported swing modes. Default: `['off', 'vertical', 'horizontal', 'both']`
+
+**Temperature Control:**
+- `min_temp`: Minimum temperature limit (°C). Default: `7.0`
+- `max_temp`: Maximum temperature limit (°C). Default: `35.0`
+- `target_temp_step`: Temperature adjustment step size. Default: `0.5`
+- `current_temperature`: Current room temperature (°C). Default: `20.0`
+- `target_temperature`: Target temperature for single mode (°C). Default: `20.0`
+- `target_temperature_high`: High temperature for heat_cool mode (°C). Default: `26.0`
+- `target_temperature_low`: Low temperature for heat_cool mode (°C). Default: `16.0`
+
+**Humidity Control:**
+- `current_humidity`: Current room humidity (%). Default: `50`
+- `humidity`: Target humidity (%). Default: `50`
+
+**Initial State:**
+- `initial_value`: Initial power state. Default: `'off'`
+- `fan_mode`: Initial fan mode. Default: `'auto'`
+- `preset_mode`: Initial preset mode. Default: `'none'`
+- `swing_mode`: Initial swing mode. Default: `'off'`
+- `hvac_action`: Initial HVAC action. Default: `'idle'`
+
+**Example Use Cases:**
+- **Simple AC**: Use `hvac_modes: ['cool', 'off']` for basic air conditioning
+- **Heat Pump**: Use `hvac_modes: ['heat', 'cool', 'heat_cool', 'off']` for full HVAC control
+- **Fan Only**: Use `hvac_modes: ['fan_only', 'off']` for ventilation systems
+- **Dehumidifier**: Use `hvac_modes: ['dry', 'off']` for moisture control
+
+**Supported Operations:**
+- Temperature control (single or range mode)
+- Mode switching (heat, cool, heat_cool, dry, fan_only)
+- Fan speed control
+- Preset mode selection
+- Swing mode control
+- Humidity monitoring and control
+
 You only need one of `speed` or `speed_count`.
 - `speed`; if `True` then fan can be set to low, medium and high speeds
 - `speed_count`; number of speeds to allow, these will be broken down into
@@ -532,4 +606,34 @@ This service will turn off a binary sensor.
 - `gps`; GPS coordinates
 
 Move a device tracker. You use one of the parameters.
+
+---
+
+**Name: `virtual.set_climate_temperature`**
+
+*Parameters:*
+- `entity_id`; The entity id of the climate device
+- `temperature`; The target temperature to set
+
+This service sets the target temperature for a virtual climate device.
+
+---
+
+**Name: `virtual.set_climate_hvac_mode`**
+
+*Parameters:*
+- `entity_id`; The entity id of the climate device
+- `hvac_mode`; The HVAC mode to set (heat, cool, heat_cool, dry, fan_only, off)
+
+This service changes the HVAC mode of a virtual climate device.
+
+---
+
+**Name: `virtual.set_climate_fan_mode`**
+
+*Parameters:*
+- `entity_id`; The entity id of the climate device
+- `fan_mode`; The fan mode to set (auto, low, medium, high)
+
+This service changes the fan mode of a virtual climate device.
 

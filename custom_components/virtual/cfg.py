@@ -44,6 +44,27 @@ BINARY_SENSOR_SCHEMA = vol.Schema(virtual_schema(BINARY_SENSOR_DEFAULT_INITIAL_V
     vol.Optional(CONF_CLASS): cv.string,
 }))
 
+CLIMATE_DEFAULT_INITIAL_VALUE = 'off'
+CLIMATE_SCHEMA = vol.Schema(virtual_schema(CLIMATE_DEFAULT_INITIAL_VALUE, {
+    vol.Optional("hvac_modes", default=["heat", "cool", "heat_cool", "dry", "fan_only", "off"]): vol.All(cv.ensure_list, [cv.string]),
+    vol.Optional("fan_modes", default=["auto", "low", "medium", "high"]): vol.All(cv.ensure_list, [cv.string]),
+    vol.Optional("preset_modes", default=["none", "eco", "boost"]): vol.All(cv.ensure_list, [cv.string]),
+    vol.Optional("swing_modes", default=["off", "vertical", "horizontal", "both"]): vol.All(cv.ensure_list, [cv.string]),
+    vol.Optional("min_temp", default=7.0): vol.Coerce(float),
+    vol.Optional("max_temp", default=35.0): vol.Coerce(float),
+    vol.Optional("target_temp_step", default=0.5): vol.Coerce(float),
+    vol.Optional("current_temperature", default=20.0): vol.Coerce(float),
+    vol.Optional("current_humidity", default=50): vol.Coerce(int),
+    vol.Optional("target_temperature", default=20.0): vol.Coerce(float),
+    vol.Optional("target_temperature_high", default=26.0): vol.Coerce(float),
+    vol.Optional("target_temperature_low", default=16.0): vol.Coerce(float),
+    vol.Optional("humidity", default=50): vol.Coerce(int),
+    vol.Optional("fan_mode", default="auto"): cv.string,
+    vol.Optional("preset_mode", default="none"): cv.string,
+    vol.Optional("swing_mode", default="off"): cv.string,
+    vol.Optional("hvac_action", default="idle"): cv.string,
+}))
+
 SENSOR_DEFAULT_INITIAL_VALUE = '0'
 SENSOR_SCHEMA = vol.Schema(virtual_schema(SENSOR_DEFAULT_INITIAL_VALUE, {
     vol.Optional(CONF_CLASS): cv.string,
@@ -396,6 +417,10 @@ class BlendedCfg(object):
         return self._entities.get(Platform.BINARY_SENSOR, [])
 
     @property
+    def climate_config(self):
+        return self._entities.get(Platform.CLIMATE, [])
+
+    @property
     def sensor_config(self):
         return self._entities.get(Platform.SENSOR, [])
 
@@ -421,7 +446,7 @@ class UpgradeCfg(object):
         devices = {}
 
         # Add in the easily formatted devices.
-        for platform in [Platform.BINARY_SENSOR, Platform.SENSOR,
+        for platform in [Platform.BINARY_SENSOR, Platform.CLIMATE, Platform.SENSOR,
                          Platform.FAN, Platform.LIGHT,
                          Platform.LOCK, Platform.SWITCH]:
             devices = _parse_old_config(devices, config.get(platform, []), str(platform))

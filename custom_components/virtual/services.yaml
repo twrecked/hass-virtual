@@ -55,6 +55,70 @@ set_available:
       selector:
         boolean:
 
+set_climate_temperature:
+  name: Set Climate Temperature
+  description: Set the target temperature of a climate device.
+  target:
+    entity:
+      integration: virtual
+      domain: climate
+  fields:
+    temperature:
+      name: Temperature
+      description: Target temperature to set.
+      example: 22.0
+      required: true
+      selector:
+        number:
+          min: -50
+          max: 100
+          step: 0.5
+          unit_of_measurement: "°C"
+
+set_climate_hvac_mode:
+  name: Set Climate HVAC Mode
+  description: Set the HVAC mode of a climate device.
+  target:
+    entity:
+      integration: virtual
+      domain: climate
+  fields:
+    hvac_mode:
+      name: HVAC Mode
+      description: HVAC mode to set.
+      example: 'heat'
+      required: true
+      selector:
+        select:
+          options:
+            - 'off'
+            - 'heat'
+            - 'cool'
+            - 'heat_cool'
+            - 'dry'
+            - 'fan_only'
+
+set_climate_fan_mode:
+  name: Set Climate Fan Mode
+  description: Set the fan mode of a climate device.
+  target:
+    entity:
+      integration: virtual
+      domain: climate
+  fields:
+    fan_mode:
+      name: Fan Mode
+      description: Fan mode to set.
+      example: 'auto'
+      required: true
+      selector:
+        select:
+          options:
+            - 'auto'
+            - 'low'
+            - 'medium'
+            - 'high'
+
 move:
   name: Move
   description: Move a device tracker to a new location.
