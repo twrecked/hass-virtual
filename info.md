@@ -15,6 +15,7 @@ entity configuration.
 ## Features
 It provides:
 * Virtual binary sensors
+* Virtual climate devices (HVAC systems, air conditioners, etc.)
 * Virtual device trackers
 * Virtual fans
 * Virtual lights

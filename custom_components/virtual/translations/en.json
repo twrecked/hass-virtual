@@ -19,7 +19,7 @@
   "services": {
     "turn_on": {
       "name": "Turn On",
-      "description": "Turn on a binary sensor.",
+      "description": "Turn on a binary sensor, climate device, or other entity.",
       "fields": {
         "entity_id": {
           "name": "Entity Id",
@@ -29,7 +29,7 @@
     },
     "turn_off": {
       "name": "Turn Off",
-      "description": "Turn off a binary sensor.",
+      "description": "Turn off a binary sensor, climate device, or other entity.",
       "fields": {
         "entity_id": {
           "name": "Entity Id",
@@ -39,7 +39,7 @@
     },
     "toggle": {
       "name": "Toggle",
-      "description": "Toggle a binary sensor.",
+      "description": "Toggle a binary sensor or other entity.",
       "fields": {
         "entity_id": {
           "name": "Entity Id",
@@ -49,7 +49,7 @@
     },
     "set": {
       "name": "Set",
-      "description": "Set the value of a sensor.",
+      "description": "Set the value of a sensor or other entity.",
       "fields": {
         "entity_id": {
           "name": "Entity Id",

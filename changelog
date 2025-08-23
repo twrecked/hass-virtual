@@ -1,3 +1,10 @@
+0.9.4:
+  Added support for virtual climate devices (HVAC systems, air conditioners, etc.)
+  New climate entities support temperature control, HVAC modes, fan modes, preset modes, and swing modes
+  Added climate-specific services: set_climate_temperature, set_climate_hvac_mode, set_climate_fan_mode
+  Updated documentation with climate configuration examples
+  Thanks to the community for requesting this feature
+
 0.9.3:
   Fix some deprecation warnings.
   Tidy up cover and valve code. Many thanks to @mikz

@@ -1,0 +1,93 @@
+{
+  "title": "虚拟设备",
+  "config": {
+    "error": {
+      "group_name_used": "该组名已被使用，请尝试其他名称。",
+      "file_name_used": "该文件名已被使用，请尝试其他名称。"
+    },
+    "step": {
+      "user": {
+        "title": "虚拟数据库",
+        "description": "请输入组名和包含虚拟设备的文件路径。如果不存在，将会创建一个空文件。",
+        "data": {
+          "group_name": "组",
+          "file_name": "文件"
+        }
+      }
+    }
+  },
+  "services": {
+    "turn_on": {
+      "name": "开启",
+      "description": "开启二进制传感器、空调设备或其他实体。",
+      "fields": {
+        "entity_id": {
+          "name": "实体ID",
+          "description": "要设置的实体名称"
+        }
+      }
+    },
+    "turn_off": {
+      "name": "关闭",
+      "description": "关闭二进制传感器、空调设备或其他实体。",
+      "fields": {
+        "entity_id": {
+          "name": "实体ID",
+          "description": "要设置的实体名称"
+        }
+      }
+    },
+    "toggle": {
+      "name": "切换",
+      "description": "切换二进制传感器或其他实体。",
+      "fields": {
+        "entity_id": {
+          "name": "实体ID",
+          "description": "要设置的实体名称"
+        }
+      }
+    },
+    "set": {
+      "name": "设置",
+      "description": "设置传感器或其他实体的值。",
+      "fields": {
+        "entity_id": {
+          "name": "实体ID",
+          "description": "要设置的实体名称"
+        },
+        "value": {
+          "name": "值",
+          "description": "要设置的状态值。"
+        }
+      }
+    },
+    "set_available": {
+      "name": "设置可用性",
+      "description": "设置实体的可用性。",
+      "fields": {
+        "value": {
+          "name": "值",
+          "description": "实体是否可用。"
+        }
+      }
+    },
+    "move": {
+      "name": "移动",
+      "description": "将设备追踪器移动到新位置。",
+      "fields": {
+        "location": {
+          "name": "位置",
+          "description": "要将设备追踪器移动到的命名位置。"
+        },
+        "gps": {
+          "name": "GPS",
+          "description": "要将设备追踪器移动到的坐标。"
+        },
+        "gps_accuracy": {
+          "name": "GPS精度",
+          "description": "GPS坐标的精度。"
+        }
+      }
+    }
+  }
+}

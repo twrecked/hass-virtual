@@ -47,8 +47,25 @@ SERVICE_SCHEMA = vol.Schema({
     vol.Required('value'): cv.boolean,
 })
 
+# Climate service schemas
+SERVICE_CLIMATE_TEMPERATURE_SCHEMA = vol.Schema({
+    vol.Required(ATTR_ENTITY_ID): cv.comp_entity_ids,
+    vol.Required('temperature'): vol.Coerce(float),
+})
+
+SERVICE_CLIMATE_HVAC_MODE_SCHEMA = vol.Schema({
+    vol.Required(ATTR_ENTITY_ID): cv.comp_entity_ids,
+    vol.Required('hvac_mode'): cv.string,
+})
+
+SERVICE_CLIMATE_FAN_MODE_SCHEMA = vol.Schema({
+    vol.Required(ATTR_ENTITY_ID): cv.comp_entity_ids,
+    vol.Required('fan_mode'): cv.string,
+})
+
 VIRTUAL_PLATFORMS = [
     Platform.BINARY_SENSOR,
+    Platform.CLIMATE,
     Platform.COVER,
     Platform.DEVICE_TRACKER,
     Platform.FAN,
@@ -196,6 +213,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[COMPONENT_SERVICES][COMPONENT_DOMAIN] = 'installed'
         hass.services.async_register(COMPONENT_DOMAIN, SERVICE_AVAILABILE,
                                      async_virtual_service_set_available, schema=SERVICE_SCHEMA)
+        
+        # Register climate services with proper closure to capture hass
+        async def async_virtual_climate_temperature_service_wrapper(call):
+            await async_virtual_climate_temperature_service(hass, call)
+        
+        async def async_virtual_climate_hvac_mode_service_wrapper(call):
+            await async_virtual_climate_hvac_mode_service(hass, call)
+        
+        async def async_virtual_climate_fan_mode_service_wrapper(call):
+            await async_virtual_climate_fan_mode_service(hass, call)
+        
+        hass.services.async_register(COMPONENT_DOMAIN, 'set_climate_temperature',
+                                     async_virtual_climate_temperature_service_wrapper, schema=SERVICE_CLIMATE_TEMPERATURE_SCHEMA)
+        hass.services.async_register(COMPONENT_DOMAIN, 'set_climate_hvac_mode',
+                                     async_virtual_climate_hvac_mode_service_wrapper, schema=SERVICE_CLIMATE_HVAC_MODE_SCHEMA)
+        hass.services.async_register(COMPONENT_DOMAIN, 'set_climate_fan_mode',
+                                     async_virtual_climate_fan_mode_service_wrapper, schema=SERVICE_CLIMATE_FAN_MODE_SCHEMA)
 
     return True
 
@@ -216,6 +250,48 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 def get_entity_configs(hass, group_name, domain):
     return hass.data.get(COMPONENT_DOMAIN, {}).get(group_name, {}).get(ATTR_ENTITIES, {}).get(domain, [])
+
+
+async def async_virtual_climate_temperature_service(hass, call):
+    """Service to set climate temperature."""
+    entity_ids = call.data.get(ATTR_ENTITY_ID)
+    temperature = call.data.get('temperature')
+    
+    for entity_id in entity_ids:
+        entity = hass.states.get(entity_id)
+        if entity and entity.domain == 'climate':
+            await hass.services.async_call('climate', 'set_temperature', {
+                'entity_id': entity_id,
+                'temperature': temperature
+            })
+
+
+async def async_virtual_climate_hvac_mode_service(hass, call):
+    """Service to set climate HVAC mode."""
+    entity_ids = call.data.get(ATTR_ENTITY_ID)
+    hvac_mode = call.data.get('hvac_mode')
+    
+    for entity_id in entity_ids:
+        entity = hass.states.get(entity_id)
+        if entity and entity.domain == 'climate':
+            await hass.services.async_call('climate', 'set_hvac_mode', {
+                'entity_id': entity_id,
+                'hvac_mode': hvac_mode
+            })
+
+
+async def async_virtual_climate_fan_mode_service(hass, call):
+    """Service to set climate fan mode."""
+    entity_ids = call.data.get(ATTR_ENTITY_ID)
+    fan_mode = call.data.get('fan_mode')
+    
+    for entity_id in entity_ids:
+        entity = hass.states.get(entity_id)
+        if entity and entity.domain == 'climate':
+            await hass.services.async_call('climate', 'set_fan_mode', {
+                'entity_id': entity_id,
+                'fan_mode': fan_mode
+            })
 
 
 def get_entity_from_domain(hass, domain, entity_id):
