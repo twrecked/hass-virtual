@@ -214,13 +214,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.services.async_register(COMPONENT_DOMAIN, SERVICE_AVAILABILE,
                                      async_virtual_service_set_available, schema=SERVICE_SCHEMA)
         
-        # Register climate services
+        # Register climate services with proper closure to capture hass
+        async def async_virtual_climate_temperature_service_wrapper(call):
+            await async_virtual_climate_temperature_service(hass, call)
+        
+        async def async_virtual_climate_hvac_mode_service_wrapper(call):
+            await async_virtual_climate_hvac_mode_service(hass, call)
+        
+        async def async_virtual_climate_fan_mode_service_wrapper(call):
+            await async_virtual_climate_fan_mode_service(hass, call)
+        
         hass.services.async_register(COMPONENT_DOMAIN, 'set_climate_temperature',
-                                     async_virtual_climate_temperature_service, schema=SERVICE_CLIMATE_TEMPERATURE_SCHEMA)
+                                     async_virtual_climate_temperature_service_wrapper, schema=SERVICE_CLIMATE_TEMPERATURE_SCHEMA)
         hass.services.async_register(COMPONENT_DOMAIN, 'set_climate_hvac_mode',
-                                     async_virtual_climate_hvac_mode_service, schema=SERVICE_CLIMATE_HVAC_MODE_SCHEMA)
+                                     async_virtual_climate_hvac_mode_service_wrapper, schema=SERVICE_CLIMATE_HVAC_MODE_SCHEMA)
         hass.services.async_register(COMPONENT_DOMAIN, 'set_climate_fan_mode',
-                                     async_virtual_climate_fan_mode_service, schema=SERVICE_CLIMATE_FAN_MODE_SCHEMA)
+                                     async_virtual_climate_fan_mode_service_wrapper, schema=SERVICE_CLIMATE_FAN_MODE_SCHEMA)
 
     return True
 
