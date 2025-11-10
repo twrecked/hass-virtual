@@ -124,7 +124,7 @@ async def async_setup(hass, config):
         _LOGGER.debug("setting up old virtual components")
         hass.data[COMPONENT_CONFIG][CONF_YAML_CONFIG] = True
 
-        @verify_domain_control(hass, COMPONENT_DOMAIN)
+        @verify_domain_control(COMPONENT_DOMAIN)
         async def async_virtual_service_set_available(call) -> None:
             """Call virtual service handler."""
             _LOGGER.info("{} service called".format(call.service))
@@ -185,7 +185,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, VIRTUAL_PLATFORMS)
 
     # Install service handler.
-    @verify_domain_control(hass, COMPONENT_DOMAIN)
+    @verify_domain_control(COMPONENT_DOMAIN)
     async def async_virtual_service_set_available(call) -> None:
         """Call virtual service handler."""
         _LOGGER.info(f"{call.service} service called")
