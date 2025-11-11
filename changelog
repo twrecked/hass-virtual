@@ -1,3 +1,5 @@
+0.9.4:
+  Fix deprecation warnings. (Thanks @Tony763)
 0.9.3:
   Fix some deprecation warnings.
   Tidy up cover and valve code. Many thanks to @mikz
