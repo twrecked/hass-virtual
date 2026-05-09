@@ -24,13 +24,16 @@ from homeassistant.components.light import (
     LightEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_ON
+from homeassistant.const import (
+    ATTR_ENTITY_ID,
+    STATE_ON,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
-from . import get_entity_configs
+from . import get_entity_configs, get_entity_from_domain
 from .const import *
 from .entity import VirtualEntity, virtual_schema
 
@@ -82,6 +85,33 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(BASE_SCHEMA)
 
 LIGHT_SCHEMA = vol.Schema(BASE_SCHEMA)
 
+SERVICE_SET_LIGHT = "set_light"
+SERVICE_SCHEMA = vol.Schema({
+    vol.Required(ATTR_ENTITY_ID): cv.comp_entity_ids,
+    vol.Optional(ATTR_BRIGHTNESS): cv.byte,
+    vol.Optional(ATTR_HS_COLOR): vol.All(
+        cv.ensure_list,
+        vol.Length(min=2, max=2),
+        [vol.Coerce(float)],
+        [vol.Range(min=0.0)],
+    ),
+    vol.Optional(ATTR_COLOR_TEMP_KELVIN): vol.All(vol.Coerce(int), vol.Range(min=2000, max=6535)),
+})                                
+
+def setup_services(hass: HomeAssistant) -> None:
+
+    async def async_virtual_service(call):
+        """Call virtual service handler."""
+        _LOGGER.debug(f"{call.service} service called")
+        await async_virtual_set_light_service(hass, call)
+
+    # Build up services...
+    if not hasattr(hass.data[COMPONENT_SERVICES], PLATFORM_DOMAIN):
+        _LOGGER.debug("installing light service handlers")
+        hass.data[COMPONENT_SERVICES][PLATFORM_DOMAIN] = "installed"
+        hass.services.async_register(
+            COMPONENT_DOMAIN, SERVICE_SET_LIGHT, async_virtual_service, schema=SERVICE_SCHEMA,
+        )
 
 async def async_setup_platform(
         hass: HomeAssistant,
@@ -94,6 +124,7 @@ async def async_setup_platform(
 
         lights = [VirtualLight(config, True)]
         async_add_entities(lights, True)
+        setup_services(hass)
 
 
 async def async_setup_entry(
@@ -108,6 +139,7 @@ async def async_setup_entry(
         entity = LIGHT_SCHEMA(entity)
         entities.append(VirtualLight(entity, False))
     async_add_entities(entities)
+    setup_services(hass)
 
 
 class VirtualLight(VirtualEntity, LightEntity):
@@ -237,3 +269,18 @@ class VirtualLight(VirtualEntity, LightEntity):
         _LOGGER.debug(f"turning {self.name} off {pprint.pformat(kwargs)}")
         self._attr_is_on = False
         self._update_attributes()
+
+async def async_virtual_set_light_service(hass, call):
+    attr_map = {
+        ATTR_BRIGHTNESS: "_attr_brightness",
+        ATTR_HS_COLOR: "_attr_hs_color",
+        ATTR_COLOR_TEMP_KELVIN: "_attr_color_temp_kelvin",
+    }
+    for entity_id in call.data[ATTR_ENTITY_ID]:
+        entity = get_entity_from_domain(hass, PLATFORM_DOMAIN, entity_id)
+        for attr, entity_attr in attr_map.items():
+            if (value := call.data.get(attr)) is not None:
+                _LOGGER.debug(f"setting {attr} of {entity_id} to {value}")
+                setattr(entity, entity_attr, value)
+        entity._update_attributes()
+        entity.async_write_ha_state()
