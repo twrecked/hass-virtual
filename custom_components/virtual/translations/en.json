@@ -71,6 +71,24 @@
         }
       }
     },
+    "set_light": {
+      "name": "Set light",
+      "description": "Set brightness, color, or color temperature of a light without turning it on.",
+      "fields": {
+        "brightness": {
+          "name": "Brightness",
+          "description": "Brightness level (0-255)."
+        },
+        "hs_color": {
+          "name": "Hue/Saturation color",
+          "description": "Color as [hue (0-360), saturation (0-100)]."
+        },
+        "color_temp_kelvin": {
+          "name": "Color temperature in kelvin",
+          "description": "Color temperature in kelvin (2000-6535)."
+        }
+      }
+    },
     "move": {
       "name": "Move",
       "description": "Move a device tracker to a new location.",

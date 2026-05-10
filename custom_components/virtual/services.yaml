@@ -55,6 +55,36 @@ set_available:
       selector:
         boolean:
 
+set_light:
+  name: Set light
+  description: Set brightness, color, or color temperature of a light without turning it on.
+  target:
+    entity:
+      integration: virtual
+      domain: light
+  fields:
+    brightness:
+      name: Brightness
+      description: Brightness level (0-255).
+      required: false
+      example: '128'
+      selector:
+        text:
+    hs_color:
+      name: Hue/Saturation color
+      description: Color as [hue (0-360), saturation (0-100)].
+      required: false
+      example: '[120, 100]'
+      selector:
+        text:
+    color_temp_kelvin:
+      name: Color temperature in kelvin
+      description: Color temperature in kelvin (2000-6535).
+      required: false
+      example: '4000'
+      selector:
+        text:
+
 move:
   name: Move
   description: Move a device tracker to a new location.
