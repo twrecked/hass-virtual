@@ -134,6 +134,15 @@ class VirtualLight(VirtualEntity, LightEntity):
             self._attr_supported_features |= LightEntityFeature.EFFECT
             self._attr_effect_list = self._config.get(CONF_INITIAL_EFFECT_LIST)
 
+    def _default_color_mode(self) -> ColorMode:
+        if ColorMode.HS in self._attr_supported_color_modes:
+            return ColorMode.HS
+        if ColorMode.COLOR_TEMP in self._attr_supported_color_modes:
+            return ColorMode.COLOR_TEMP
+        if ColorMode.BRIGHTNESS in self._attr_supported_color_modes:
+            return ColorMode.BRIGHTNESS
+        return ColorMode.ONOFF
+
     @property
     def brightness(self) -> int | None:
         return self._attr_brightness if self._attr_is_on else None
@@ -154,16 +163,14 @@ class VirtualLight(VirtualEntity, LightEntity):
         super()._create_state(config)
 
         self._attr_is_on = config.get(CONF_INITIAL_VALUE).lower() == STATE_ON
+        self._attr_color_mode = self._default_color_mode()
 
         if ColorMode.BRIGHTNESS in self._attr_supported_color_modes:
-            self._attr_color_mode = ColorMode.BRIGHTNESS
             self._attr_brightness = config.get(CONF_INITIAL_BRIGHTNESS)
         if ColorMode.HS in self._attr_supported_color_modes:
-            self._attr_color_mode = ColorMode.HS
             self._attr_hs_color = config.get(CONF_INITIAL_COLOR)
             self._attr_brightness = config.get(CONF_INITIAL_BRIGHTNESS)
         if ColorMode.COLOR_TEMP in self._attr_supported_color_modes:
-            self._attr_color_mode = ColorMode.COLOR_TEMP
             self._attr_color_temp_kelvin = config.get(CONF_INITIAL_COLOR_TEMP)
             self._attr_brightness = config.get(CONF_INITIAL_BRIGHTNESS)
         if self._attr_supported_features & LightEntityFeature.EFFECT:
@@ -174,15 +181,23 @@ class VirtualLight(VirtualEntity, LightEntity):
 
         self._attr_is_on = state.state.lower() == STATE_ON
 
-        self._attr_color_mode = state.attributes.get(ATTR_COLOR_MODE, ColorMode.ONOFF)
+        restored_mode = state.attributes.get(ATTR_COLOR_MODE)
+        if restored_mode in self._attr_supported_color_modes:
+            self._attr_color_mode = ColorMode(restored_mode)
+        else:
+            self._attr_color_mode = self._default_color_mode()
+
         if self._attr_color_mode == ColorMode.BRIGHTNESS:
             self._attr_brightness = state.attributes.get(ATTR_BRIGHTNESS, config.get(CONF_INITIAL_BRIGHTNESS))
-        if self._attr_color_mode == ColorMode.HS:
+        elif self._attr_color_mode == ColorMode.HS:
             self._attr_hs_color = state.attributes.get(ATTR_HS_COLOR, config.get(CONF_INITIAL_COLOR))
             self._attr_brightness = state.attributes.get(ATTR_BRIGHTNESS, config.get(CONF_INITIAL_BRIGHTNESS))
-        if self._attr_color_mode == ColorMode.COLOR_TEMP:
+        elif self._attr_color_mode == ColorMode.COLOR_TEMP:
             self._attr_color_temp_kelvin = state.attributes.get(ATTR_COLOR_TEMP_KELVIN, config.get(CONF_INITIAL_COLOR_TEMP))
             self._attr_brightness = state.attributes.get(ATTR_BRIGHTNESS, config.get(CONF_INITIAL_BRIGHTNESS))
+        else:
+            self._attr_brightness = state.attributes.get(ATTR_BRIGHTNESS, config.get(CONF_INITIAL_BRIGHTNESS))
+
         if self._attr_supported_features & LightEntityFeature.EFFECT:
             self._attr_effect = state.attributes.get(ATTR_EFFECT, config.get(CONF_INITIAL_EFFECT))
 
@@ -218,12 +233,15 @@ class VirtualLight(VirtualEntity, LightEntity):
 
         brightness = kwargs.get(ATTR_BRIGHTNESS, None)
         if brightness is not None:
-            if self._attr_color_mode == ColorMode.UNKNOWN:
-                self._attr_color_mode = ColorMode.BRIGHTNESS
+            if self._attr_color_mode not in self._attr_supported_color_modes:
+                if ColorMode.BRIGHTNESS in self._attr_supported_color_modes:
+                    self._attr_color_mode = ColorMode.BRIGHTNESS
+                else:
+                    self._attr_color_mode = self._default_color_mode()
             self._attr_brightness = brightness
 
-        if self._attr_color_mode == ColorMode.UNKNOWN:
-            self._attr_color_mode = ColorMode.ONOFF
+        if self._attr_color_mode not in self._attr_supported_color_modes:
+            self._attr_color_mode = self._default_color_mode()
 
         effect = kwargs.get(ATTR_EFFECT, None)
         if effect is not None and self._attr_supported_features & LightEntityFeature.EFFECT:
