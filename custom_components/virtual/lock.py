@@ -58,7 +58,7 @@ async def async_setup_platform(
     if hass.data[COMPONENT_CONFIG].get(CONF_YAML_CONFIG, False):
         _LOGGER.debug("setting up old config...")
 
-        locks = [VirtualLock(hass, config, True)]
+        locks = [VirtualLock(config, True)]
         async_add_entities(locks, True)
 
 
@@ -72,32 +72,48 @@ async def async_setup_entry(
     entities = []
     for entity in get_entity_configs(hass, entry.data[ATTR_GROUP_NAME], PLATFORM_DOMAIN):
         entity = LOCK_SCHEMA(entity)
-        entities.append(VirtualLock(hass, entity, False))
+        entities.append(VirtualLock(entity, False))
     async_add_entities(entities)
 
 
 class VirtualLock(VirtualEntity, LockEntity):
     """Representation of a Virtual lock."""
 
-    def __init__(self, hass, config, old_style: bool):
+    def __init__(self, config, old_style: bool):
         """Initialize the Virtual lock device."""
         super().__init__(config, PLATFORM_DOMAIN, old_style)
 
-        self._hass = hass
-        self._change_time = config.get(CONF_CHANGE_TIME)
-        self._test_jamming = config.get(CONF_TEST_JAMMING)
-        
-        _LOGGER.info('VirtualLock: {} created'.format(self.name))
+        self._change_time = config.get(CONF_CHANGE_TIME, DEFAULT_CHANGE_TIME)
+        self._test_jamming = config.get(CONF_TEST_JAMMING, DEFAULT_TEST_JAMMING)
+        self._timer_handle = None
+
+        _LOGGER.info(f"VirtualLock: {self.name} created")
 
     def _create_state(self, config):
         super()._create_state(config)
 
-        self._attr_is_locked = config.get(CONF_INITIAL_VALUE).lower() == LockState.LOCKED
+        self._attr_is_locked = config.get(CONF_INITIAL_VALUE, DEFAULT_LOCK_VALUE).lower() == LockState.LOCKED
+        self._attr_is_locking = False
+        self._attr_is_unlocking = False
+        self._attr_is_jammed = False
 
     def _restore_state(self, state, config):
         super()._restore_state(state, config)
 
-        self._attr_is_locked = state.state == LockState.LOCKED
+        self._attr_is_locking = False
+        self._attr_is_unlocking = False
+        if state.state == LockState.JAMMED:
+            self._attr_is_locked = False
+            self._attr_is_jammed = True
+        elif state.state == LockState.UNLOCKED:
+            self._attr_is_locked = False
+            self._attr_is_jammed = False
+        elif state.state == LockState.LOCKED:
+            self._attr_is_locked = True
+            self._attr_is_jammed = False
+        else:
+            self._attr_is_locked = config.get(CONF_INITIAL_VALUE, DEFAULT_LOCK_VALUE).lower() == LockState.LOCKED
+            self._attr_is_jammed = False
 
     def _lock(self) -> None:
         if self._test_jamming == 0 or random.randint(0, self._test_jamming) > 0:
@@ -135,31 +151,46 @@ class VirtualLock(VirtualEntity, LockEntity):
         self._attr_is_locked = False
         self._attr_is_jammed = True
 
+    def _cancel_timer(self) -> None:
+        if self._timer_handle:
+            self._timer_handle()
+            self._timer_handle = None
+
+    async def async_will_remove_from_hass(self) -> None:
+        self._cancel_timer()
+        await super().async_will_remove_from_hass()
+
     @callback
-    async def _finish_operation(self, _point_in_time) -> None:
+    def _finish_operation(self, _point_in_time) -> None:
+        self._timer_handle = None
         if self.is_locking:
             self._lock()
-        if self.is_unlocking:
+        elif self.is_unlocking:
             self._unlock()
-        self.async_schedule_update_ha_state()
+        self.async_write_ha_state()
 
     def _start_operation(self):
-        async_call_later(self.hass, self._change_time, self._finish_operation)
+        self._cancel_timer()
+        self._timer_handle = async_call_later(self.hass, self._change_time, self._finish_operation)
 
     async def async_lock(self, **kwargs: Any) -> None:
         if self._change_time == DEFAULT_CHANGE_TIME:
+            self._cancel_timer()
             self._lock()
         else:
             self._locking()
             self._start_operation()
+        self.async_write_ha_state()
 
     async def async_unlock(self, **kwargs: Any) -> None:
         if self._change_time == DEFAULT_CHANGE_TIME:
+            self._cancel_timer()
             self._unlock()
         else:
             self._unlocking()
             self._start_operation()
+        self.async_write_ha_state()
 
     async def async_open(self, **kwargs: Any) -> None:
         _LOGGER.debug(f"opening {self.name}")
-        self.unlock()
+        await self.async_unlock(**kwargs)

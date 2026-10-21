@@ -15,7 +15,7 @@ from homeassistant.components.switch import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    ATTR_DEVICE_CLASS,
+    STATE_OFF,
     STATE_ON,
 )
 from homeassistant.core import HomeAssistant
@@ -83,25 +83,24 @@ class VirtualSwitch(VirtualEntity, SwitchEntity):
     def _create_state(self, config):
         super()._create_state(config)
 
-        self._attr_is_on = config.get(CONF_INITIAL_VALUE).lower() == STATE_ON
+        self._attr_is_on = config.get(CONF_INITIAL_VALUE, DEFAULT_SWITCH_VALUE).lower() == STATE_ON
 
     def _restore_state(self, state, config):
         super()._restore_state(state, config)
 
-        self._attr_is_on = state.state.lower() == STATE_ON
-
-    def _update_attributes(self):
-        super()._update_attributes()
-        self._attr_extra_state_attributes.update({
-            name: value for name, value in (
-                (ATTR_DEVICE_CLASS, self._attr_device_class),
-            ) if value is not None
-        })
+        if state.state and state.state.lower() in (STATE_ON, STATE_OFF):
+            self._attr_is_on = state.state.lower() == STATE_ON
+        else:
+            self._attr_is_on = config.get(CONF_INITIAL_VALUE, DEFAULT_SWITCH_VALUE).lower() == STATE_ON
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         _LOGGER.debug(f"turning {self.name} on")
         self._attr_is_on = True
+        self._update_attributes()
+        self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         _LOGGER.debug(f"turning {self.name} off")
         self._attr_is_on = False
+        self._update_attributes()
+        self.async_write_ha_state()

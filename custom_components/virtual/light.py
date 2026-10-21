@@ -24,7 +24,7 @@ from homeassistant.components.light import (
     LightEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_ON
+from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -162,24 +162,27 @@ class VirtualLight(VirtualEntity, LightEntity):
     def _create_state(self, config):
         super()._create_state(config)
 
-        self._attr_is_on = config.get(CONF_INITIAL_VALUE).lower() == STATE_ON
+        self._attr_is_on = config.get(CONF_INITIAL_VALUE, DEFAULT_LIGHT_VALUE).lower() == STATE_ON
         self._attr_color_mode = self._default_color_mode()
 
         if ColorMode.BRIGHTNESS in self._attr_supported_color_modes:
-            self._attr_brightness = config.get(CONF_INITIAL_BRIGHTNESS)
+            self._attr_brightness = config.get(CONF_INITIAL_BRIGHTNESS, DEFAULT_INITIAL_BRIGHTNESS)
         if ColorMode.HS in self._attr_supported_color_modes:
-            self._attr_hs_color = config.get(CONF_INITIAL_COLOR)
-            self._attr_brightness = config.get(CONF_INITIAL_BRIGHTNESS)
+            self._attr_hs_color = tuple(config.get(CONF_INITIAL_COLOR, DEFAULT_INITIAL_COLOR))
+            self._attr_brightness = config.get(CONF_INITIAL_BRIGHTNESS, DEFAULT_INITIAL_BRIGHTNESS)
         if ColorMode.COLOR_TEMP in self._attr_supported_color_modes:
-            self._attr_color_temp_kelvin = config.get(CONF_INITIAL_COLOR_TEMP)
-            self._attr_brightness = config.get(CONF_INITIAL_BRIGHTNESS)
+            self._attr_color_temp_kelvin = config.get(CONF_INITIAL_COLOR_TEMP, DEFAULT_INITIAL_COLOR_TEMP)
+            self._attr_brightness = config.get(CONF_INITIAL_BRIGHTNESS, DEFAULT_INITIAL_BRIGHTNESS)
         if self._attr_supported_features & LightEntityFeature.EFFECT:
-            self._attr_effect = config.get(CONF_INITIAL_EFFECT)
+            self._attr_effect = config.get(CONF_INITIAL_EFFECT, DEFAULT_INITIAL_EFFECT)
 
     def _restore_state(self, state, config):
         super()._restore_state(state, config)
 
-        self._attr_is_on = state.state.lower() == STATE_ON
+        if state.state and state.state.lower() in (STATE_ON, STATE_OFF):
+            self._attr_is_on = state.state.lower() == STATE_ON
+        else:
+            self._attr_is_on = config.get(CONF_INITIAL_VALUE, DEFAULT_LIGHT_VALUE).lower() == STATE_ON
 
         restored_mode = state.attributes.get(ATTR_COLOR_MODE)
         if restored_mode in self._attr_supported_color_modes:
@@ -187,33 +190,30 @@ class VirtualLight(VirtualEntity, LightEntity):
         else:
             self._attr_color_mode = self._default_color_mode()
 
-        if self._attr_color_mode == ColorMode.BRIGHTNESS:
-            self._attr_brightness = state.attributes.get(ATTR_BRIGHTNESS, config.get(CONF_INITIAL_BRIGHTNESS))
-        elif self._attr_color_mode == ColorMode.HS:
-            self._attr_hs_color = state.attributes.get(ATTR_HS_COLOR, config.get(CONF_INITIAL_COLOR))
-            self._attr_brightness = state.attributes.get(ATTR_BRIGHTNESS, config.get(CONF_INITIAL_BRIGHTNESS))
-        elif self._attr_color_mode == ColorMode.COLOR_TEMP:
-            self._attr_color_temp_kelvin = state.attributes.get(ATTR_COLOR_TEMP_KELVIN, config.get(CONF_INITIAL_COLOR_TEMP))
-            self._attr_brightness = state.attributes.get(ATTR_BRIGHTNESS, config.get(CONF_INITIAL_BRIGHTNESS))
+        brightness = state.attributes.get(ATTR_BRIGHTNESS)
+        if brightness is not None:
+            self._attr_brightness = brightness
         else:
-            self._attr_brightness = state.attributes.get(ATTR_BRIGHTNESS, config.get(CONF_INITIAL_BRIGHTNESS))
+            self._attr_brightness = config.get(CONF_INITIAL_BRIGHTNESS, DEFAULT_INITIAL_BRIGHTNESS)
+
+        hs_color = state.attributes.get(ATTR_HS_COLOR)
+        if hs_color is not None:
+            self._attr_hs_color = tuple(hs_color)
+        else:
+            self._attr_hs_color = tuple(config.get(CONF_INITIAL_COLOR, DEFAULT_INITIAL_COLOR))
+
+        ct = state.attributes.get(ATTR_COLOR_TEMP_KELVIN)
+        if ct is not None:
+            self._attr_color_temp_kelvin = ct
+        else:
+            self._attr_color_temp_kelvin = config.get(CONF_INITIAL_COLOR_TEMP, DEFAULT_INITIAL_COLOR_TEMP)
 
         if self._attr_supported_features & LightEntityFeature.EFFECT:
-            self._attr_effect = state.attributes.get(ATTR_EFFECT, config.get(CONF_INITIAL_EFFECT))
-
-    def _update_attributes(self):
-        """Return the state attributes."""
-        super()._update_attributes()
-        self._attr_extra_state_attributes.update({
-            name: value for name, value in (
-                (ATTR_BRIGHTNESS, self.brightness),
-                (ATTR_COLOR_MODE, self.color_mode),
-                (ATTR_COLOR_TEMP_KELVIN, self.color_temp_kelvin),
-                (ATTR_EFFECT, self._attr_effect),
-                (ATTR_EFFECT_LIST, self._attr_effect_list),
-                (ATTR_HS_COLOR, self.hs_color),
-            ) if value is not None
-        })
+            effect = state.attributes.get(ATTR_EFFECT)
+            if effect is not None:
+                self._attr_effect = effect
+            else:
+                self._attr_effect = config.get(CONF_INITIAL_EFFECT, DEFAULT_INITIAL_EFFECT)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the light on."""
@@ -222,7 +222,7 @@ class VirtualLight(VirtualEntity, LightEntity):
 
         if hs_color is not None and ColorMode.HS in self._attr_supported_color_modes:
             self._attr_color_mode = ColorMode.HS
-            self._attr_hs_color = hs_color
+            self._attr_hs_color = tuple(hs_color)
             self._attr_color_temp_kelvin = None
 
         ct = kwargs.get(ATTR_COLOR_TEMP_KELVIN, None)
@@ -249,9 +249,11 @@ class VirtualLight(VirtualEntity, LightEntity):
 
         self._attr_is_on = True
         self._update_attributes()
+        self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the light off."""
         _LOGGER.debug(f"turning {self.name} off {pprint.pformat(kwargs)}")
         self._attr_is_on = False
         self._update_attributes()
+        self.async_write_ha_state()

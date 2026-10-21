@@ -98,13 +98,16 @@ class VirtualEntity(RestoreEntity):
 
     def _create_state(self, config):
         _LOGGER.info(f'VirtualEntity {self.unique_id}: creating initial state')
-        self._attr_available = config.get(CONF_INITIAL_AVAILABILITY)
+        self._attr_available = config.get(CONF_INITIAL_AVAILABILITY, DEFAULT_AVAILABILITY)
 
     def _restore_state(self, state, config):
         _LOGGER.info(f'VirtualEntity {self.unique_id}: restoring state')
         _LOGGER.debug(f'VirtualEntity:: state={pprint.pformat(state.state)}')
         _LOGGER.debug(f'VirtualEntity:: attr={pprint.pformat(state.attributes)}')
-        self._attr_available = state.attributes.get(ATTR_AVAILABLE)
+        restored_available = state.attributes.get(ATTR_AVAILABLE)
+        if restored_available is None:
+            restored_available = config.get(CONF_INITIAL_AVAILABILITY, DEFAULT_AVAILABILITY)
+        self._attr_available = restored_available
 
     def _update_attributes(self):
         self._attr_extra_state_attributes = {
@@ -130,10 +133,10 @@ class VirtualEntity(RestoreEntity):
         """Call when entity is being removed from hass."""
         await super().async_will_remove_from_hass()
 
-    def set_available(self, value):
+    def set_available(self, value: bool) -> None:
         self._attr_available = value
         self._update_attributes()
-        self.async_schedule_update_ha_state()
+        self.async_write_ha_state()
 
 
 class VirtualOpenableEntity(VirtualEntity):
@@ -170,7 +173,7 @@ class VirtualOpenableEntity(VirtualEntity):
     def _create_state(self, config):
         super()._create_state(config)
 
-        self._attr_is_closed = config.get(CONF_INITIAL_VALUE).lower() == STATE_CLOSED
+        self._attr_is_closed = config.get(CONF_INITIAL_VALUE, "").lower() == STATE_CLOSED
         if self._attr_is_closed:
             self._current_position = 0
         else:
@@ -181,17 +184,16 @@ class VirtualOpenableEntity(VirtualEntity):
 
         # Cover and valve use the same position state. If this changes we will
         # need to add this into the derived class.
-        if ATTR_CURRENT_POSITION in state.attributes:
-            self._current_position = state.attributes[ATTR_CURRENT_POSITION]
-        self._attr_is_closed = state.state.lower() == STATE_CLOSED
+        position = state.attributes.get(ATTR_CURRENT_POSITION)
+        if position is not None:
+            try:
+                self._current_position = float(position)
+            except (ValueError, TypeError):
+                self._current_position = 0 if state.state.lower() == STATE_CLOSED else 100
+        else:
+            self._current_position = 0 if state.state.lower() == STATE_CLOSED else 100
 
-    def _update_attributes(self):
-        super()._update_attributes()
-        self._attr_extra_state_attributes.update({
-            name: value for name, value in (
-                (ATTR_DEVICE_CLASS, self._attr_device_class),
-            ) if value is not None
-        })
+        self._attr_is_closed = state.state.lower() == STATE_CLOSED
 
     def _cancel_timer(self) -> None:
         """Cancel the current movement timer if active."""

@@ -10,19 +10,18 @@ from collections.abc import Callable
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.sensor import (
     DOMAIN as PLATFORM_DOMAIN,
-    SensorDeviceClass
+    SensorDeviceClass,
+    SensorEntity,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     ATTR_ENTITY_ID,
-    ATTR_DEVICE_CLASS,
-    ATTR_UNIT_OF_MEASUREMENT,
-    CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
-    CONCENTRATION_PARTS_PER_MILLION,
     CONF_UNIT_OF_MEASUREMENT,
     LIGHT_LUX,
     PERCENTAGE,
     SIGNAL_STRENGTH_DECIBELS,
+    STATE_UNAVAILABLE,
+    STATE_UNKNOWN,
     UnitOfApparentPower,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
@@ -35,7 +34,6 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
-from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
@@ -103,7 +101,7 @@ def setup_services(hass: HomeAssistant) -> None:
         await async_virtual_set_service(hass, call)
 
     # Build up services...
-    if not hasattr(hass.data[COMPONENT_SERVICES], PLATFORM_DOMAIN):
+    if PLATFORM_DOMAIN not in hass.data[COMPONENT_SERVICES]:
         _LOGGER.debug("installing handlers")
         hass.data[COMPONENT_SERVICES][PLATFORM_DOMAIN] = "installed"
         hass.services.async_register(
@@ -140,7 +138,7 @@ async def async_setup_entry(
     setup_services(hass)
 
 
-class VirtualSensor(VirtualEntity, Entity):
+class VirtualSensor(VirtualEntity, SensorEntity):
     """An implementation of a Virtual Sensor."""
 
     def __init__(self, config, old_style: bool):
@@ -150,35 +148,30 @@ class VirtualSensor(VirtualEntity, Entity):
         self._attr_device_class = config.get(CONF_CLASS)
 
         # Set unit of measurement
-        self._attr_unit_of_measurement = config.get(CONF_UNIT_OF_MEASUREMENT)
-        if not self._attr_unit_of_measurement and self._attr_device_class in UNITS_OF_MEASUREMENT.keys():
-            self._attr_unit_of_measurement = UNITS_OF_MEASUREMENT[self._attr_device_class]
+        self._attr_native_unit_of_measurement = config.get(CONF_UNIT_OF_MEASUREMENT)
+        if not self._attr_native_unit_of_measurement and self._attr_device_class in UNITS_OF_MEASUREMENT:
+            self._attr_native_unit_of_measurement = UNITS_OF_MEASUREMENT[self._attr_device_class]
 
         _LOGGER.info(f"VirtualSensor: {self.name} created")
 
     def _create_state(self, config):
         super()._create_state(config)
 
-        self._attr_state = config.get(CONF_INITIAL_VALUE)
+        self._attr_native_value = config.get(CONF_INITIAL_VALUE, DEFAULT_SENSOR_VALUE)
 
     def _restore_state(self, state, config):
         super()._restore_state(state, config)
 
-        self._attr_state = state.state
-
-    def _update_attributes(self):
-        super()._update_attributes()
-        self._attr_extra_state_attributes.update({
-            name: value for name, value in (
-                (ATTR_DEVICE_CLASS, self._attr_device_class),
-                (ATTR_UNIT_OF_MEASUREMENT, self._attr_unit_of_measurement),
-            ) if value is not None
-        })
+        if state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN, None):
+            self._attr_native_value = state.state
+        else:
+            self._attr_native_value = config.get(CONF_INITIAL_VALUE, DEFAULT_SENSOR_VALUE)
 
     def set(self, value) -> None:
         _LOGGER.debug(f"set {self.name} to {value}")
-        self._attr_state = value
-        self.async_schedule_update_ha_state()
+        self._attr_native_value = value
+        self._update_attributes()
+        self.async_write_ha_state()
 
 
 async def async_virtual_set_service(hass, call):

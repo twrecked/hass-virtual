@@ -23,6 +23,7 @@ from homeassistant.components.fan import (
     FanEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -118,44 +119,54 @@ class VirtualFan(VirtualEntity, FanEntity):
     def _create_state(self, config):
         super()._create_state(config)
 
+        is_on = config.get(CONF_INITIAL_VALUE, DEFAULT_FAN_VALUE).lower() == STATE_ON
         if self._attr_supported_features & FanEntityFeature.DIRECTION:
             self._attr_current_direction = "forward"
         if self._attr_supported_features & FanEntityFeature.OSCILLATE:
             self._attr_oscillating = False
-        self._attr_percentage = None
+        self._attr_percentage = 67 if is_on else 0
         self._attr_preset_mode = None
 
     def _restore_state(self, state, config):
         super()._restore_state(state, config)
 
-        if self._attr_supported_features & FanEntityFeature.DIRECTION:
-            self._attr_current_direction = state.attributes.get(ATTR_DIRECTION)
-        if self._attr_supported_features & FanEntityFeature.OSCILLATE:
-            self._attr_oscillating = state.attributes.get(ATTR_OSCILLATING)
-        self._attr_percentage = state.attributes.get(ATTR_PERCENTAGE)
-        self._attr_preset_mode = state.attributes.get(ATTR_PRESET_MODE)
+        if state.state and state.state.lower() in (STATE_ON, STATE_OFF):
+            is_on = state.state.lower() == STATE_ON
+        else:
+            is_on = config.get(CONF_INITIAL_VALUE, DEFAULT_FAN_VALUE).lower() == STATE_ON
 
-    def _update_attributes(self):
-        super()._update_attributes()
-        self._attr_extra_state_attributes.update({
-            name: value for name, value in (
-                (ATTR_DIRECTION, self._attr_current_direction),
-                (ATTR_OSCILLATING, self._attr_oscillating),
-                (ATTR_PERCENTAGE, self._attr_percentage),
-                (ATTR_PRESET_MODE, self._attr_preset_mode),
-            ) if value is not None
-        })
+        if self._attr_supported_features & FanEntityFeature.DIRECTION:
+            direction = state.attributes.get(ATTR_DIRECTION)
+            self._attr_current_direction = direction if direction is not None else "forward"
+        if self._attr_supported_features & FanEntityFeature.OSCILLATE:
+            oscillating = state.attributes.get(ATTR_OSCILLATING)
+            self._attr_oscillating = bool(oscillating) if oscillating is not None else False
+
+        percentage = state.attributes.get(ATTR_PERCENTAGE)
+        if percentage is not None:
+            try:
+                self._attr_percentage = int(percentage)
+            except (ValueError, TypeError):
+                self._attr_percentage = 67 if is_on else 0
+        else:
+            self._attr_percentage = 67 if is_on else 0
+
+        self._attr_preset_mode = state.attributes.get(ATTR_PRESET_MODE)
+        if not is_on:
+            self._attr_percentage = 0
 
     def _set_percentage(self, percentage: int) -> None:
         self._attr_percentage = percentage
         self._attr_preset_mode = None
         self._update_attributes()
+        self.async_write_ha_state()
 
     def _set_preset_mode(self, preset_mode: str) -> None:
-        if preset_mode in self.preset_modes:
+        if preset_mode in (self.preset_modes or []):
             self._attr_preset_mode = preset_mode
             self._attr_percentage = None
             self._update_attributes()
+            self.async_write_ha_state()
         else:
             raise ValueError(f"Invalid preset mode: {preset_mode}")
 
@@ -195,9 +206,11 @@ class VirtualFan(VirtualEntity, FanEntity):
         _LOGGER.debug(f"setting direction of {self.name} to {direction}")
         self._attr_current_direction = direction
         self._update_attributes()
+        self.async_write_ha_state()
 
     async def async_oscillate(self, oscillating: bool) -> None:
         """Set oscillation."""
         _LOGGER.debug(f"setting oscillate of {self.name} to {oscillating}")
         self._attr_oscillating = oscillating
         self._update_attributes()
+        self.async_write_ha_state()

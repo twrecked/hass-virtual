@@ -41,7 +41,7 @@ CONFIG_SCHEMA = vol.Schema({
     extra=vol.ALLOW_EXTRA,
 )
 
-SERVICE_AVAILABILE = 'set_available'
+SERVICE_AVAILABLE = 'set_available'
 SERVICE_SCHEMA = vol.Schema({
     vol.Required(ATTR_ENTITY_ID): cv.comp_entity_ids,
     vol.Required('value'): cv.boolean,
@@ -127,10 +127,10 @@ async def async_setup(hass, config):
         @verify_domain_control(COMPONENT_DOMAIN)
         async def async_virtual_service_set_available(call) -> None:
             """Call virtual service handler."""
-            _LOGGER.info("{} service called".format(call.service))
+            _LOGGER.info(f"{call.service} service called")
             await async_virtual_set_availability_service(hass, call)
 
-        hass.services.async_register(COMPONENT_DOMAIN, SERVICE_AVAILABILE, async_virtual_service_set_available)
+        hass.services.async_register(COMPONENT_DOMAIN, SERVICE_AVAILABLE, async_virtual_service_set_available)
 
     return True
 
@@ -163,7 +163,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     for device in vcfg.devices:
         _LOGGER.debug(f"creating-device={device}")
         await _async_get_or_create_virtual_device_in_registry(hass, entry, device)
-    await asyncio.sleep(1)
 
     # Delete orphaned devices.
     for switch, device in vcfg.orphaned_entities.items():
@@ -191,10 +190,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.info(f"{call.service} service called")
         await async_virtual_set_availability_service(hass, call)
 
-    if not hasattr(hass.data[COMPONENT_SERVICES], COMPONENT_DOMAIN):
+    if COMPONENT_DOMAIN not in hass.data[COMPONENT_SERVICES]:
         _LOGGER.debug("installing handlers")
         hass.data[COMPONENT_SERVICES][COMPONENT_DOMAIN] = 'installed'
-        hass.services.async_register(COMPONENT_DOMAIN, SERVICE_AVAILABILE,
+        hass.services.async_register(COMPONENT_DOMAIN, SERVICE_AVAILABLE,
                                      async_virtual_service_set_available, schema=SERVICE_SCHEMA)
 
     return True
@@ -230,14 +229,14 @@ def get_entity_from_domain(hass, domain, entity_id):
     return entity
 
 
-async def async_virtual_set_availability_service(hass, call):
+async def async_virtual_set_availability_service(hass, call) -> None:
     value = call.data['value']
-    if type(value) is not bool:
+    if not isinstance(value, bool):
         value = str_to_bool(value)
 
     for entity_id in call.data['entity_id']:
         domain = entity_id.split(".")[0]
-        _LOGGER.info("{} set_avilable(value={})".format(entity_id, value))
+        _LOGGER.info(f"{entity_id} set_available(value={value})")
         get_entity_from_domain(hass, domain, entity_id).set_available(value)
 
 

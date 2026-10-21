@@ -169,7 +169,7 @@ async def async_setup_entry(
             await async_virtual_move_service(hass, call)
 
     # Build up services...
-    if not hasattr(hass.data[COMPONENT_SERVICES], PLATFORM_DOMAIN):
+    if PLATFORM_DOMAIN not in hass.data[COMPONENT_SERVICES]:
         _LOGGER.debug("installing handlers")
         hass.data[COMPONENT_SERVICES][PLATFORM_DOMAIN] = 'installed'
         hass.services.async_register(

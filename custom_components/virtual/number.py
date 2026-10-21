@@ -9,16 +9,12 @@ from collections.abc import Callable
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.number import (
-    ATTR_MAX, ATTR_MIN, DOMAIN as PLATFORM_DOMAIN,
-    NumberDeviceClass
+    DOMAIN as PLATFORM_DOMAIN,
+    NumberDeviceClass,
+    NumberEntity,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    ATTR_ENTITY_ID,
-    ATTR_DEVICE_CLASS,
-    ATTR_UNIT_OF_MEASUREMENT,
-    CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
-    CONCENTRATION_PARTS_PER_MILLION,
     CONF_UNIT_OF_MEASUREMENT,
     LIGHT_LUX,
     PERCENTAGE,
@@ -35,11 +31,10 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
-from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
-from . import get_entity_from_domain, get_entity_configs
+from . import get_entity_configs
 from .const import *
 from .entity import VirtualEntity, virtual_schema
 
@@ -120,62 +115,49 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class VirtualNumber(VirtualEntity, Entity):
+class VirtualNumber(VirtualEntity, NumberEntity):
     """An implementation of a Virtual Number."""
 
     def __init__(self, config, old_style: bool):
-        """Initialize an Virtual Number."""
+        """Initialize a Virtual Number."""
         super().__init__(config, PLATFORM_DOMAIN, old_style)
 
         self._attr_device_class = config.get(CONF_CLASS)
-
-        self.min_value = config.get(CONF_MIN)
-        self.max_value = config.get(CONF_MAX)
+        self._attr_native_min_value = float(config.get(CONF_MIN))
+        self._attr_native_max_value = float(config.get(CONF_MAX))
 
         # Set unit of measurement
-        self._attr_unit_of_measurement = config.get(CONF_UNIT_OF_MEASUREMENT)
-        if not self._attr_unit_of_measurement and self._attr_device_class in UNITS_OF_MEASUREMENT.keys():
-            self._attr_unit_of_measurement = UNITS_OF_MEASUREMENT[self._attr_device_class]
+        self._attr_native_unit_of_measurement = config.get(CONF_UNIT_OF_MEASUREMENT)
+        if not self._attr_native_unit_of_measurement and self._attr_device_class in UNITS_OF_MEASUREMENT:
+            self._attr_native_unit_of_measurement = UNITS_OF_MEASUREMENT[self._attr_device_class]
 
-        _LOGGER.info(f"VirtualSensor: {self.name} created")
-
-    def convert_to_native_value(self, value: float) -> float:
-        return value
-
-    @property
-    def native_min_value(self):
-        return self.min_value
-
-    @property
-    def native_max_value(self):
-        return self.max_value
+        _LOGGER.info(f"VirtualNumber: {self.name} created")
 
     def _create_state(self, config):
         super()._create_state(config)
 
-        self._attr_state = config.get(CONF_INITIAL_VALUE)
+        init_val = config.get(CONF_INITIAL_VALUE, DEFAULT_NUMBER_VALUE)
+        try:
+            val = float(init_val)
+            self._attr_native_value = max(self._attr_native_min_value, min(self._attr_native_max_value, val))
+        except (ValueError, TypeError):
+            self._attr_native_value = self._attr_native_min_value
 
     def _restore_state(self, state, config):
         super()._restore_state(state, config)
 
-        self._attr_state = state.state
-
-    def _update_attributes(self):
-        super()._update_attributes()
-        self._attr_extra_state_attributes.update({
-            name: value for name, value in (
-                (ATTR_DEVICE_CLASS, self._attr_device_class),
-                (ATTR_UNIT_OF_MEASUREMENT, self._attr_unit_of_measurement),
-                (ATTR_MIN, self.min_value),
-                (ATTR_MAX, self.max_value)
-            ) if value is not None
-        })
+        try:
+            val = float(state.state)
+            if self._attr_native_min_value <= val <= self._attr_native_max_value:
+                self._attr_native_value = val
+            else:
+                self._attr_native_value = self._attr_native_min_value
+        except (ValueError, TypeError):
+            self._create_state(config)
 
     async def async_set_native_value(self, value: float) -> None:
         """Set new value."""
-        await self.hass.async_add_executor_job(self.set, value)
-
-    def set(self, value) -> None:
         _LOGGER.debug(f"set {self.name} to {value}")
-        self._attr_state = value
-        #self.async_schedule_update_ha_state()
+        self._attr_native_value = value
+        self._update_attributes()
+        self.async_write_ha_state()

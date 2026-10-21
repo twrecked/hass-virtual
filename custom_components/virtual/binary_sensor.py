@@ -13,7 +13,7 @@ from homeassistant.components.binary_sensor import (
     DOMAIN as PLATFORM_DOMAIN
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_ENTITY_ID, ATTR_DEVICE_CLASS, STATE_ON
+from homeassistant.const import ATTR_ENTITY_ID, STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 
@@ -56,7 +56,7 @@ def setup_services(hass: HomeAssistant) -> None:
             await async_virtual_toggle_service(hass, call)
 
     # Build up services...
-    if not hasattr(hass.data[COMPONENT_SERVICES], PLATFORM_DOMAIN):
+    if PLATFORM_DOMAIN not in hass.data[COMPONENT_SERVICES]:
         _LOGGER.debug("installing binary_service handlers")
         hass.data[COMPONENT_SERVICES][PLATFORM_DOMAIN] = 'installed'
         hass.services.async_register(
@@ -108,30 +108,27 @@ class VirtualBinarySensor(VirtualEntity, BinarySensorEntity):
     def _create_state(self, config):
         super()._create_state(config)
 
-        self._attr_is_on = config.get(CONF_INITIAL_VALUE).lower() == STATE_ON
+        self._attr_is_on = config.get(CONF_INITIAL_VALUE, DEFAULT_BINARY_SENSOR_VALUE).lower() == STATE_ON
 
     def _restore_state(self, state, config):
         super()._restore_state(state, config)
 
-        self._attr_is_on = state.state.lower() == STATE_ON
-
-    def _update_attributes(self):
-        super()._update_attributes()
-        self._attr_extra_state_attributes.update({
-            name: value for name, value in (
-                (ATTR_DEVICE_CLASS, self._attr_device_class),
-            ) if value is not None
-        })
+        if state.state and state.state.lower() in (STATE_ON, STATE_OFF):
+            self._attr_is_on = state.state.lower() == STATE_ON
+        else:
+            self._attr_is_on = config.get(CONF_INITIAL_VALUE, DEFAULT_BINARY_SENSOR_VALUE).lower() == STATE_ON
 
     def turn_on(self) -> None:
         _LOGGER.debug(f"turning {self.name} on")
         self._attr_is_on = True
-        self.async_schedule_update_ha_state()
+        self._update_attributes()
+        self.async_write_ha_state()
 
     def turn_off(self) -> None:
         _LOGGER.debug(f"turning {self.name} off")
         self._attr_is_on = False
-        self.async_schedule_update_ha_state()
+        self._update_attributes()
+        self.async_write_ha_state()
 
     def toggle(self) -> None:
         if self.is_on:
