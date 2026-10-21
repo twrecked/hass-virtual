@@ -1,603 +1,449 @@
-# **Virtual devices for Home Assistant**
+# **Virtual Devices for Home Assistant**
 
-_Virtual_ is a component that provides virtual entities for _Home Assistant_.
+_Virtual_ is a custom integration for [Home Assistant](https://www.home-assistant.io/) that provides in-memory virtual entities and devices for testing, development, and complex automation prototyping.
 
 ![icon](images/virtual-icon.png)
 
+_Virtual_ provides support for 10 distinct entity platforms:
+- **Binary Sensors**: Motion, presence, door, window, smoke, and moisture sensors.
+- **Covers**: Timed position-based blinds, garage doors, shutters, and shades.
+- **Device Trackers**: GPS coordinates and named location zones.
+- **Fans**: Multi-speed, oscillating, and reversible fans.
+- **Lights**: Dimmable, RGB color (HS), color temperature, and animated effects.
+- **Locks**: Lockable doors with optional locking duration and jamming tests.
+- **Numbers**: Configurable sliders and numeric inputs with custom ranges and units.
+- **Sensors**: Environmental (temperature, humidity, pressure), power, energy, and battery monitors.
+- **Switches**: Simple on/off switches and power outlets.
+- **Valves**: Timed water and gas valves with position reporting.
 
-# !!!BREAKING CHANGES!!!
+---
 
-Version 0.9 supports adding virtual devices using _config flow_. By default it
-will move your existing devices into a single file `virtual.yaml`. If you **DO
-NOT** want this behaviour add this to your current `virtual` configuration.
+> ### ⚠️ Virtual `v0.10.0-alpha` Notice
+>
+> **Virtual v0.10 modernizes the integration with native Home Assistant entity models, an interactive web-based Visual Device Editor, and non-blocking asynchronous state storage.**
+>
+> **This is an active alpha release — community testing and feedback are welcome!**
+>
+> If you encounter issues, regressions, or unexpected behavior, please [open a GitHub issue](https://github.com/twrecked/hass-virtual/issues).
+>
+> Legacy `0.9.x` documentation is archived in [README_v9.md](README_v9.md), and `0.8.x` documentation is in [version-0.8.x](https://github.com/twrecked/hass-virtual/tree/version-0.8.x#readme).
 
-```yaml
-virtual:
-  yaml_config: True
-```
-
+---
 
 # Table Of Contents
 
-
-<!--toc:start-->
-- [**Virtual devices for Home Assistant**](#virtual-devices-for-home-assistant)
-- [!!!BREAKING CHANGES!!!](#breaking-changes)
-- [Table Of Contents](#table-of-contents)
 - [Introduction](#introduction)
-  - [Notes](#notes)
-  - [Version 0.8 Documentation](#version-08-documentation)
-  - [New Features in 0.9.0](#new-features-in-090)
-    - [Config Flow](#config-flow)
-      - [What pieces are done](#what-pieces-are-done)
-      - [What you need to be wary of](#what-you-need-to-be-wary-of)
-      - [What if it goes wrong?](#what-if-it-goes-wrong)
-  - [Thanks](#thanks)
-- [Installation](#installation)
-  - [Getting the Software](#getting-the-software)
-    - [HACS](#hacs)
-  - [Adding the Integration](#adding-the-integration)
-    - [After a Fresh Install](#after-a-fresh-install)
-    - [After an Upgrade](#after-an-upgrade)
-  - [I don't want the New Behaviour!!!](#i-dont-want-the-new-behaviour)
-  - [Adding More Entries](#adding-more-entries)
-- [Component Configuration](#component-configuration)
-- [Entity Configuration](#entity-configuration)
-  - [Visual Device Editor](#visual-device-editor)
-  - [File Layout](#file-layout)
+- [What's New in v0.10](#whats-new-in-v010)
+- [Installing the Integration](#installing-the-integration)
+  - [HACS (Recommended)](#hacs-recommended)
+  - [Manual Installation](#manual-installation)
+- [Adding the Integration](#adding-the-integration)
+- [Visual Device Editor](#visual-device-editor)
+  - [One-Click Sync via Home Assistant](#1-one-click-sync-via-home-assistant-recommended)
+  - [Manual Copy-Paste / Offline Fallback](#2-manual-copy-paste--offline-fallback-no-webhooks-needed)
+  - [Running the Editor Locally on Your LAN](#3-running-the-editor-locally-on-your-lan)
+  - [Device Templates & Collapsible Cards](#4-device-templates--collapsible-cards)
+- [Entity Configuration & File Layout](#entity-configuration--file-layout)
+  - [File Structure](#file-structure)
   - [Common Attributes](#common-attributes)
-    - [Availability](#availability)
-    - [Persistence](#persistence)
   - [Switches](#switches)
   - [Binary Sensors](#binary-sensors)
   - [Sensors](#sensors)
+  - [Numbers](#numbers)
   - [Lights](#lights)
   - [Locks](#locks)
   - [Fans](#fans)
   - [Covers](#covers)
   - [Valves](#valves)
-  - [Numbers](#numbers)
-  - [Device Tracking](#device-tracking)
-- [Old Style Entity Configuration](#old-style-entity-configuration)
+  - [Device Trackers](#device-trackers)
+- [Legacy YAML Configuration](#legacy-yaml-configuration)
 - [Services](#services)
-<!--toc:end-->
 
+---
 
 # Introduction
 
-Virtual provides virtual components for testing Home Assistant systems.
+Virtual devices act like real physical devices in Home Assistant, allowing you to test automations, simulate presence and sensor triggers, mock complex devices, and verify dashboard setups without physical hardware.
 
-## Notes
-Wherever you see `/config` in this README it refers to your home-assistant
-configuration directory. For me, for example, it's `/home/steve/ha` that is
-mapped to `/config` inside my docker container.
+All entity states are maintained in-memory and can persist cleanly across Home Assistant restarts.
 
-## Version 0.8 Documentation
+---
 
-**This documentation is for the 0.9.x version, you can find the
-0.8.x version** [here](https://github.com/twrecked/hass-virtual/tree/version-0.8.x#readme).
+# What's New in v0.10
 
-## New Features in 0.9.0
+1. **Visual Device Editor**:
+   - A dedicated web application for building and managing your virtual devices and entities visually.
+   - Hosted in the cloud at **[https://virtual-dot-twrecked-tools.nn.r.appspot.com](https://virtual-dot-twrecked-tools.nn.r.appspot.com)** or runnable locally on your home network.
+2. **Options Flow & Webhook Sync**:
+   - Clicking **Configure** on any Virtual group in Home Assistant launches the visual editor preloaded with your YAML.
+   * Clicking **Save & Return** in the editor writes your changes to disk and reloads the integration automatically via an authenticated webhook.
+3. **Number and Valve Platforms**:
+   - Native support for `number` and `valve` entities with standard Home Assistant device classes and units.
+4. **Strict Home Assistant & Python Modernization**:
+   - Entities now directly inherit from core entity classes (`NumberEntity`, `SensorEntity`), eliminating threadpool worker overhead.
+   - State persistence and storage use Home Assistant's managed non-blocking `Store` helper and async executor, eliminating the external `aiofiles` dependency.
+   - Full modern typing (`from __future__ import annotations`), unified global device-class units, and hardened state restoration against null or invalid values across restarts.
 
-### Config Flow
+---
 
-Finally. After sitting on it for far too long I decided to do the work I
-needed to, this integration now acts much like every integration, splitting
-down by entity, device and integration.
+# Installing the Integration
 
-#### What pieces are done
+### HACS (Recommended)
 
-- _upgrade_; the code will upgrade a _0.8_ build to the _config flow_ system.
-  Your current configuration will be moved into 1 file, `virtual.yaml`. This
-  file contains all your virtual devices. Edit this file to add any type of
-  device.
-- _services_; they follow the _Home Assistant_ standard
-- _multiple integrations_; the integration can be added several times and you
-  can spread your devices across several files
-- _device groupings_; for example, a motion detector can have a motion
-  detection entity and a battery entity, upgraded devices will have a one to
-  one relationship. For example, the following will create a motion device
-  with 2 entities. If you don't provide a name for an entity the system will
-  provide a default.
-
-```yaml
-  Mezzanine Motion:
-    - platform: binary_sensor
-      initial_value: 'off'
-      class: motion
-    - platform: sensor
-      initial_value: '98'
-      class: battery
-```
-
-#### What you need to be wary of
-
-- _device trackers_; the upgrade process is a little more complicated if you
-  have device trackers, because of the way _virtual_ created the old devices
-  you will end up with duplicates entries, you can fix it by running the
-  following steps
-  1. do the upgrade
-  2. comment out device virtual device trackers from `device_trackers.yaml`
-     and `known_devices.yaml`
-  3. restart _Home Assistant_
-  4. delete the virtual integration
-  5. add back the virtual integration in accepting the defaults
-
-#### What if it goes wrong?
-
-For now I recommend leaving your old configuration in place so you can revert
-back to a _0.8_ release if you encounter an issue. _Home Assistant_ will
-complain about the config but it's OK to ignore it.
-
-If you do encounter and issue if you can turn on debug an create an issue that
-would be great.
-
-## Thanks
-Many thanks to:
-* Icon from [iconscout](https://iconscout.com) by [twitter-inc](https://iconscout.com/contributors/twitter-inc)
- 
-
-# Installation
-
-## Getting the Software
-
-### HACS
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/hacs/integration)
 
-Virtual is part of the default HACS store. If you're not interested in
-development branches this is the easiest way to install.
+_Virtual_ is available in the default HACS store. Search for "Virtual Components" under Integrations and download the latest release.
 
-## Adding the Integration 
+### Manual Installation
 
-### After a Fresh Install
+Copy the `custom_components/virtual` directory into your Home Assistant `/config/custom_components/` directory and restart Home Assistant.
 
-When you have created your initial configuration file do the following:
+---
 
-- go to `Settings` -> `Devices and Integrations` -> `+ ADD INTEGRATION`
-- search for _virtual_ and choose the integration
-- give your configuration a name and point it at your newly created file
+# Adding the Integration
 
-Then you click OK 
+1. In Home Assistant, navigate to **Settings -> Devices & Services**.
+2. Click **Add Integration** and search for **Virtual Components**.
+3. Enter a **Group Name** (e.g. `Main Virtual Devices`) and the path to your YAML file (defaults to `/config/virtual.yaml`).
+4. Click **Submit**. If the file does not exist, an initial file will be created automatically.
 
-**Warning:** Check your /config/ folder if a virtual.yml file has been added. If not, make this file yourself.
+You can add multiple integration entries to separate different groups of devices into different files (e.g., `lighting.yaml`, `sensors.yaml`).
 
-### After an Upgrade
+---
 
-All your devices will be moved to a group called _import_ and put into
-`/config/virtual.yaml`. The system will create a single _virtual_ integration.
+# Visual Device Editor
 
-## I don't want the New Behaviour!!!
+The **Virtual Device Editor** provides a visual tree interface for adding, configuring, and organizing devices and child entities without editing YAML by hand.
 
-If you want to keep your existing behaviour change your current `virtual`
-entry in `configuration.yaml` to this:
+Hosted version: **[https://virtual-dot-twrecked-tools.nn.r.appspot.com](https://virtual-dot-twrecked-tools.nn.r.appspot.com)**
 
-```yaml
-virtual:
-  yaml_config: True
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ Virtual Device Editor                      [Templates] [Save & Return] │
+├────────────────────────────────────────────────────────────────────────┤
+│ ▼ Living Room Motion                              2 entities   [Delete]│
+│   ├── [BINARY_SENSOR] Motion Detector (class: motion, initial: off)    │
+│   └── [SENSOR]        Battery Level   (class: battery, unit: %)        │
+│                                                                        │
+│ ▶ Ceiling Fan                                     1 entity     [Delete]│
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Adding More Entries
+### 1. One-Click Sync via Home Assistant (Recommended)
 
-You can add more than one integration by selecting `Add Entry` on the
-_virtual_ integration page. You will need to give this new entity group a name
-and point it to the new file.
-
-
-# Component Configuration
-
-You set this to enable backwards compatibility. 
-
-- `yaml_config`; set to `True` to enable backwards compatibility, set to `False`
-  to disable it. The default is `False`.
-
-For example, this enable backwards compatibility.
-
-```yaml
-virtual:
-  yaml_config: True
-```
-
-
-# Entity Configuration
-
-All component configuration is done through _yaml_ files. You can put all of
-your virtual devices into a single _yaml_ file or you can group devices
-together in multiple file.
-
-If this is a fresh install you will need to install a _virtual_ integration
-instance and tell it about your file. If you are upgrading from _0.8_ the system will
-create a single instance and copy all your current devices into a
-`/config/virtual.yaml`.
-
-## Visual Device Editor
-
-You can configure your virtual devices manually in YAML or visually using the **Virtual Device Editor**.
-
-The web-based visual editor is hosted at: **[https://virtual-dot-twrecked-tools.nn.r.appspot.com](https://virtual-dot-twrecked-tools.nn.r.appspot.com)**
-
-### 1. One-Click Sync from Home Assistant (Recommended)
 1. In Home Assistant, go to **Settings -> Devices & Services -> Virtual**.
 2. Click **Configure** on any virtual group.
-3. Click the **Open Virtual Device Editor** link to open your devices in the visual editor.
-4. Add, edit, or remove devices and entities using the visual interface.
-5. Click **Save & Return** in the editor. Your configuration file will be updated on disk and Home Assistant will automatically reload your virtual devices.
-6. Click **Submit** in Home Assistant to close the dialog.
+3. Click the **Open Virtual Device Editor** link to open your devices in the editor.
+4. Make your changes visually (add devices, apply templates, tweak attributes).
+5. Click **Save & Return** in the editor. The editor POSTs your updated configuration to Home Assistant, updates your file on disk, and automatically reloads the integration.
+6. Click **Submit** in Home Assistant to close the options dialog.
 
 ### 2. Manual Copy-Paste / Offline Fallback (No Webhooks Needed)
-If you don't have external access enabled or prefer not to use webhooks:
-1. Open the editor: [https://virtual-dot-twrecked-tools.nn.r.appspot.com](https://virtual-dot-twrecked-tools.nn.r.appspot.com).
-2. Click **Import YAML** and paste your current `virtual.yaml` content (or start fresh with **Templates**).
-3. Make your changes visually with live schema validation.
-4. Click **Copy** in the top bar to copy the generated YAML (or click **Download** to save the file).
-5. Open your `/config/virtual.yaml` file in Home Assistant (using File Editor, Studio Code Server, Samba, or SSH) and paste the updated content.
-6. In Home Assistant, go to **Developer Tools -> YAML -> Reload Virtual Components** (or click the three dots on the Virtual integration and select **Reload**).
 
-### 3. Running the Editor Locally / Offline
-If you wish to run the editor locally on your home network so no data touches the cloud:
-1. Navigate to the `virtual-device-editor` directory and start the local server:
+If your Home Assistant instance is not accessible from the browser or you prefer not to use webhooks:
+
+1. Open the editor: **[https://virtual-dot-twrecked-tools.nn.r.appspot.com](https://virtual-dot-twrecked-tools.nn.r.appspot.com)**.
+2. Click **Import YAML** and paste your current `virtual.yaml` content (or start fresh with templates).
+3. Edit your devices visually with real-time schema validation.
+4. Click **Copy** in the top bar to copy the generated YAML to your clipboard (or click **Download** to save `virtual.yaml`).
+5. Open your `/config/virtual.yaml` file in Home Assistant (using File Editor, Studio Code Server, Samba, or SSH) and paste the updated content.
+6. In Home Assistant, go to **Settings -> Devices & Services -> Virtual**, click the three dots, and select **Reload**.
+
+### 3. Running the Editor Locally on Your LAN
+
+If you want the convenience of one-click sync without any cloud traffic:
+
+1. Start the editor locally on your machine or home server:
    ```bash
    cd virtual-device-editor
    pip install -r requirements.txt
    python main.py
    ```
-2. In Home Assistant, click **Configure** on your Virtual group and set **Editor URL** to `http://127.0.0.1:8080` (or your local IP `http://192.168.1.X:8080`).
-3. Click **Submit** to save your preference, and launch the editor locally.
+   *The editor starts at `http://localhost:8080` (and on your local network IP).*
+2. In Home Assistant, click **Configure** on your Virtual group.
+3. Change **Editor URL** to your local address (e.g. `http://127.0.0.1:8080` or `http://192.168.1.X:8080`) and click **Submit**.
+4. Click the link to open your local editor with one-click local webhook sync.
 
-## File Layout
+### 4. Device Templates & Collapsible Cards
 
-An empty file looks like this:
+* **Collapsible Cards**: Click the chevron next to any device title to collapse or expand it. Use the **Collapse All / Expand All** button in the top bar when working with large device lists.
+* **Quick-Add Templates**:
+  * *Motion Sensor* (`binary_sensor` motion + `sensor` battery)
+  * *Contact Sensor* (`binary_sensor` door + `sensor` battery)
+  * *Dimmable Light* & *RGB Color Light*
+  * *Ceiling Fan* (multi-speed, direction, oscillation)
+  * *Window Blind* (timed position cover)
+  * *Water Valve* (timed position valve)
+  * *Power Outlet* (`switch` + power & energy sensors)
+  * *Weather Station* (temperature, humidity, atmospheric pressure)
+
+---
+
+# Entity Configuration & File Layout
+
+### File Structure
+
+A standard `virtual.yaml` file defines devices, each containing one or more entity platforms:
+
 ```yaml
 version: 1
-devices: {}
+devices:
+  Living Room Multi Sensor:
+    - platform: binary_sensor
+      name: Living Room Motion
+      initial_value: 'off'
+      class: motion
+    - platform: sensor
+      name: Living Room Temperature
+      initial_value: 21
+      class: temperature
+      unit_of_measurement: '°C'
+    - platform: sensor
+      name: Living Room Battery
+      initial_value: 100
+      class: battery
+      unit_of_measurement: '%'
 ```
 
-- _version_; this is currently 1
-- _devices_; this is a list of devices and entities associated with that
-  device
+* **Device Groupings**: Entities listed under a device name share the same parent device in Home Assistant's Device Registry.
+* **Entity Names**: The `name` parameter on an entity is optional. If omitted, Home Assistant creates a clean entity name combining the device name and the entity type/class (e.g. `Living Room Multi Sensor Motion`).
 
-These two entries are optional. If you remove them then remove the indentation
-from the following device entries.
+---
 
-This is a small example of an imported file: 
+### Common Attributes
+
+All entity types support the following common configuration options:
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `name` | string | Optional | Friendly name for the entity. |
+| `initial_value` | any | *Platform default* | Value assigned on first creation or if state is not restored. |
+| `persistent` | boolean | `true` | When `true`, the entity state is saved across Home Assistant restarts. |
+| `initial_availability` | boolean | `true` | When `false`, the entity starts in an `unavailable` state. |
+
+---
+
+### Switches
+
+Simulates standard power switches or outlets.
 
 ```yaml
-version: 1
-devices: 
- Living Room Sensor:
-  - platform: binary_sensor
-    name: Living Room Motion
+Coffee Maker:
+  - platform: switch
     initial_value: 'off'
-    class: motion
- Back Door Sensor:
+    class: outlet
+```
+
+---
+
+### Binary Sensors
+
+Simulates on/off state sensors supporting all standard Home Assistant device classes (`motion`, `door`, `window`, `presence`, `smoke`, `moisture`, `occupancy`, etc.).
+
+```yaml
+Front Door:
   - platform: binary_sensor
-    name: Back Door
     initial_value: 'off'
     class: door
 ```
 
-This is an example of a file without the preamble.
+*Controllable via the `virtual.turn_on`, `virtual.turn_off`, and `virtual.toggle` services.*
+
+---
+
+### Sensors
+
+Simulates numeric or string sensor entities. Standard device classes automatically assign appropriate units (`temperature` -> `°C`, `humidity` -> `%`, `power` -> `kW`, `battery` -> `%`).
 
 ```yaml
-Living Room Sensor:
-- platform: binary_sensor
-  name: Living Room Motion
-  initial_value: 'off'
-  class: motion
-Back Door Sensor:
-- platform: binary_sensor
-  name: Back Door
-  initial_value: 'off'
-  class: door
+Outdoor Weather:
+  - platform: sensor
+    class: temperature
+    initial_value: 21.5
+    unit_of_measurement: '°C'
 ```
 
-Note that these entities have explicit names, this is because these entities
-were imported and the integration will re-create the same entity and
-unique IDs as previous version. You do not need to assign a name on new
-entries, the system will provide a default suffix based on device class. But,
-you can also choose to provide names if you wish.
+*Controllable via the `virtual.set` service.*
 
-This is the same file without the names:
+---
+
+### Numbers
+
+Simulates numeric inputs and sliders with custom bounds.
 
 ```yaml
-version: 1
-devices: 
-  Living Room Sensor:
-  - platform: binary_sensor
+Target Temperature:
+  - platform: number
+    min: 15
+    max: 30
+    initial_value: 21
+    class: temperature
+    unit_of_measurement: '°C'
+```
+
+*Controllable via the native `number.set_value` service.*
+
+---
+
+### Lights
+
+Simulates virtual lights with brightness, color temperature, and full RGB/HS color support.
+
+```yaml
+Living Room Accent:
+  - platform: light
     initial_value: 'off'
-    class: motion
-  Back Door Sensor:
-  - platform: binary_sensor
+    support_brightness: true
+    initial_brightness: 255
+    support_color: true
+    initial_color: [0, 100]
+    support_color_temp: true
+    initial_color_temp: 3000
+    support_effect: true
+    initial_effect: "none"
+```
+
+*Controllable via native `light.turn_on` and `light.turn_off` services.*
+
+---
+
+### Locks
+
+Simulates door locks with optional realistic lock movement duration and jamming tests.
+
+```yaml
+Front Door Lock:
+  - platform: lock
+    initial_value: locked
+    locking_time: 2
+    jamming_test: 10
+```
+
+* `locking_time`: Optional duration in seconds for the locking/unlocking transition phase.
+* `jamming_test`: Positive integer; triggers a random jamming failure approximately 1 out of every X attempts.
+* *Controllable via native `lock.lock`, `lock.unlock`, and `lock.open` services.*
+
+---
+
+### Fans
+
+Simulates multi-speed, reversible, and oscillating fans.
+
+```yaml
+Living Room Ceiling Fan:
+  - platform: fan
     initial_value: 'off'
-    class: door
+    speed_count: 4
+    direction: true
+    oscillate: true
 ```
 
-In this case it will create 2 entities, one called `Living Room Sensor motion`
-and `Back Door Sensor door`. The default naming can get a little hairy but you
-can alter it from the _Integration_ settings.
+* `speed_count`: Number of speed tiers (e.g. 4 tiers = 25%, 50%, 75%, 100%).
+* *Controllable via native `fan.turn_on`, `fan.turn_off`, `fan.set_percentage`, `fan.set_direction`, and `fan.oscillate` services.*
 
-You can also define virtual multi sensors. In this example a multi sensor
-devices provides 2 entities.
+---
+
+### Covers
+
+Simulates blinds, shutters, garage doors, and shades with realistic opening and closing travel times.
 
 ```yaml
-Living Room Multi Sensor:
-- platform: binary_sensor
-  initial_value: 'off'
-  class: motion
-- platform: sensor
-  initial_value: '20'
-  class: temperature
+Patio Blind:
+  - platform: cover
+    initial_value: closed
+    class: blind
+    open_close_duration: 15
+    open_close_tick: 1
 ```
 
-## Common Attributes
+* `open_close_duration`: Travel time in seconds from fully open to fully closed.
+* `open_close_tick`: Time interval in seconds between simulated position update events.
+* *Controllable via native `cover.open_cover`, `cover.close_cover`, `cover.stop_cover`, and `cover.set_cover_position` services.*
 
-### Availability
+---
 
-By default, all devices are market as available. As shown below in each domain,
-adding `initial_availability: false` to configuration can override default and
-set as unavailable on HA start. Availability can by set by using
-the `virtual.set_available` with value `true` or `false`.
+### Valves
 
-This is fully optional and `initial_availability` is not required to be set.
-
-### Persistence
-By default, all device states are persistent. You can change this behaviour with
-the `persistent` configuration option.
-
-If you have set an `initial_value` it will only be used if the device state is
-not restored. The following switch will always start _on_.
+Simulates water and gas valves with travel durations and position reporting.
 
 ```yaml
-Test Switch:
-- platform: virtual
-  name: Switch 1
-  persistent: False
-  initial_value: on
+Garden Irrigation Valve:
+  - platform: valve
+    initial_value: closed
+    class: water
+    open_close_duration: 5
+    open_close_tick: 1
 ```
 
-## Switches
+*Controllable via native `valve.open_valve`, `valve.close_valve`, `valve.stop_valve`, and `valve.set_valve_position` services.*
 
-To add a virtual switch use the following:
+---
+
+### Device Trackers
+
+Simulates GPS coordinates or named zones for presence testing.
 
 ```yaml
-Test Switch:
-- platform: switch
+Family Member:
+  - platform: device_tracker
+    initial_value: home
 ```
 
-## Binary Sensors
-To add a virtual binary_sensor use the following. It supports all standard
-classes.
+*Controllable via the `virtual.move` service.*
+
+---
+
+# Legacy YAML Configuration
+
+For backward compatibility with older configurations, you can continue managing entities directly under platform keys in `configuration.yaml` by setting:
 
 ```yaml
-Test Binary Sensor:
-- platform: binary_sensor
-  initial_value: 'on'
-  class: presence
+virtual:
+  yaml_config: true
 ```
 
-Use the `virtual.turn_on`, `virtual.turn_off` and `virtual.toggle` services to
-manipulate the binary sensors.
+When `yaml_config: false` (the default), Home Assistant automatically uses the modern Config Flow and `virtual.yaml` device files.
 
-## Sensors
-
-To add a virtual sensor use the following:
-
-```yaml
-Test Sensor:
-- platform: sensor
-  class: temperature
-  initial_value: 37
-  unit_of_measurement: 'F'
-```
-
-Use the `virtual.set` service to manipulate the sensor value.
-
-Setting `unit_of_measurement` can override default unit for selected sensor
-class. This is optional ans any string is accepted. List of standard units can
-be found here:
-[Sensor Entity](https://developers.home-assistant.io/docs/core/entity/sensor/)
-
-## Lights
-
-To add a virtual light use the following:
-
-```yaml
-Test Lights:
-- platform: light
-  initial_value: 'on'
-  support_brightness: true
-  initial_brightness: 100
-  support_color: true
-  initial_color: [0,255]
-  support_color_temp: true
-  initial_color_temp: 255
-  support_white_value: true
-  initial_white_value: 240
-```
-
-Only `name` is required.
-- `support_*`; this allows the light to have colour and temperature properties
-- `initial_*`; this is to set the initial values. `initial_color` is `[hue
-  (0-360), saturation (0-100)]`
-
-_Note; *white_value is deprecated and will be removed in future releases._
-
-## Locks
-
-To add a virtual lock use the following:
-
-```yaml
-Test Lock:
-- platform: lock
-  name: Front Door Lock
-  initial_value: locked
-  locking_time: 5
-  jamming_test: 5
-```
-
-- Persistent Configuration
-  - `initial_value`: optional, default `locked`; any other value will result in the lock
-    being unlocked at start up
-- Per Run Configuration
-  - `locking_time`: optional, default `0` seconds; any positive value will result in a
-    locking or unlocking phase that lasts `locking_time` seconds
-  - `jamming_test`: optional, default `0` tries; any positive value will result in a
-    jamming failure approximately once per `jamming_test` tries
-
-## Fans
-
-To add a virtual fan use the following:
-
-```yaml
-Test Fan:
-- platform: fan
-  speed: True
-  speed_count: 5
-  direction: True
-  oscillate: True
-```
-
-You only need one of `speed` or `speed_count`.
-- `speed`; if `True` then fan can be set to low, medium and high speeds
-- `speed_count`; number of speeds to allow, these will be broken down into
-  percentages. 4 speeds = 25, 50, 75 and 100%.
-- `direction`; if `True` then fan can run in 2 directions
-- `oscillate`; if `True` then fan can be set to oscillate
-
-## Covers
-
-To add a virtual cover use the following:
-
-```yaml
-Test Cover:
-- platform: cover
-  initial_value: 'closed'
-  open_close_duration: 10
-  open_close_tick: 1
-```
-
-Supports `open`, `close`, `stop` and `set_position`. Opening and closing of
-the cover is emulated with timed events, and the timing can be controlled with
-- `open_close_duration`: The time it take to go from fully open to fully closed, or back
-- `open_close_tick`: The update interval when opening and closing
-
-## Valves
-
-To add a virtual valve use the following:
-
-```yaml
-Test Valve:
-- platform: valve
-  initial_value: 'closed'
-  open_close_duration: 10
-  open_close_tick: 1
-```
-
-Supports `open_valve`, `close_valve`, `stop_valve` and `set_valve_position`. Opening and closing of
-the valve is emulated with timed events, and the timing can be controlled with
-- `open_close_duration`: The time it take to go from fully open to fully closed, or back
-- `open_close_tick`: The update interval when opening and closing
-
-## Numbers
-
-To add a virtual number use the following:
-
-```yaml
-Test Number:
-- platform: number
-  min: 0
-  max: 100
-  initial_value: 50
-  class: temperature
-  unit_of_measurement: "°C"
-```
-
-- `min`: required; minimum allowed value
-- `max`: required; maximum allowed value
-- `initial_value`: optional, default `0`; initial value for the number
-- `class`: optional; device class (e.g. `temperature`, `humidity`, `battery`, `power`)
-- `unit_of_measurement`: optional; unit of measurement string (e.g. `°C`, `%`, `W`)
-
-## Device Tracking
-
-To add a virtual device tracker use the following:
-
-```yaml
-Test Device_Tracker:
-- platform: device_tracker
-  initial_value: home
-```
-
-- `persistent`: default `True`; if `True` then entity location is remembered
-  across restarts otherwise entity always starts at `location`
-- `location`: default `home`; this sets the device location when it is created
-  or if the device is not `persistent`
-
-Use the `virtual.move` service to change device locations.
-
-
-# Old Style Entity Configuration
-
-For now; look at [the 0.8](https://github.com/twrecked/hass-virtual/tree/version-0.8.x?tab=readme-ov-file#component-configuration) documentation.
-
+---
 
 # Services
 
-The component provides the following services:
+The integration provides the following custom services:
 
-**Name: `virtual.set_available`**
+### `virtual.set_available`
+Sets the availability state of any virtual entity.
 
-*Parameters:*
-- `entity_id`: Entity ID(s) of the virtual entities to set availability for.
-- `value`: Boolean (`true` or `false`) to set availability.
+* **Target**: Any virtual entity
+* **Fields**:
+  * `value`: Boolean (`true` or `false`)
 
-This will change the availability state of any virtual entity.
+### `virtual.turn_on`
+Turns on a virtual binary sensor.
 
----
+* **Target**: Virtual binary sensor entities
 
-**Name: `virtual.turn_on`**
+### `virtual.turn_off`
+Turns off a virtual binary sensor.
 
-*Parameters:*
-- `entity_id`: Entity ID(s) of the binary sensor(s) to turn on.
+* **Target**: Virtual binary sensor entities
 
-This service will turn on a virtual binary sensor.
+### `virtual.toggle`
+Toggles a virtual binary sensor.
 
----
+* **Target**: Virtual binary sensor entities
 
-**Name: `virtual.turn_off`**
+### `virtual.set`
+Sets the state value of a virtual sensor.
 
-*Parameters:*
-- `entity_id`: Entity ID(s) of the binary sensor(s) to turn off.
+* **Target**: Virtual sensor entities
+* **Fields**:
+  * `value`: String or number representing the new sensor value.
 
-This service will turn off a virtual binary sensor.
+### `virtual.move`
+Moves a virtual device tracker to a new zone or GPS coordinates.
 
----
-
-**Name: `virtual.toggle`**
-
-*Parameters:*
-- `entity_id`: Entity ID(s) of the binary sensor(s) to toggle.
-
-This service will toggle a virtual binary sensor.
-
----
-
-**Name: `virtual.set`**
-
-*Parameters:*
-- `entity_id`: Entity ID(s) of the sensor(s) to set.
-- `value`: String/number value to set the sensor state to.
-
-This service will set the value of a virtual sensor.
-
----
-
-**Name: `virtual.move`**
-
-*Parameters:*
-- `entity_id`: Entity ID(s) of the device tracker(s) to move.
-- `location`: A named location (e.g. `home`, `not_home`, or custom zone name).
-- `gps`: GPS coordinates map (`latitude`, `longitude`, optional `radius`).
-- `gps_accuracy`: GPS accuracy in meters.
-
-Move a device tracker using a named location or GPS coordinates.
-
+* **Target**: Virtual device tracker entities
+* **Fields**:
+  * `location`: Named zone or location string (e.g. `home`, `work`, `away`).
+  * `gps`: Object containing `latitude` and `longitude`.
+  * `gps_accuracy`: Optional accuracy radius in meters.
