@@ -1,26 +1,30 @@
-"""Config flow for Aarlo"""
+"""Config flow for Virtual components."""
+from __future__ import annotations
 
 import logging
+from typing import Any
 import voluptuous as vol
 
 from homeassistant import config_entries, exceptions
-from homeassistant.const import (
-    CONF_PASSWORD,
-    CONF_USERNAME
-)
 
-from .const import *
+from .const import (
+    ATTR_FILE_NAME,
+    ATTR_GROUP_NAME,
+    COMPONENT_DOMAIN,
+    IMPORTED_GROUP_NAME,
+    default_config_file,
+)
 from .cfg import UpgradeCfg
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class VirtualFlowHandler(config_entries.ConfigFlow, domain=COMPONENT_DOMAIN):
-    """Aarlo config flow."""
+    """Virtual config flow."""
 
     VERSION = 1
 
-    async def validate_input(self, user_input):
+    async def validate_input(self, user_input: dict[str, Any]) -> dict[str, str]:
         for group, values in self.hass.data.get(COMPONENT_DOMAIN, {}).items():
             _LOGGER.debug(f"checking {group}")
             if group == user_input[ATTR_GROUP_NAME]:
@@ -31,7 +35,7 @@ class VirtualFlowHandler(config_entries.ConfigFlow, domain=COMPONENT_DOMAIN):
             "title": f"{user_input[ATTR_GROUP_NAME]} - {COMPONENT_DOMAIN}"
         }
 
-    async def async_step_user(self, user_input):
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> config_entries.ConfigFlowResult:
         _LOGGER.debug(f"step user {user_input}")
 
         errors = {}
@@ -42,9 +46,9 @@ class VirtualFlowHandler(config_entries.ConfigFlow, domain=COMPONENT_DOMAIN):
                     ATTR_GROUP_NAME: user_input[ATTR_GROUP_NAME],
                     ATTR_FILE_NAME: user_input[ATTR_FILE_NAME],
                 })
-            except GroupNameAlreadyUsed as e:
+            except GroupNameAlreadyUsed:
                 errors["base"] = "group_name_used"
-            except FileNameAlreadyUsed as e:
+            except FileNameAlreadyUsed:
                 errors["base"] = "file_name_used"
 
         else:
@@ -62,15 +66,15 @@ class VirtualFlowHandler(config_entries.ConfigFlow, domain=COMPONENT_DOMAIN):
             errors=errors
         )
 
-    async def async_step_import(self, import_data):
+    async def async_step_import(self, import_data: dict[str, Any]) -> config_entries.ConfigFlowResult:
         """Import momentary config from configuration.yaml."""
 
-        _LOGGER.debug(f"importing aarlo YAML {import_data}")
+        _LOGGER.debug(f"importing virtual YAML {import_data}")
         await UpgradeCfg.async_import_yaml(self.hass, import_data)
         data = UpgradeCfg.create_flow_data(self.hass, import_data)
 
         return self.async_create_entry(
-            title=f"Imported Virtual Group",
+            title="Imported Virtual Group",
             data=data
         )
 

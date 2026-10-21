@@ -1,12 +1,10 @@
-"""
-This component provides support for a virtual switch.
-
-"""
+"""This component provides support for a virtual switch."""
+from __future__ import annotations
 
 import logging
-import voluptuous as vol
 from collections.abc import Callable
 from typing import Any
+import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.switch import (
@@ -19,12 +17,19 @@ from homeassistant.const import (
     STATE_ON,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.config_validation import (PLATFORM_SCHEMA)
+from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import get_entity_configs
-from .const import *
+from .const import (
+    ATTR_GROUP_NAME,
+    COMPONENT_CONFIG,
+    COMPONENT_DOMAIN,
+    CONF_CLASS,
+    CONF_INITIAL_VALUE,
+    CONF_YAML_CONFIG,
+)
 from .entity import VirtualEntity, virtual_schema
 
 

@@ -1,12 +1,11 @@
-"""
-This component provides support for a virtual cover.
-
-"""
+"""This component provides support for a virtual cover."""
+from __future__ import annotations
 
 import logging
-import voluptuous as vol
 from typing import Any
 from collections.abc import Callable
+
+import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.cover import (
@@ -17,9 +16,19 @@ from homeassistant.components.cover import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import get_entity_configs
-from .const import *
+from .const import (
+    ATTR_GROUP_NAME,
+    COMPONENT_CONFIG,
+    COMPONENT_DOMAIN,
+    CONF_CLASS,
+    CONF_OPEN_CLOSE_DURATION,
+    CONF_OPEN_CLOSE_TICK,
+    CONF_YAML_CONFIG,
+)
 from .entity import (
     VirtualOpenableEntity,
     virtual_schema,
@@ -45,12 +54,17 @@ COVER_SCHEMA = vol.Schema(virtual_schema(DEFAULT_COVER_VALUE, {
 }))
 
 
-async def async_setup_platform(hass, config, async_add_entities, _discovery_info=None):
+async def async_setup_platform(
+        hass: HomeAssistant,
+        config: ConfigType,
+        async_add_entities: AddEntitiesCallback,
+        _discovery_info: DiscoveryInfoType | None = None,
+) -> None:
     if hass.data[COMPONENT_CONFIG].get(CONF_YAML_CONFIG, False):
         _LOGGER.debug("setting up old config...")
 
-        sensors = [VirtualCover(config, True)]
-        async_add_entities(sensors, True)
+        covers = [VirtualCover(config, True)]
+        async_add_entities(covers, True)
 
 
 async def async_setup_entry(

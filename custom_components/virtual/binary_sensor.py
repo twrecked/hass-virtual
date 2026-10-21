@@ -1,11 +1,11 @@
-"""
-This component provides support for a virtual binary sensor.
-
-"""
+"""This component provides support for a virtual binary sensor."""
+from __future__ import annotations
 
 import logging
-import voluptuous as vol
 from collections.abc import Callable
+from typing import Any
+
+import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.binary_sensor import (
@@ -14,11 +14,21 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ENTITY_ID, STATE_OFF, STATE_ON
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import get_entity_from_domain, get_entity_configs
-from .const import *
+from .const import (
+    ATTR_GROUP_NAME,
+    COMPONENT_CONFIG,
+    COMPONENT_DOMAIN,
+    COMPONENT_SERVICES,
+    CONF_CLASS,
+    CONF_INITIAL_VALUE,
+    CONF_YAML_CONFIG,
+)
 from .entity import VirtualEntity, virtual_schema
 
 
@@ -45,14 +55,14 @@ SERVICE_SCHEMA = vol.Schema({
 
 def setup_services(hass: HomeAssistant) -> None:
 
-    async def async_virtual_service(call):
+    async def async_virtual_service(call: ServiceCall) -> None:
         """Call virtual service handler."""
         _LOGGER.debug(f"{call.service} service called")
         if call.service == SERVICE_ON:
             await async_virtual_on_service(hass, call)
-        if call.service == SERVICE_OFF:
+        elif call.service == SERVICE_OFF:
             await async_virtual_off_service(hass, call)
-        if call.service == SERVICE_TOGGLE:
+        elif call.service == SERVICE_TOGGLE:
             await async_virtual_toggle_service(hass, call)
 
     # Build up services...
@@ -70,12 +80,17 @@ def setup_services(hass: HomeAssistant) -> None:
         )
 
 
-async def async_setup_platform(hass, config, async_add_entities, _discovery_info=None):
+async def async_setup_platform(
+        hass: HomeAssistant,
+        config: ConfigType,
+        async_add_entities: AddEntitiesCallback,
+        _discovery_info: DiscoveryInfoType | None = None,
+) -> None:
     if hass.data[COMPONENT_CONFIG].get(CONF_YAML_CONFIG, False):
         _LOGGER.debug("setting up old config...")
 
-        sensors = [VirtualBinarySensor(config, True)]
-        async_add_entities(sensors, True)
+        binary_sensors = [VirtualBinarySensor(config, True)]
+        async_add_entities(binary_sensors, True)
         setup_services(hass)
 
 

@@ -1,7 +1,5 @@
-"""
-This component provides support for a virtual valve.
-
-"""
+"""This component provides support for a virtual valve."""
+from __future__ import annotations
 
 import logging
 import voluptuous as vol
@@ -20,10 +18,19 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import get_entity_configs
-from .const import *
+from .const import (
+    ATTR_GROUP_NAME,
+    COMPONENT_CONFIG,
+    COMPONENT_DOMAIN,
+    CONF_CLASS,
+    CONF_OPEN_CLOSE_DURATION,
+    CONF_OPEN_CLOSE_TICK,
+    CONF_YAML_CONFIG,
+)
 from .entity import (
     VirtualOpenableEntity,
-    virtual_schema, positive_tick,
+    virtual_schema,
+    positive_tick,
 )
 
 
@@ -54,8 +61,8 @@ async def async_setup_platform(
     if hass.data[COMPONENT_CONFIG].get(CONF_YAML_CONFIG, False):
         _LOGGER.debug("setting up old config...")
 
-        sensors = [VirtualValve(config, True)]
-        async_add_entities(sensors, True)
+        valves = [VirtualValve(config, True)]
+        async_add_entities(valves, True)
 
 
 async def async_setup_entry(

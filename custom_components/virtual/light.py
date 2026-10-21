@@ -31,7 +31,13 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import get_entity_configs
-from .const import *
+from .const import (
+    ATTR_GROUP_NAME,
+    COMPONENT_CONFIG,
+    COMPONENT_DOMAIN,
+    CONF_INITIAL_VALUE,
+    CONF_YAML_CONFIG,
+)
 from .entity import VirtualEntity, virtual_schema
 
 

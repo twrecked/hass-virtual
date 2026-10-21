@@ -1,18 +1,17 @@
-"""
-This component provides support for a virtual sensor.
+"""Base classes for virtual entities.
 
-This class adds persistence to an entity.
+Adds persistence and device/entity management to entities.
 """
+from __future__ import annotations
 
 import logging
 import pprint
-
+from typing import Any
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.cover import ATTR_CURRENT_POSITION
 from homeassistant.const import (
-    ATTR_DEVICE_CLASS,
     ATTR_ENTITY_ID,
     STATE_CLOSED,
 )
@@ -22,14 +21,32 @@ from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import slugify
 
-from .const import *
+from .const import (
+    ATTR_AVAILABLE,
+    ATTR_DEVICE_ID,
+    ATTR_ENTITY_ID,
+    ATTR_PERSISTENT,
+    ATTR_UNIQUE_ID,
+    COMPONENT_DOMAIN,
+    COMPONENT_MANUFACTURER,
+    COMPONENT_MODEL,
+    CONF_CLASS,
+    CONF_INITIAL_AVAILABILITY,
+    CONF_INITIAL_VALUE,
+    CONF_NAME,
+    CONF_OPEN_CLOSE_DURATION,
+    CONF_OPEN_CLOSE_TICK,
+    CONF_PERSISTENT,
+    DEFAULT_AVAILABILITY,
+    DEFAULT_PERSISTENT,
+)
 
 
 _LOGGER = logging.getLogger(__name__)
 
 positive_tick = vol.All(vol.Coerce(float), vol.Range(min=0, min_included=False))
 
-def virtual_schema(default_initial_value: str, extra_attrs):
+def virtual_schema(default_initial_value: str, extra_attrs: dict[Any, Any]) -> dict[Any, Any]:
     schema = {
         vol.Required(CONF_NAME): cv.string,
         vol.Optional(CONF_INITIAL_VALUE, default=default_initial_value): cv.string,

@@ -1,11 +1,11 @@
-"""
-This component provides support for a virtual sensor.
-
-"""
+"""This component provides support for a virtual sensor."""
+from __future__ import annotations
 
 import logging
-import voluptuous as vol
 from collections.abc import Callable
+from typing import Any
+
+import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.sensor import (
@@ -32,13 +32,22 @@ from homeassistant.const import (
     UnitOfReactivePower,
     UnitOfVolume,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import get_entity_from_domain, get_entity_configs
-from .const import *
+from .const import (
+    ATTR_GROUP_NAME,
+    ATTR_VALUE,
+    COMPONENT_CONFIG,
+    COMPONENT_DOMAIN,
+    COMPONENT_SERVICES,
+    CONF_CLASS,
+    CONF_INITIAL_VALUE,
+    CONF_YAML_CONFIG,
+)
 from .entity import VirtualEntity, virtual_schema
 
 

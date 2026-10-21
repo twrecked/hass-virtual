@@ -1,4 +1,10 @@
-"""Constants for the virtual component. """
+"""Constants for the virtual component."""
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
 
 COMPONENT_DOMAIN = "virtual"
 COMPONENT_SERVICES = "virtual-services"
@@ -35,9 +41,9 @@ DEFAULT_PERSISTENT = True
 IMPORTED_GROUP_NAME = "imported"
 
 
-def default_config_file(hass) -> str:
+def default_config_file(hass: HomeAssistant) -> str:
     return hass.config.path("virtual.yaml")
 
 
-def default_meta_file(hass) -> str:
+def default_meta_file(hass: HomeAssistant) -> str:
     return hass.config.path(".storage/virtual.meta.json")

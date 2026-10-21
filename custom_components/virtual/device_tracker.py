@@ -1,11 +1,11 @@
-"""
-This component provides support for a virtual device tracker.
-
-"""
+"""This component provides support for a virtual device tracker."""
+from __future__ import annotations
 
 import logging
-import voluptuous as vol
 from collections.abc import Callable
+from typing import Any
+
+import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.device_tracker import (
@@ -21,13 +21,25 @@ from homeassistant.const import (
     ATTR_LONGITUDE,
     CONF_DEVICES
 )
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.storage import Store
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import get_entity_from_domain, get_entity_configs
-from .const import *
+from .const import (
+    ATTR_GROUP_NAME,
+    COMPONENT_CONFIG,
+    COMPONENT_DOMAIN,
+    COMPONENT_SERVICES,
+    CONF_INITIAL_VALUE,
+    CONF_NAME,
+    CONF_PERSISTENT,
+    CONF_YAML_CONFIG,
+    DEFAULT_PERSISTENT,
+)
 from .entity import VirtualEntity, virtual_schema
 
 
@@ -240,7 +252,7 @@ class VirtualDeviceTracker(VirtualEntity, TrackerEntity):
         self.async_write_ha_state()
 
 
-async def async_virtual_move_service(hass, call):
+async def async_virtual_move_service(hass: HomeAssistant, call: ServiceCall) -> None:
     for entity_id in call.data['entity_id']:
         _LOGGER.debug(f"moving {entity_id} --> {call.data}")
 

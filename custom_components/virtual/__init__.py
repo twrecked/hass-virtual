@@ -1,11 +1,9 @@
-"""
-This component provides support for virtual components.
-
-"""
+"""This component provides support for virtual components."""
+from __future__ import annotations
 
 import logging
+from typing import Any
 import voluptuous as vol
-import asyncio
 
 import homeassistant.helpers.config_validation as cv
 import homeassistant.helpers.device_registry as dr
@@ -21,11 +19,25 @@ from homeassistant.const import ATTR_ENTITY_ID, CONF_SOURCE, Platform
 from homeassistant.core import (
     DOMAIN as HOMEASSISTANT_DOMAIN,
     HomeAssistant,
+    ServiceCall,
     callback
 )
 from homeassistant.exceptions import HomeAssistantError
 
-from .const import *
+from .const import (
+    ATTR_DEVICE_ID,
+    ATTR_DEVICES,
+    ATTR_ENTITIES,
+    ATTR_FILE_NAME,
+    ATTR_GROUP_NAME,
+    COMPONENT_CONFIG,
+    COMPONENT_DOMAIN,
+    COMPONENT_MANUFACTURER,
+    COMPONENT_MODEL,
+    COMPONENT_SERVICES,
+    CONF_NAME,
+    CONF_YAML_CONFIG,
+)
 from .cfg import BlendedCfg, UpgradeCfg
 
 
@@ -61,16 +73,18 @@ VIRTUAL_PLATFORMS = [
 ]
 
 
-def str_to_bool(value) -> bool:
-    value = value.lower()
-    if value in ["y", "yes", "t", "true", "on", "1"]:
+def str_to_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    val = str(value).lower()
+    if val in ["y", "yes", "t", "true", "on", "1"]:
         return True
-    if value in ["n", "no", "f", "false", "off", "0"]:
+    if val in ["n", "no", "f", "false", "off", "0"]:
         return False
-    raise ValueError
+    raise ValueError(f"Cannot convert {value} to boolean")
 
 
-async def async_setup(hass, config):
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up a virtual components.
 
     This uses the old mechanism and has to be enabled with 'yaml_config: True'
@@ -136,12 +150,13 @@ async def async_setup(hass, config):
 
 
 @callback
-def _async_find_matching_config_entry(hass):
+def _async_find_matching_config_entry(hass: HomeAssistant) -> ConfigEntry | None:
     """ If we have anything in config_entries for virtual we consider it
     configured and will ignore the YAML.
     """
     for entry in hass.config_entries.async_entries(COMPONENT_DOMAIN):
         return entry
+    return None
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -213,23 +228,23 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return unload_ok
 
 
-def get_entity_configs(hass, group_name, domain):
+def get_entity_configs(hass: HomeAssistant, group_name: str, domain: str) -> list[dict[str, Any]]:
     return hass.data.get(COMPONENT_DOMAIN, {}).get(group_name, {}).get(ATTR_ENTITIES, {}).get(domain, [])
 
 
-def get_entity_from_domain(hass, domain, entity_id):
+def get_entity_from_domain(hass: HomeAssistant, domain: str, entity_id: str) -> Any:
     component = hass.data.get(domain)
     if component is None:
-        raise HomeAssistantError("{} component not set up".format(domain))
+        raise HomeAssistantError(f"{domain} component not set up")
 
     entity = component.get_entity(entity_id)
     if entity is None:
-        raise HomeAssistantError("{} not found".format(entity_id))
+        raise HomeAssistantError(f"{entity_id} not found")
 
     return entity
 
 
-async def async_virtual_set_availability_service(hass, call) -> None:
+async def async_virtual_set_availability_service(hass: HomeAssistant, call: ServiceCall) -> None:
     value = call.data['value']
     if not isinstance(value, bool):
         value = str_to_bool(value)
@@ -241,7 +256,7 @@ async def async_virtual_set_availability_service(hass, call) -> None:
 
 
 async def _async_get_or_create_virtual_device_in_registry(
-        hass: HomeAssistant, entry: ConfigEntry, device
+        hass: HomeAssistant, entry: ConfigEntry, device: dict[str, Any]
 ) -> None:
     registry = dr.async_get(hass)
     registry.async_get_or_create(
@@ -255,7 +270,7 @@ async def _async_get_or_create_virtual_device_in_registry(
 
 
 async def _async_delete_virtual_device_from_registry(
-        hass: HomeAssistant, _entry: ConfigEntry, device
+        hass: HomeAssistant, _entry: ConfigEntry, device: dict[str, Any]
 ) -> None:
     registery = dr.async_get(hass)
     device_in_registry = registery.async_get_device(

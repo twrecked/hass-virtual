@@ -13,6 +13,7 @@ There are 2 pieces:
 - `UpgradeCfg`; A helper class to import configuration from the old YAML
   layout.
 """
+from __future__ import annotations
 
 import asyncio
 import copy
@@ -21,6 +22,7 @@ import json
 import voluptuous as vol
 import uuid
 from datetime import timedelta
+from typing import Any
 
 from homeassistant.const import (
     ATTR_ENTITY_ID,
@@ -28,11 +30,25 @@ from homeassistant.const import (
     CONF_UNIT_OF_MEASUREMENT,
     Platform
 )
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 from homeassistant.util import slugify
 from homeassistant.util.yaml import parse_yaml, dump
 
-from .const import *
+from .const import (
+    ATTR_DEVICES,
+    ATTR_DEVICE_ID,
+    ATTR_FILE_NAME,
+    ATTR_GROUP_NAME,
+    ATTR_UNIQUE_ID,
+    ATTR_VERSION,
+    COMPONENT_DOMAIN,
+    CONF_CLASS,
+    CONF_NAME,
+    IMPORTED_GROUP_NAME,
+    default_config_file,
+    default_meta_file,
+)
 from .entity import virtual_schema
 
 
@@ -268,22 +284,22 @@ def _make_suffix(platform, device_class):
     return ""
 
 
-class BlendedCfg(object):
+class BlendedCfg:
     """Helper class to get at Virtual configuration options.
 
     Reads in non config flow settings from the external config file and merges
     them with flow data and options.
     """
 
-    def __init__(self, hass, flow_data):
+    def __init__(self, hass: HomeAssistant, flow_data: dict[str, Any]):
         self._hass = hass
         self._group_name = flow_data[ATTR_GROUP_NAME]
         self._file_name = flow_data[ATTR_FILE_NAME]
 
-        self._meta_data = {}
-        self._orphaned_entities = {}
-        self._devices = []
-        self._entities = {}
+        self._meta_data: dict[str, Any] = {}
+        self._orphaned_entities: dict[str, Any] = {}
+        self._devices: list[dict[str, Any]] = []
+        self._entities: dict[str, Any] = {}
 
     async def async_load(self):
         meta_data = await _load_meta_data(self._hass, self._group_name)
@@ -405,12 +421,12 @@ class BlendedCfg(object):
         return self._entities.get(Platform.SWITCH, [])
 
 
-class UpgradeCfg(object):
+class UpgradeCfg:
     """Read in the old YAML config and convert it to the new format.
     """
 
     @staticmethod
-    async def async_import_yaml(hass, config):
+    async def async_import_yaml(hass: HomeAssistant, config: dict[str, Any]):
         """ Take the current virtual config and make the new yaml file.
 
         Virtual needs a lot of fine tuning so rather than get rid of the
@@ -464,8 +480,8 @@ class UpgradeCfg(object):
         await _save_meta_data(hass, IMPORTED_GROUP_NAME, devices_meta_data)
 
     @staticmethod
-    def create_flow_data(hass, _config):
-        """ Take the current aarlo config and make the new flow configuration.
+    def create_flow_data(hass: HomeAssistant, _config: dict[str, Any]) -> dict[str, Any]:
+        """ Take the current virtual config and make the new flow configuration.
         """
         _LOGGER.debug(f"new-config-file={default_config_file(hass)}")
         _LOGGER.debug(f"new-meta-file={default_meta_file(hass)}")

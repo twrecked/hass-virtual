@@ -110,3 +110,7 @@ venv.bak/
 *.orig
 *.diff
 .idea
+crap
+test.py
+prompt.md
+venv-*/

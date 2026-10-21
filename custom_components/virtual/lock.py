@@ -1,14 +1,13 @@
-"""
-This component provides support for a virtual lock.
-
-"""
+"""This component provides support for a virtual lock."""
+from __future__ import annotations
 
 import logging
 import random
-import voluptuous as vol
 from collections.abc import Callable
 from datetime import timedelta
 from typing import Any
+
+import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.lock import (
@@ -24,7 +23,13 @@ from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import get_entity_configs
-from .const import *
+from .const import (
+    ATTR_GROUP_NAME,
+    COMPONENT_CONFIG,
+    COMPONENT_DOMAIN,
+    CONF_INITIAL_VALUE,
+    CONF_YAML_CONFIG,
+)
 from .entity import VirtualEntity, virtual_schema
 
 
