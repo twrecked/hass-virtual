@@ -67,7 +67,7 @@
       "fields": {
         "value": {
           "name": "Value",
-          "description": "Is the entity available.."
+          "description": "Is the entity available."
         }
       }
     },

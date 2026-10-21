@@ -67,7 +67,7 @@
       "fields": {
         "value": {
           "name": "Hodnota",
-          "description": "Je entita dostupná.."
+          "description": "Je entita dostupná."
         }
       }
     },
@@ -78,6 +78,14 @@
         "location": {
           "name": "Pozice",
           "description": "Kam přesunout sledovač zařízení."
+        },
+        "gps": {
+          "name": "GPS",
+          "description": "Na jaké souřadnice přesunout sledovač zařízení."
+        },
+        "gps_accuracy": {
+          "name": "Přesnost GPS",
+          "description": "Přesnost souřadnic GPS."
         }
       }
     }

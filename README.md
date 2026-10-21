@@ -55,6 +55,7 @@ virtual:
   - [Fans](#fans)
   - [Covers](#covers)
   - [Valves](#valves)
+  - [Numbers](#numbers)
   - [Device Tracking](#device-tracking)
 - [Old Style Entity Configuration](#old-style-entity-configuration)
 - [Services](#services)
@@ -461,6 +462,26 @@ the valve is emulated with timed events, and the timing can be controlled with
 - `open_close_duration`: The time it take to go from fully open to fully closed, or back
 - `open_close_tick`: The update interval when opening and closing
 
+## Numbers
+
+To add a virtual number use the following:
+
+```yaml
+Test Number:
+- platform: number
+  min: 0
+  max: 100
+  initial_value: 50
+  class: temperature
+  unit_of_measurement: "°C"
+```
+
+- `min`: required; minimum allowed value
+- `max`: required; maximum allowed value
+- `initial_value`: optional, default `0`; initial value for the number
+- `class`: optional; device class (e.g. `temperature`, `humidity`, `battery`, `power`)
+- `unit_of_measurement`: optional; unit of measurement string (e.g. `°C`, `%`, `W`)
+
 ## Device Tracking
 
 To add a virtual device tracker use the following:
@@ -488,48 +509,60 @@ For now; look at [the 0.8](https://github.com/twrecked/hass-virtual/tree/version
 
 The component provides the following services:
 
-**Name: `virtual.set_availability`**
+**Name: `virtual.set_available`**
 
 *Parameters:*
-- `entity_id`; The entity id of the binary sensor to turn on.
+- `entity_id`: Entity ID(s) of the virtual entities to set availability for.
+- `value`: Boolean (`true` or `false`) to set availability.
 
-This will change the availability setting of any virtual device.
+This will change the availability state of any virtual entity.
 
 ---
 
 **Name: `virtual.turn_on`**
 
 *Parameters:*
-- `entity_id`; The entity id of the binary sensor to turn on.
+- `entity_id`: Entity ID(s) of the binary sensor(s) to turn on.
 
-This service will turn on a binary sensor.
+This service will turn on a virtual binary sensor.
 
 ---
 
 **Name: `virtual.turn_off`**
 
 *Parameters:*
-- `entity_id`; The entity id of the binary sensor to turn off.
+- `entity_id`: Entity ID(s) of the binary sensor(s) to turn off.
 
-This service will turn off a binary sensor.
+This service will turn off a virtual binary sensor.
 
 ---
 
 **Name: `virtual.toggle`**
 
 *Parameters:*
-- `entity_id`; The entity id of the binary sensor to toggle.
+- `entity_id`: Entity ID(s) of the binary sensor(s) to toggle.
 
-- This service will toggle a binary sensor.
+This service will toggle a virtual binary sensor.
+
+---
+
+**Name: `virtual.set`**
+
+*Parameters:*
+- `entity_id`: Entity ID(s) of the sensor(s) to set.
+- `value`: String/number value to set the sensor state to.
+
+This service will set the value of a virtual sensor.
 
 ---
 
 **Name: `virtual.move`**
 
 *Parameters:*
+- `entity_id`: Entity ID(s) of the device tracker(s) to move.
+- `location`: A named location (e.g. `home`, `not_home`, or custom zone name).
+- `gps`: GPS coordinates map (`latitude`, `longitude`, optional `radius`).
+- `gps_accuracy`: GPS accuracy in meters.
 
-- `location`; a named location
-- `gps`; GPS coordinates
-
-Move a device tracker. You use one of the parameters.
+Move a device tracker using a named location or GPS coordinates.
 

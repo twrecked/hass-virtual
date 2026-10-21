@@ -2,25 +2,22 @@
 Virtual components for testing Home Assistant systems.
 
 
-## Version 0.8
-
-### **Breaking Changes**
-
-I've added persistent support to `binary_sensor`, `fan`, `light`, `lock`,
-`sensor`, `switch` and `device_tracker`. The persistent saving of state is
-turned *on* by default. If you do not want this set `persistent: False` in the
-entity configuration.
-
-
 ## Features
 It provides:
 * Virtual binary sensors
+* Virtual covers
 * Virtual device trackers
 * Virtual fans
 * Virtual lights
 * Virtual locks
-* Virtual senors
+* Virtual numbers
+* Virtual sensors
 * Virtual switches
+* Virtual valves
+
+
+## Configuration
+Supports both UI configuration via Config Flow and file-based device definitions, with persistent state support across restarts.
 
 
 ## Documentation
