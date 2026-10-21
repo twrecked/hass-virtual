@@ -2,9 +2,13 @@
 from __future__ import annotations
 
 import logging
+import secrets
 from typing import Any
+from aiohttp import web
 import voluptuous as vol
+import yaml
 
+from homeassistant.components import webhook
 import homeassistant.helpers.config_validation as cv
 import homeassistant.helpers.device_registry as dr
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
@@ -159,6 +163,48 @@ def _async_find_matching_config_entry(hass: HomeAssistant) -> ConfigEntry | None
     return None
 
 
+async def _async_handle_builder_webhook(
+    hass: HomeAssistant, webhook_id: str, request: web.Request, entry: ConfigEntry
+) -> web.Response:
+    """Handle incoming YAML save from Virtual Device Editor."""
+    token = request.query.get("token") or request.headers.get("X-Auth-Token")
+    expected_token = (
+        hass.data.get(COMPONENT_DOMAIN, {})
+        .get(entry.entry_id, {})
+        .get("webhook_token")
+    )
+    if not token or token != expected_token:
+        _LOGGER.warning("Invalid token received on virtual builder webhook")
+        return web.Response(text="Invalid token", status=403)
+
+    body = await request.text()
+    if not body:
+        return web.Response(text="Empty body", status=400)
+
+    try:
+        parsed = yaml.safe_load(body)
+        if not isinstance(parsed, dict):
+            return web.Response(text="YAML root must be a dictionary", status=400)
+    except Exception as err:
+        _LOGGER.warning("Invalid YAML received on builder webhook: %s", err)
+        return web.Response(text=f"Invalid YAML: {err}", status=400)
+
+    file_name = entry.data.get(ATTR_FILE_NAME)
+    if not file_name:
+        return web.Response(text="No file_name configured for entry", status=500)
+
+    def _write_yaml() -> None:
+        with open(file_name, "w", encoding="utf-8") as f:
+            f.write(body)
+
+    await hass.async_add_executor_job(_write_yaml)
+    _LOGGER.info(f"Successfully updated {file_name} from Virtual Device Editor")
+
+    # Reload config entry asynchronously to pick up changes
+    hass.async_create_task(hass.config_entries.async_reload(entry.entry_id))
+    return web.Response(text="OK", status=200)
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.debug(f'async setup {entry.data}')
 
@@ -167,6 +213,29 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[COMPONENT_DOMAIN] = {}
         hass.data[COMPONENT_SERVICES] = {}
         hass.data[COMPONENT_CONFIG] = {}
+
+    # Register builder webhook
+    webhook_id = f"virtual_{entry.entry_id}"
+    token = secrets.token_hex(16)
+    if entry.entry_id not in hass.data[COMPONENT_DOMAIN]:
+        hass.data[COMPONENT_DOMAIN][entry.entry_id] = {}
+    hass.data[COMPONENT_DOMAIN][entry.entry_id]["webhook_token"] = token
+    hass.data[COMPONENT_DOMAIN][entry.entry_id]["webhook_id"] = webhook_id
+
+    async def _handle_webhook(hass_instance: HomeAssistant, wh_id: str, req: web.Request) -> web.Response:
+        return await _async_handle_builder_webhook(hass_instance, wh_id, req, entry)
+
+    try:
+        webhook.async_register(
+            hass,
+            COMPONENT_DOMAIN,
+            f"Virtual Builder ({entry.data.get(ATTR_GROUP_NAME, 'group')})",
+            webhook_id,
+            _handle_webhook,
+            allowed_methods=["POST"],
+        )
+    except ValueError:
+        pass
 
     # Get the config.
     _LOGGER.debug(f"creating new cfg")
@@ -221,9 +290,14 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     unload_ok = await hass.config_entries.async_unload_platforms(entry, VIRTUAL_PLATFORMS)
     if unload_ok:
         _LOGGER.debug("unloaded ok")
-        hass.data[COMPONENT_DOMAIN].pop(entry.data[ATTR_GROUP_NAME])
-        # _LOGGER.debug(f"ocfg={ocfg}")
-    # _LOGGER.debug(f"after hass={hass.data[COMPONENT_DOMAIN]}")
+        hass.data[COMPONENT_DOMAIN].pop(entry.data[ATTR_GROUP_NAME], None)
+        # Unregister webhook
+        webhook_id = f"virtual_{entry.entry_id}"
+        try:
+            webhook.async_unregister(hass, webhook_id)
+        except Exception:
+            pass
+        hass.data[COMPONENT_DOMAIN].pop(entry.entry_id, None)
 
     return unload_ok
 

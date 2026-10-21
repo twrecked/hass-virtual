@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Virtual Device Editor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+</head>
+<body>
+{% raw %}
+  <div id="app" v-cloak>
+    <!-- Navbar -->
+    <header class="navbar">
+      <div class="nav-brand">
+        <h1>Virtual Device Editor</h1>
+        <span class="nav-badge">{{ groupName }}</span>
+      </div>
+      <div class="nav-actions">
+        <button class="btn btn-secondary" @click="showTemplateModal = true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>
+          Templates
+        </button>
+        <button class="btn btn-secondary" @click="showManualYamlModal = true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Import YAML
+        </button>
+        <button class="btn btn-secondary" @click="showYamlSidebar = !showYamlSidebar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          {{ showYamlSidebar ? 'Hide YAML' : 'Show YAML' }}
+        </button>
+        <button class="btn btn-primary" @click="addDevice">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Device
+        </button>
+        <button v-if="callbackUrl" class="btn btn-success" :disabled="isSaving" @click="saveAndReturn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          {{ isSaving ? 'Saving...' : 'Save & Return' }}
+        </button>
+        <button v-else class="btn btn-success" @click="downloadYaml">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download YAML
+        </button>
+      </div>
+    </header>
+
+    <!-- Save Alert Banner -->
+    <div v-if="saveStatus" :class="['alert', saveStatus === 'success' ? 'alert-success' : 'alert-danger']" style="margin: 1rem 2rem 0; display: flex; justify-content: space-between; align-items: center;">
+      <span>{{ saveMessage }}</span>
+      <button v-if="saveStatus === 'success'" class="btn btn-sm btn-success" @click="closeTab">
+        Close Tab
+      </button>
+    </div>
+
+    <!-- App Container -->
+    <div class="app-container">
+      <!-- Main Devices List -->
+      <main class="editor-main">
+        <div v-if="devices.length === 0" class="empty-state">
+          <h2>No devices configured</h2>
+          <p>Add a virtual device or use a preset template to get started.</p>
+          <div style="display: flex; gap: 1rem; justify-content: center;">
+            <button class="btn btn-primary" @click="addDevice">Add First Device</button>
+            <button class="btn btn-secondary" @click="showTemplateModal = true">Use Template</button>
+          </div>
+        </div>
+
+        <div v-for="(device, dIdx) in devices" :key="dIdx" class="device-card">
+          <!-- Device Header -->
+          <div class="device-header">
+            <input 
+              v-model="device.name" 
+              class="device-title-input" 
+              placeholder="Device Name (e.g. Living Room Motion)"
+            />
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <button class="btn btn-sm btn-secondary" @click="addEntity(device)">
+                + Add Entity
+              </button>
+              <button class="btn btn-sm btn-danger-outline" @click="removeDevice(dIdx)">
+                Delete Device
+              </button>
+            </div>
+          </div>
+
+          <!-- Device Entities -->
+          <div class="device-body">
+            <div class="entities-list">
+              <div v-for="(entity, eIdx) in device.entities" :key="eIdx" class="entity-card">
+                <div class="entity-header">
+                  <span class="entity-platform-tag">{{ entity.platform }}</span>
+                  <button class="btn btn-sm btn-danger-outline" @click="removeEntity(device, eIdx)">Remove Entity</button>
+                </div>
+
+                <div class="form-grid">
+                  <!-- Platform -->
+                  <div class="form-group">
+                    <label>Platform</label>
+                    <select v-model="entity.platform" class="form-control">
+                      <option v-for="plat in PLATFORMS" :key="plat" :value="plat">{{ plat }}</option>
+                    </select>
+                  </div>
+
+                  <!-- Entity Name override -->
+                  <div class="form-group">
+                    <label>Entity Name (Optional)</label>
+                    <input v-model="entity.name" class="form-control" placeholder="Default: Device Name" />
+                  </div>
+
+                  <!-- Device Class -->
+                  <div v-if="DEVICE_CLASSES[entity.platform]" class="form-group">
+                    <label>Device Class</label>
+                    <select v-model="entity.class" class="form-control" @change="onClassChange(entity)">
+                      <option v-for="cls in DEVICE_CLASSES[entity.platform]" :key="cls" :value="cls">
+                        {{ cls || '(None)' }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Initial Value -->
+                  <div class="form-group">
+                    <label>Initial Value</label>
+                    <input v-model="entity.initial_value" class="form-control" placeholder="e.g. on, off, 0" />
+                  </div>
+
+                  <!-- Unit of Measurement (Sensor/Number) -->
+                  <div v-if="entity.platform === 'sensor' || entity.platform === 'number'" class="form-group">
+                    <label>Unit of Measurement</label>
+                    <input v-model="entity.unit_of_measurement" class="form-control" placeholder="e.g. °C, %, W" />
+                  </div>
+
+                  <!-- Min / Max for Number -->
+                  <template v-if="entity.platform === 'number'">
+                    <div class="form-group">
+                      <label>Min Value</label>
+                      <input v-model="entity.min" type="number" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                      <label>Max Value</label>
+                      <input v-model="entity.max" type="number" class="form-control" />
+                    </div>
+                  </template>
+
+                  <!-- Open/Close for Cover / Valve -->
+                  <template v-if="entity.platform === 'cover' || entity.platform === 'valve'">
+                    <div class="form-group">
+                      <label>Open/Close Duration (sec)</label>
+                      <input v-model="entity.open_close_duration" type="number" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                      <label>Tick Interval (sec)</label>
+                      <input v-model="entity.open_close_tick" type="number" step="0.1" class="form-control" />
+                    </div>
+                  </template>
+
+                  <!-- Lock Settings -->
+                  <template v-if="entity.platform === 'lock'">
+                    <div class="form-group">
+                      <label>Locking Time (sec)</label>
+                      <input v-model="entity.locking_time" type="number" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                      <label>Jamming Test (1 in X)</label>
+                      <input v-model="entity.jamming_test" type="number" class="form-control" />
+                    </div>
+                  </template>
+
+                  <!-- Fan Settings -->
+                  <template v-if="entity.platform === 'fan'">
+                    <div class="form-group">
+                      <label>Speed Count</label>
+                      <input v-model="entity.speed_count" type="number" class="form-control" />
+                    </div>
+                  </template>
+                </div>
+
+                <!-- Light Feature Toggles -->
+                <div v-if="entity.platform === 'light'" style="margin-top: 0.75rem; display: flex; gap: 1.25rem; flex-wrap: wrap;">
+                  <label class="checkbox-group">
+                    <input type="checkbox" v-model="entity.support_brightness" />
+                    <span>Brightness</span>
+                  </label>
+                  <label class="checkbox-group">
+                    <input type="checkbox" v-model="entity.support_color" />
+                    <span>Color (HS)</span>
+                  </label>
+                  <label class="checkbox-group">
+                    <input type="checkbox" v-model="entity.support_color_temp" />
+                    <span>Color Temperature</span>
+                  </label>
+                  <label class="checkbox-group">
+                    <input type="checkbox" v-model="entity.support_effect" />
+                    <span>Effects</span>
+                  </label>
+                </div>
+
+                <!-- Fan Feature Toggles -->
+                <div v-if="entity.platform === 'fan'" style="margin-top: 0.75rem; display: flex; gap: 1.25rem; flex-wrap: wrap;">
+                  <label class="checkbox-group">
+                    <input type="checkbox" v-model="entity.direction" />
+                    <span>Direction</span>
+                  </label>
+                  <label class="checkbox-group">
+                    <input type="checkbox" v-model="entity.oscillate" />
+                    <span>Oscillate</span>
+                  </label>
+                </div>
+
+                <!-- Common Checkboxes -->
+                <div style="margin-top: 0.75rem; display: flex; gap: 1.5rem;">
+                  <label class="checkbox-group">
+                    <input type="checkbox" v-model="entity.persistent" />
+                    <span>Persistent across restarts</span>
+                  </label>
+                  <label class="checkbox-group">
+                    <input type="checkbox" v-model="entity.initial_availability" />
+                    <span>Initially Available</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Sidebar: Live YAML Preview -->
+      <aside v-show="showYamlSidebar" class="editor-sidebar">
+        <div class="sidebar-header">
+          <span style="font-weight: 700; font-size: 0.95rem;">Live YAML</span>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-sm btn-secondary" @click="copyYaml">Copy</button>
+            <button class="btn btn-sm btn-secondary" @click="downloadYaml">Download</button>
+          </div>
+        </div>
+        <div class="sidebar-content">
+          <textarea readonly class="yaml-viewer" :value="generatedYaml"></textarea>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Template Modal -->
+    <div v-if="showTemplateModal" class="modal-overlay" @click.self="showTemplateModal = false">
+      <div class="modal-content">
+        <h3>Choose a Device Template</h3>
+        <p style="color: var(--text-secondary); font-size: 0.875rem;">Select a pre-configured virtual device:</p>
+        <div class="template-grid">
+          <div v-for="tpl in TEMPLATES" :key="tpl.id" class="template-item" @click="applyTemplate(tpl)">
+            <h4>{{ tpl.name }}</h4>
+            <p>{{ tpl.description }}</p>
+          </div>
+        </div>
+        <div style="text-align: right; margin-top: 1rem;">
+          <button class="btn btn-secondary" @click="showTemplateModal = false">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manual Import Modal -->
+    <div v-if="showManualYamlModal" class="modal-overlay" @click.self="showManualYamlModal = false">
+      <div class="modal-content" style="max-width: 650px;">
+        <h3>Import Existing YAML</h3>
+        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.75rem;">
+          Paste your existing <code>virtual.yaml</code> contents to load it into the editor:
+        </p>
+        <textarea v-model="rawYamlInput" class="form-control" style="height: 250px; font-family: monospace; font-size: 0.85rem;" placeholder="version: 1&#10;devices:&#10;  ..."></textarea>
+        <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem;">
+          <button class="btn btn-secondary" @click="showManualYamlModal = false">Cancel</button>
+          <button class="btn btn-primary" @click="importManualYaml">Load into Editor</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endraw %}
+
+  <script>
+    window.__VIRTUAL_CALLBACK_URL = {{ callback_url | tojson }};
+    window.__VIRTUAL_TOKEN = {{ token | tojson }};
+    window.__VIRTUAL_GROUP_NAME = {{ group_name | tojson }};
+    window.__VIRTUAL_INITIAL_YAML = {{ initial_yaml | tojson }};
+  </script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

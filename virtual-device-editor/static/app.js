@@ -1,0 +1,568 @@
+const { createApp, ref, computed, watch, onMounted } = Vue;
+
+function decodeBase64Utf8(base64Str) {
+  try {
+    const binary = atob(base64Str);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return new TextDecoder("utf-8").decode(bytes);
+  } catch (e) {
+    return atob(base64Str);
+  }
+}
+
+const DEVICE_CLASS_UNITS = {
+  apparent_power: "VA",
+  battery: "%",
+  carbon_monoxide: "ppm",
+  carbon_dioxide: "ppm",
+  co: "ppm",
+  co2: "ppm",
+  humidity: "%",
+  illuminance: "lx",
+  nitrogen_dioxide: "µg/m³",
+  nitrogen_monoxide: "µg/m³",
+  nitrous_oxide: "µg/m³",
+  ozone: "µg/m³",
+  pm1: "µg/m³",
+  pm10: "µg/m³",
+  pm25: "µg/m³",
+  signal_strength: "dB",
+  sulphur_dioxide: "µg/m³",
+  temperature: "°C",
+  pressure: "hPa",
+  power: "kW",
+  current: "A",
+  energy: "kWh",
+  frequency: "GHz",
+  power_factor: "%",
+  reactive_power: "var",
+  volatile_organic_compounds: "µg/m³",
+  voltage: "V",
+  gas: "m³",
+};
+
+const PLATFORMS = [
+  "binary_sensor",
+  "cover",
+  "device_tracker",
+  "fan",
+  "light",
+  "lock",
+  "number",
+  "sensor",
+  "switch",
+  "valve",
+];
+
+const DEVICE_CLASSES = {
+  binary_sensor: [
+    "", "battery", "battery_charging", "carbon_monoxide", "cold", "connectivity",
+    "door", "garage_door", "gas", "heat", "light", "lock", "moisture", "motion",
+    "moving", "occupancy", "opening", "plug", "power", "presence", "problem",
+    "running", "safety", "smoke", "sound", "tamper", "update", "vibration", "window",
+  ],
+  sensor: [
+    "", "apparent_power", "battery", "carbon_dioxide", "carbon_monoxide", "current",
+    "energy", "frequency", "gas", "humidity", "illuminance", "moisture",
+    "nitrogen_dioxide", "nitrogen_monoxide", "nitrous_oxide", "ozone", "pm1",
+    "pm10", "pm25", "power_factor", "power", "pressure", "reactive_power",
+    "signal_strength", "sulphur_dioxide", "temperature", "volatile_organic_compounds", "voltage",
+  ],
+  number: [
+    "", "apparent_power", "battery", "carbon_dioxide", "carbon_monoxide", "current",
+    "energy", "frequency", "gas", "humidity", "illuminance",
+    "nitrogen_dioxide", "nitrogen_monoxide", "nitrous_oxide", "ozone", "pm1",
+    "pm10", "pm25", "power_factor", "power", "pressure", "reactive_power",
+    "signal_strength", "sulphur_dioxide", "temperature", "volatile_organic_compounds", "voltage",
+  ],
+  cover: ["", "awning", "blind", "curtain", "damper", "door", "garage", "gate", "shade", "shutter", "window"],
+  valve: ["", "water", "gas"],
+  switch: ["", "outlet", "switch"],
+};
+
+const TEMPLATES = [
+  {
+    id: "motion_sensor",
+    name: "Motion Sensor",
+    description: "Binary motion sensor with battery level",
+    create: (name) => ({
+      name: name || "Motion Sensor",
+      entities: [
+        { platform: "binary_sensor", class: "motion", initial_value: "off", persistent: true, initial_availability: true },
+        { platform: "sensor", class: "battery", unit_of_measurement: "%", initial_value: "100", persistent: true, initial_availability: true },
+      ],
+    }),
+  },
+  {
+    id: "door_contact",
+    name: "Door / Window Contact",
+    description: "Contact sensor with battery level",
+    create: (name) => ({
+      name: name || "Front Door",
+      entities: [
+        { platform: "binary_sensor", class: "door", initial_value: "off", persistent: true, initial_availability: true },
+        { platform: "sensor", class: "battery", unit_of_measurement: "%", initial_value: "100", persistent: true, initial_availability: true },
+      ],
+    }),
+  },
+  {
+    id: "dimmable_light",
+    name: "Dimmable Light",
+    description: "Virtual light with brightness control",
+    create: (name) => ({
+      name: name || "Ceiling Light",
+      entities: [
+        {
+          platform: "light",
+          initial_value: "off",
+          support_brightness: true,
+          initial_brightness: 255,
+          persistent: true,
+          initial_availability: true,
+        },
+      ],
+    }),
+  },
+  {
+    id: "rgb_light",
+    name: "RGB Color Light",
+    description: "Color light with brightness & color temperature",
+    create: (name) => ({
+      name: name || "Accent Light",
+      entities: [
+        {
+          platform: "light",
+          initial_value: "off",
+          support_brightness: true,
+          initial_brightness: 255,
+          support_color: true,
+          support_color_temp: true,
+          persistent: true,
+          initial_availability: true,
+        },
+      ],
+    }),
+  },
+  {
+    id: "smart_fan",
+    name: "Ceiling Fan",
+    description: "Multi-speed fan with direction & oscillation",
+    create: (name) => ({
+      name: name || "Ceiling Fan",
+      entities: [
+        {
+          platform: "fan",
+          initial_value: "off",
+          speed: false,
+          speed_count: 3,
+          direction: true,
+          oscillate: true,
+          persistent: true,
+          initial_availability: true,
+        },
+      ],
+    }),
+  },
+  {
+    id: "window_blind",
+    name: "Window Cover / Blind",
+    description: "Timed opening/closing blind with position control",
+    create: (name) => ({
+      name: name || "Living Room Blind",
+      entities: [
+        {
+          platform: "cover",
+          class: "blind",
+          initial_value: "closed",
+          open_close_duration: 10,
+          open_close_tick: 1,
+          persistent: true,
+          initial_availability: true,
+        },
+      ],
+    }),
+  },
+  {
+    id: "water_valve",
+    name: "Water Valve",
+    description: "Timed water valve with position feedback",
+    create: (name) => ({
+      name: name || "Main Water Valve",
+      entities: [
+        {
+          platform: "valve",
+          class: "water",
+          initial_value: "open",
+          open_close_duration: 5,
+          open_close_tick: 1,
+          persistent: true,
+          initial_availability: true,
+        },
+      ],
+    }),
+  },
+  {
+    id: "power_outlet",
+    name: "Smart Power Outlet",
+    description: "Switch with real-time power and energy meter",
+    create: (name) => ({
+      name: name || "Coffee Maker Outlet",
+      entities: [
+        { platform: "switch", class: "outlet", initial_value: "on", persistent: true, initial_availability: true },
+        { platform: "sensor", class: "power", unit_of_measurement: "W", initial_value: "0", persistent: true, initial_availability: true },
+        { platform: "sensor", class: "energy", unit_of_measurement: "kWh", initial_value: "0", persistent: true, initial_availability: true },
+      ],
+    }),
+  },
+  {
+    id: "weather_station",
+    name: "Weather Station",
+    description: "Temperature, humidity, and atmospheric pressure sensors",
+    create: (name) => ({
+      name: name || "Outdoor Station",
+      entities: [
+        { platform: "sensor", class: "temperature", unit_of_measurement: "°C", initial_value: "20", persistent: true, initial_availability: true },
+        { platform: "sensor", class: "humidity", unit_of_measurement: "%", initial_value: "50", persistent: true, initial_availability: true },
+        { platform: "sensor", class: "pressure", unit_of_measurement: "hPa", initial_value: "1013", persistent: true, initial_availability: true },
+      ],
+    }),
+  },
+];
+
+createApp({
+  setup() {
+    const devices = ref([]);
+    const showYamlSidebar = ref(true);
+    const showTemplateModal = ref(false);
+    const showManualYamlModal = ref(false);
+    const rawYamlInput = ref("");
+    const isSaving = ref(false);
+    const saveStatus = ref(null);
+    const saveMessage = ref("");
+
+    const callbackUrl = ref(window.__VIRTUAL_CALLBACK_URL || "");
+    const token = ref(window.__VIRTUAL_TOKEN || "");
+    const groupName = ref(window.__VIRTUAL_GROUP_NAME || "virtual.yaml");
+    const initialYaml = ref(window.__VIRTUAL_INITIAL_YAML || "");
+
+    const generatedYaml = computed(() => {
+      const output = {
+        version: 1,
+        devices: {},
+      };
+
+      for (const dev of devices.value) {
+        if (!dev.name || !dev.name.trim()) continue;
+        const deviceName = dev.name.trim();
+        output.devices[deviceName] = [];
+
+        for (const ent of dev.entities) {
+          const item = { platform: ent.platform };
+
+          if (ent.name && ent.name.trim()) item.name = ent.name.trim();
+          if (ent.class) item.class = ent.class;
+          if (ent.initial_value !== undefined && ent.initial_value !== "") {
+            item.initial_value = ent.initial_value;
+          }
+          if (ent.persistent !== undefined) item.persistent = ent.persistent;
+          if (ent.initial_availability !== undefined) {
+            item.initial_availability = ent.initial_availability;
+          }
+
+          // Platform specifics
+          if (ent.platform === "sensor" || ent.platform === "number") {
+            if (ent.unit_of_measurement) {
+              item.unit_of_measurement = ent.unit_of_measurement.replace(/Â°/g, "°");
+            }
+          }
+          if (ent.platform === "number") {
+            if (ent.min !== undefined && ent.min !== "") item.min = Number(ent.min);
+            if (ent.max !== undefined && ent.max !== "") item.max = Number(ent.max);
+          }
+          if (ent.platform === "cover" || ent.platform === "valve") {
+            if (ent.open_close_duration !== undefined) {
+              item.open_close_duration = Number(ent.open_close_duration);
+            }
+            if (ent.open_close_tick !== undefined) {
+              item.open_close_tick = Number(ent.open_close_tick);
+            }
+          }
+          if (ent.platform === "light") {
+            if (ent.support_brightness) item.support_brightness = true;
+            if (ent.initial_brightness !== undefined) item.initial_brightness = Number(ent.initial_brightness);
+            if (ent.support_color) item.support_color = true;
+            if (ent.support_color_temp) item.support_color_temp = true;
+            if (ent.support_white_value) item.support_white_value = true;
+            if (ent.support_effect) {
+              item.support_effect = true;
+              if (ent.initial_effect) item.initial_effect = ent.initial_effect;
+            }
+          }
+          if (ent.platform === "fan") {
+            if (ent.speed) item.speed = true;
+            if (ent.speed_count) item.speed_count = Number(ent.speed_count);
+            if (ent.direction) item.direction = true;
+            if (ent.oscillate) item.oscillate = true;
+          }
+          if (ent.platform === "lock") {
+            if (ent.locking_time) item.locking_time = Number(ent.locking_time);
+            if (ent.jamming_test) item.jamming_test = Number(ent.jamming_test);
+          }
+
+          output.devices[deviceName].push(item);
+        }
+      }
+
+      try {
+        return jsyaml.dump(output, { indent: 2, lineWidth: -1, noRefs: true });
+      } catch (err) {
+        return `# Error rendering YAML: ${err.message}`;
+      }
+    });
+
+    const addDevice = () => {
+      const num = devices.value.length + 1;
+      devices.value.push({
+        name: `Virtual Device ${num}`,
+        entities: [createDefaultEntity("binary_sensor")],
+      });
+    };
+
+    const removeDevice = (index) => {
+      devices.value.splice(index, 1);
+    };
+
+    const createDefaultEntity = (platform) => {
+      const base = {
+        platform,
+        name: "",
+        initial_value: platform === "light" || platform === "switch" || platform === "binary_sensor" ? "off" : "0",
+        persistent: true,
+        initial_availability: true,
+      };
+
+      if (platform === "cover" || platform === "valve") {
+        base.initial_value = "closed";
+        base.open_close_duration = 10;
+        base.open_close_tick = 1;
+      } else if (platform === "lock") {
+        base.initial_value = "locked";
+        base.locking_time = 0;
+        base.jamming_test = 0;
+      } else if (platform === "light") {
+        base.support_brightness = true;
+        base.initial_brightness = 255;
+      } else if (platform === "fan") {
+        base.speed_count = 3;
+      } else if (platform === "number") {
+        base.min = 0;
+        base.max = 100;
+        base.initial_value = 50;
+      } else if (platform === "device_tracker") {
+        base.initial_value = "home";
+      }
+
+      return base;
+    };
+
+    const addEntity = (device) => {
+      device.entities.push(createDefaultEntity("binary_sensor"));
+    };
+
+    const removeEntity = (device, index) => {
+      device.entities.splice(index, 1);
+    };
+
+    const onClassChange = (entity) => {
+      if (entity.class && DEVICE_CLASS_UNITS[entity.class]) {
+        entity.unit_of_measurement = DEVICE_CLASS_UNITS[entity.class];
+      }
+    };
+
+    const applyTemplate = (template) => {
+      const num = devices.value.length + 1;
+      const device = template.create(`${template.name} ${num}`);
+      devices.value.push(device);
+      showTemplateModal.value = false;
+    };
+
+    const loadFromYamlString = (yamlText) => {
+      try {
+        const parsed = jsyaml.load(yamlText);
+        if (!parsed || typeof parsed !== "object") return;
+
+        const devMap = parsed.devices || parsed;
+        const newDevices = [];
+
+        for (const [deviceName, entList] of Object.entries(devMap)) {
+          if (!Array.isArray(entList)) continue;
+          const entities = entList.map((item) => ({
+            platform: item.platform || "switch",
+            name: item.name || "",
+            class: item.class || "",
+            initial_value: item.initial_value !== undefined ? String(item.initial_value) : "",
+            persistent: item.persistent !== undefined ? item.persistent : true,
+            initial_availability: item.initial_availability !== undefined ? item.initial_availability : true,
+            unit_of_measurement: (item.unit_of_measurement || "").replace(/Â°/g, "°"),
+            min: item.min,
+            max: item.max,
+            open_close_duration: item.open_close_duration,
+            open_close_tick: item.open_close_tick,
+            support_brightness: item.support_brightness || false,
+            initial_brightness: item.initial_brightness || 255,
+            support_color: item.support_color || false,
+            support_color_temp: item.support_color_temp || false,
+            support_white_value: item.support_white_value || false,
+            support_effect: item.support_effect || false,
+            initial_effect: item.initial_effect || "",
+            speed: item.speed || false,
+            speed_count: item.speed_count || 0,
+            direction: item.direction || false,
+            oscillate: item.oscillate || false,
+            locking_time: item.locking_time || 0,
+            jamming_test: item.jamming_test || 0,
+          }));
+
+          newDevices.push({
+            name: deviceName,
+            entities,
+          });
+        }
+
+        if (newDevices.length > 0) {
+          devices.value = newDevices;
+        }
+      } catch (err) {
+        saveStatus.value = "error";
+        saveMessage.value = `Error parsing YAML: ${err.message}`;
+      }
+    };
+
+    const importManualYaml = () => {
+      if (rawYamlInput.value) {
+        loadFromYamlString(rawYamlInput.value);
+        showManualYamlModal.value = false;
+        rawYamlInput.value = "";
+      }
+    };
+
+    const copyYaml = () => {
+      navigator.clipboard.writeText(generatedYaml.value).then(() => {
+        saveStatus.value = "success";
+        saveMessage.value = "YAML copied to clipboard!";
+      }).catch((err) => {
+        saveStatus.value = "error";
+        saveMessage.value = `Failed to copy YAML: ${err}`;
+      });
+    };
+
+    const downloadYaml = () => {
+      const blob = new Blob([generatedYaml.value], { type: "text/yaml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = groupName.value.endsWith(".yaml") ? groupName.value : `${groupName.value}.yaml`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+
+    const saveAndReturn = async () => {
+      if (!callbackUrl.value) {
+        copyYaml();
+        return;
+      }
+
+      isSaving.value = true;
+      saveStatus.value = null;
+
+      try {
+        const response = await fetch("/api/save", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            callback_url: callbackUrl.value,
+            token: token.value,
+            yaml: generatedYaml.value,
+          }),
+        });
+
+        const result = await response.json();
+        if (response.ok && result.ok) {
+          saveStatus.value = "success";
+          saveMessage.value = "Saved successfully! Your Home Assistant configuration has reloaded. You can close this window.";
+        } else {
+          throw new Error(result.error || `Server responded with status ${response.status}`);
+        }
+      } catch (err) {
+        saveStatus.value = "error";
+        saveMessage.value = `Failed to send to Home Assistant: ${err.message}. You can download the YAML or copy to clipboard below.`;
+      } finally {
+        isSaving.value = false;
+      }
+    };
+
+    const closeTab = () => {
+      window.close();
+    };
+
+    onMounted(() => {
+      // Check for data in hash fragment (e.g. #data=...)
+      const hash = window.location.hash.substring(1);
+      const params = new URLSearchParams(hash);
+      const hashData = params.get("data");
+
+      if (hashData) {
+        try {
+          const decoded = decodeBase64Utf8(hashData);
+          loadFromYamlString(decoded);
+          return;
+        } catch (e) {
+          saveStatus.value = "error";
+          saveMessage.value = `Could not decode base64 data: ${e.message}`;
+        }
+      }
+
+      if (initialYaml.value) {
+        loadFromYamlString(initialYaml.value);
+      } else {
+        // Start with one sample device if completely empty
+        addDevice();
+      }
+    });
+
+    return {
+      devices,
+      showYamlSidebar,
+      showTemplateModal,
+      showManualYamlModal,
+      rawYamlInput,
+      isSaving,
+      saveStatus,
+      saveMessage,
+      callbackUrl,
+      groupName,
+      generatedYaml,
+      PLATFORMS,
+      DEVICE_CLASSES,
+      TEMPLATES,
+      addDevice,
+      removeDevice,
+      addEntity,
+      removeEntity,
+      onClassChange,
+      applyTemplate,
+      importManualYaml,
+      copyYaml,
+      downloadYaml,
+      saveAndReturn,
+      closeTab,
+    };
+  },
+}).mount("#app");

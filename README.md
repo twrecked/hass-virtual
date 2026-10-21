@@ -43,6 +43,7 @@ virtual:
   - [Adding More Entries](#adding-more-entries)
 - [Component Configuration](#component-configuration)
 - [Entity Configuration](#entity-configuration)
+  - [Visual Device Editor](#visual-device-editor)
   - [File Layout](#file-layout)
   - [Common Attributes](#common-attributes)
     - [Availability](#availability)
@@ -207,6 +208,40 @@ If this is a fresh install you will need to install a _virtual_ integration
 instance and tell it about your file. If you are upgrading from _0.8_ the system will
 create a single instance and copy all your current devices into a
 `/config/virtual.yaml`.
+
+## Visual Device Editor
+
+You can configure your virtual devices manually in YAML or visually using the **Virtual Device Editor**.
+
+The web-based visual editor is hosted at: **[https://virtual-dot-twrecked-tools.nn.r.appspot.com](https://virtual-dot-twrecked-tools.nn.r.appspot.com)**
+
+### 1. One-Click Sync from Home Assistant (Recommended)
+1. In Home Assistant, go to **Settings -> Devices & Services -> Virtual**.
+2. Click **Configure** on any virtual group.
+3. Click the **Open Virtual Device Editor** link to open your devices in the visual editor.
+4. Add, edit, or remove devices and entities using the visual interface.
+5. Click **Save & Return** in the editor. Your configuration file will be updated on disk and Home Assistant will automatically reload your virtual devices.
+6. Click **Submit** in Home Assistant to close the dialog.
+
+### 2. Manual Copy-Paste / Offline Fallback (No Webhooks Needed)
+If you don't have external access enabled or prefer not to use webhooks:
+1. Open the editor: [https://virtual-dot-twrecked-tools.nn.r.appspot.com](https://virtual-dot-twrecked-tools.nn.r.appspot.com).
+2. Click **Import YAML** and paste your current `virtual.yaml` content (or start fresh with **Templates**).
+3. Make your changes visually with live schema validation.
+4. Click **Copy** in the top bar to copy the generated YAML (or click **Download** to save the file).
+5. Open your `/config/virtual.yaml` file in Home Assistant (using File Editor, Studio Code Server, Samba, or SSH) and paste the updated content.
+6. In Home Assistant, go to **Developer Tools -> YAML -> Reload Virtual Components** (or click the three dots on the Virtual integration and select **Reload**).
+
+### 3. Running the Editor Locally / Offline
+If you wish to run the editor locally on your home network so no data touches the cloud:
+1. Navigate to the `virtual-device-editor` directory and start the local server:
+   ```bash
+   cd virtual-device-editor
+   pip install -r requirements.txt
+   python main.py
+   ```
+2. In Home Assistant, click **Configure** on your Virtual group and set **Editor URL** to `http://127.0.0.1:8080` (or your local IP `http://192.168.1.X:8080`).
+3. Click **Submit** to save your preference, and launch the editor locally.
 
 ## File Layout
 

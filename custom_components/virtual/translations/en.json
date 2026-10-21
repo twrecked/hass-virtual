@@ -16,6 +16,17 @@
       }
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Virtual Device Editor",
+        "description": "Click the link below to open the visual device editor for **{group_name}** in a new tab:\n\n[**Open Virtual Device Editor**]({builder_url})\n\nConfiguration file: `{file_name}`\n\nWhen done, click **Save & Return** in the editor, then click **Submit** below to close this dialog.",
+        "data": {
+          "editor_url": "Editor URL"
+        }
+      }
+    }
+  },
   "services": {
     "turn_on": {
       "name": "Turn On",

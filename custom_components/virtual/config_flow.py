@@ -1,16 +1,23 @@
 """Config flow for Virtual components."""
 from __future__ import annotations
 
+import base64
 import logging
+import os
 from typing import Any
+from urllib.parse import quote
 import voluptuous as vol
 
 from homeassistant import config_entries, exceptions
+from homeassistant.components import webhook
+from homeassistant.core import callback
 
 from .const import (
     ATTR_FILE_NAME,
     ATTR_GROUP_NAME,
     COMPONENT_DOMAIN,
+    CONF_EDITOR_URL,
+    DEFAULT_EDITOR_URL,
     IMPORTED_GROUP_NAME,
     default_config_file,
 )
@@ -23,6 +30,11 @@ class VirtualFlowHandler(config_entries.ConfigFlow, domain=COMPONENT_DOMAIN):
     """Virtual config flow."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: config_entries.ConfigEntry) -> config_entries.OptionsFlow:
+        return VirtualOptionsFlowHandler()
 
     async def validate_input(self, user_input: dict[str, Any]) -> dict[str, str]:
         for group, values in self.hass.data.get(COMPONENT_DOMAIN, {}).items():
@@ -85,3 +97,69 @@ class GroupNameAlreadyUsed(exceptions.HomeAssistantError):
 
 class FileNameAlreadyUsed(exceptions.HomeAssistantError):
     """ Error indicating file name already used. """
+
+
+class VirtualOptionsFlowHandler(config_entries.OptionsFlow):
+    """Handle options flow for Virtual integration."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.ConfigFlowResult:
+        entry = self.config_entry
+        editor_url = entry.options.get(CONF_EDITOR_URL, DEFAULT_EDITOR_URL)
+
+        if user_input is not None:
+            new_editor_url = user_input.get(CONF_EDITOR_URL, editor_url)
+            return self.async_create_entry(
+                title="",
+                data={CONF_EDITOR_URL: new_editor_url},
+            )
+
+        file_name = entry.data.get(ATTR_FILE_NAME, default_config_file(self.hass))
+        group_name = entry.data.get(ATTR_GROUP_NAME, "virtual")
+
+        yaml_content = ""
+        def _read() -> str:
+            if os.path.exists(file_name):
+                with open(file_name, "r", encoding="utf-8") as f:
+                    return f.read()
+            return ""
+
+        try:
+            yaml_content = await self.hass.async_add_executor_job(_read)
+        except Exception as err:
+            _LOGGER.debug("Could not read %s: %s", file_name, err)
+
+        webhook_id = f"virtual_{entry.entry_id}"
+        token = (
+            self.hass.data.get(COMPONENT_DOMAIN, {})
+            .get(entry.entry_id, {})
+            .get("webhook_token", "")
+        )
+
+        try:
+            webhook_url = webhook.async_generate_url(self.hass, webhook_id, allow_internal=True, allow_external=True)
+        except Exception:
+            webhook_url = f"/api/webhook/{webhook_id}"
+
+        cb_param = f"{webhook_url}?token={token}" if "?" not in webhook_url else f"{webhook_url}&token={token}"
+
+        encoded_yaml = base64.b64encode(yaml_content.encode("utf-8")).decode("ascii")
+        builder_url = (
+            f"{editor_url}/?cb={quote(cb_param, safe='')}"
+            f"&token={quote(token)}"
+            f"&name={quote(group_name)}"
+            f"#data={encoded_yaml}"
+        )
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema({
+                vol.Required(CONF_EDITOR_URL, default=editor_url): str,
+            }),
+            description_placeholders={
+                "builder_url": builder_url,
+                "group_name": group_name,
+                "file_name": file_name,
+            },
+        )

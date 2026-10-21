@@ -60,9 +60,11 @@ CONF_OPEN_CLOSE_DURATION = "open_close_duration"
 CONF_OPEN_CLOSE_TICK = "open_close_tick"
 CONF_PERSISTENT = "persistent"
 CONF_YAML_CONFIG = "yaml_config"
+CONF_EDITOR_URL = "editor_url"
 
 DEFAULT_AVAILABILITY = True
 DEFAULT_PERSISTENT = True
+DEFAULT_EDITOR_URL = "https://virtual-dot-twrecked-tools.nn.r.appspot.com"
 
 IMPORTED_GROUP_NAME = "imported"
 

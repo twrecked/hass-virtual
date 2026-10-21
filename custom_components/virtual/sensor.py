@@ -118,10 +118,12 @@ class VirtualSensor(VirtualEntity, SensorEntity):
 
         # Set unit of measurement
         unit = config.get(CONF_UNIT_OF_MEASUREMENT)
-        if unit in ("C", "c") and self._attr_device_class == SensorDeviceClass.TEMPERATURE:
+        if unit in ("C", "c", "Â°C", "Â°c") and self._attr_device_class == SensorDeviceClass.TEMPERATURE:
             unit = DEVICE_CLASS_UNITS["temperature"]
         elif not unit and self._attr_device_class:
             unit = DEVICE_CLASS_UNITS.get(str(self._attr_device_class))
+        elif unit and "Â°" in unit:
+            unit = unit.replace("Â°", "°")
 
         self._attr_native_unit_of_measurement = unit
 

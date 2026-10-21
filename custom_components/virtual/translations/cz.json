@@ -16,6 +16,17 @@
       }
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Editor Virtuálních Zařízení",
+        "description": "Kliknutím na odkaz níže otevřete vizuální editor pro **{group_name}** v nové záložce:\n\n[**Otevřít Editor Virtuálních Zařízení**]({builder_url})\n\nSoubor: `{file_name}`\n\nPo dokončení úprav klikněte v editoru na **Uložit a vrátit se**, a poté klikněte na **Odeslat** pro zavření tohoto dialogu.",
+        "data": {
+          "editor_url": "URL Editoru"
+        }
+      }
+    }
+  },
   "services": {
     "turn_on": {
       "name": "Zapnout",
