@@ -209,6 +209,51 @@ body {
   border-top-right-radius: var(--radius-md);
 }
 
+.device-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chevron-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+}
+.chevron-btn:hover {
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.08);
+}
+.chevron-btn svg {
+  transition: transform 0.2s ease;
+}
+.chevron-btn.is-collapsed svg {
+  transform: rotate(-90deg);
+}
+
+.device-count-pill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  background-color: rgba(148, 163, 184, 0.15);
+  color: var(--text-secondary);
+  border-radius: 9999px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.device-card.is-collapsed .device-header {
+  border-bottom: none;
+  border-bottom-left-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+}
+
 .device-title-input {
   background-color: transparent;
   border: 1px solid transparent;

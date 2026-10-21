@@ -327,8 +327,24 @@ createApp({
       const num = devices.value.length + 1;
       devices.value.push({
         name: `Virtual Device ${num}`,
+        collapsed: false,
         entities: [createDefaultEntity("binary_sensor")],
       });
+    };
+
+    const toggleCollapse = (device) => {
+      device.collapsed = !device.collapsed;
+    };
+
+    const allCollapsed = computed(() => {
+      return devices.value.length > 0 && devices.value.every((d) => d.collapsed);
+    });
+
+    const toggleAllCollapse = () => {
+      const targetState = !allCollapsed.value;
+      for (const dev of devices.value) {
+        dev.collapsed = targetState;
+      }
     };
 
     const removeDevice = (index) => {
@@ -385,6 +401,7 @@ createApp({
     const applyTemplate = (template) => {
       const num = devices.value.length + 1;
       const device = template.create(`${template.name} ${num}`);
+      device.collapsed = false;
       devices.value.push(device);
       showTemplateModal.value = false;
     };
@@ -428,6 +445,7 @@ createApp({
 
           newDevices.push({
             name: deviceName,
+            collapsed: false,
             entities,
           });
         }
@@ -554,6 +572,9 @@ createApp({
       TEMPLATES,
       addDevice,
       removeDevice,
+      toggleCollapse,
+      allCollapsed,
+      toggleAllCollapse,
       addEntity,
       removeEntity,
       onClassChange,

@@ -30,6 +30,19 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
           {{ showYamlSidebar ? 'Hide YAML' : 'Show YAML' }}
         </button>
+        <button v-if="devices.length > 0" class="btn btn-secondary" @click="toggleAllCollapse">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <g v-if="allCollapsed">
+              <polyline points="7 11 12 6 17 11"/>
+              <polyline points="7 18 12 13 17 18"/>
+            </g>
+            <g v-else>
+              <polyline points="7 6 12 11 17 6"/>
+              <polyline points="7 13 12 18 17 13"/>
+            </g>
+          </svg>
+          {{ allCollapsed ? 'Expand All' : 'Collapse All' }}
+        </button>
         <button class="btn btn-primary" @click="addDevice">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Add Device
@@ -66,16 +79,31 @@
           </div>
         </div>
 
-        <div v-for="(device, dIdx) in devices" :key="dIdx" class="device-card">
+        <div v-for="(device, dIdx) in devices" :key="dIdx" class="device-card" :class="{ 'is-collapsed': device.collapsed }">
           <!-- Device Header -->
           <div class="device-header">
-            <input 
-              v-model="device.name" 
-              class="device-title-input" 
-              placeholder="Device Name (e.g. Living Room Motion)"
-            />
+            <div class="device-header-left">
+              <button 
+                class="chevron-btn" 
+                :class="{ 'is-collapsed': device.collapsed }" 
+                @click="toggleCollapse(device)"
+                :title="device.collapsed ? 'Expand device' : 'Collapse device'"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <input 
+                v-model="device.name" 
+                class="device-title-input" 
+                placeholder="Device Name (e.g. Living Room Motion)"
+              />
+              <span v-if="device.collapsed" class="device-count-pill">
+                {{ device.entities.length }} {{ device.entities.length === 1 ? 'entity' : 'entities' }}
+              </span>
+            </div>
             <div style="display: flex; gap: 0.5rem; align-items: center;">
-              <button class="btn btn-sm btn-secondary" @click="addEntity(device)">
+              <button v-if="!device.collapsed" class="btn btn-sm btn-secondary" @click="addEntity(device)">
                 + Add Entity
               </button>
               <button class="btn btn-sm btn-danger-outline" @click="removeDevice(dIdx)">
@@ -85,7 +113,7 @@
           </div>
 
           <!-- Device Entities -->
-          <div class="device-body">
+          <div v-show="!device.collapsed" class="device-body">
             <div class="entities-list">
               <div v-for="(entity, eIdx) in device.entities" :key="eIdx" class="entity-card">
                 <div class="entity-header">
