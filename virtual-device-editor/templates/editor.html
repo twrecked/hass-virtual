@@ -256,10 +256,7 @@
       <aside v-show="showYamlSidebar" class="editor-sidebar">
         <div class="sidebar-header">
           <span style="font-weight: 700; font-size: 0.95rem;">Live YAML</span>
-          <div style="display: flex; gap: 0.5rem;">
-            <button class="btn btn-sm btn-secondary" @click="copyYaml">Copy</button>
-            <button class="btn btn-sm btn-secondary" @click="downloadYaml">Download</button>
-          </div>
+          <button class="btn btn-sm btn-secondary" @click="copyYaml">Copy</button>
         </div>
         <div class="sidebar-content">
           <textarea readonly class="yaml-viewer" :value="generatedYaml"></textarea>
