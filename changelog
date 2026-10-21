@@ -1,3 +1,15 @@
+0.10.0-alpha.1:
+  Fix lock entity hanging when locking_time is configured.
+  Fix AttributeError in lock async_open.
+  Ensure immediate state update and write across light, switch, fan, and number entities.
+  Modernize sensor and number platforms to inherit from SensorEntity and NumberEntity.
+  Avoid duplicating native entity properties into extra_state_attributes.
+  Harden state restoration against None/stale values across restarts.
+  Fix service registration dictionary lookup bug across multiple platforms.
+  Use Home Assistant Store and non-blocking I/O for device tracker state persistence.
+  Eliminate aiofiles dependency in favor of standard executor file handling.
+  Python 3.12 modernization: add future annotations, explicit imports, clean legacy code.
+  Update documentation and translations for numbers platform and services.
 0.9.5:
   Fix restore state and color mode on lights (#186).
 0.9.4:
