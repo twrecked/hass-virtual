@@ -26,7 +26,7 @@ _Virtual_ provides support for 10 distinct entity platforms:
 >
 > If you encounter issues, regressions, or unexpected behavior, please [open a GitHub issue](https://github.com/twrecked/hass-virtual/issues).
 >
-> Legacy `0.9.x` documentation is archived in [README_v9.md](README_v9.md), and `0.8.x` documentation is in [version-0.8.x](https://github.com/twrecked/hass-virtual/tree/version-0.8.x#readme).
+> Legacy `0.9.x` documentation is archived in [docs/README_v9.md](docs/README_v9.md), and `0.8.x` documentation is in [version-0.8.x](https://github.com/twrecked/hass-virtual/tree/version-0.8.x#readme).
 
 ---
 

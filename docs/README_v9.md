@@ -1,7 +1,7 @@
 # **Virtual devices for Home Assistant (v0.9.x Documentation Archive)**
 
 > **Note:** This document preserves the documentation for `hass-virtual` version `0.9.x`.
-> For the current documentation, see [README.md](README.md).
+> For the current documentation, see [README.md](../README.md).
 
 ---
 
