@@ -14,7 +14,6 @@ There are 2 pieces:
   layout.
 """
 
-import aiofiles
 import asyncio
 import copy
 import logging
@@ -61,57 +60,59 @@ def _fix_value(value):
     return value
 
 
-async def _async_load_json(file_name):
-    _LOGGER.debug("_async_load_yaml1 file_name for %s", file_name)
+def _read_file(file_name: str) -> str:
+    with open(file_name, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+def _write_file(file_name: str, content: str) -> None:
+    with open(file_name, "w", encoding="utf-8") as f:
+        f.write(content)
+
+
+async def _async_load_json(hass, file_name: str):
+    _LOGGER.debug("loading JSON %s", file_name)
     try:
-        async with aiofiles.open(file_name, 'r') as meta_file:
-            _LOGGER.debug("_async_load_yaml2 file_name for %s", file_name)
-            contents = await meta_file.read()
-            _LOGGER.debug("_async_load_yaml3 file_name for %s", file_name)
-            return json.loads(contents)
+        content = await hass.async_add_executor_job(_read_file, file_name)
+        return json.loads(content)
     except Exception as e:
-        _LOGGER.debug("_async_load_yaml3 file_name for %s", file_name)
+        _LOGGER.debug("Error loading JSON %s: %s", file_name, e)
         return {}
 
 
-async def _async_save_json(file_name, data):
-    _LOGGER.debug("_async_save_yaml1 file_name for %s", file_name)
+async def _async_save_json(hass, file_name: str, data):
+    _LOGGER.debug("saving JSON %s", file_name)
     try:
-        async with aiofiles.open(file_name, 'w') as meta_file:
-            data = json.dumps(data, indent=4)
-            await meta_file.write(data)
+        content = json.dumps(data, indent=4)
+        await hass.async_add_executor_job(_write_file, file_name, content)
     except Exception as e:
-        _LOGGER.debug("_async_load_yaml3 file_name for %s", file_name)
+        _LOGGER.debug("Error saving JSON %s: %s", file_name, e)
 
 
-async def _async_load_yaml(file_name):
-    _LOGGER.debug("_async_load_yaml1 file_name for %s", file_name)
+async def _async_load_yaml(hass, file_name: str):
+    _LOGGER.debug("loading YAML %s", file_name)
     try:
-        async with aiofiles.open(file_name, 'r') as meta_file:
-            _LOGGER.debug("_async_load_yaml2 file_name for %s", file_name)
-            contents = await meta_file.read()
-            _LOGGER.debug("_async_load_yaml3 file_name for %s", file_name)
-            return parse_yaml(contents)
+        content = await hass.async_add_executor_job(_read_file, file_name)
+        return parse_yaml(content)
     except Exception as e:
-        _LOGGER.debug("_async_load_yaml3 file_name for %s", file_name)
+        _LOGGER.debug("Error loading YAML %s: %s", file_name, e)
         return {}
 
 
-async def _async_save_yaml(file_name, data):
-    _LOGGER.debug("_async_save_yaml1 file_name for %s", file_name)
+async def _async_save_yaml(hass, file_name: str, data):
+    _LOGGER.debug("saving YAML %s", file_name)
     try:
-        async with aiofiles.open(file_name, 'w') as meta_file:
-            data = dump(data)
-            await meta_file.write(data)
+        content = dump(data)
+        await hass.async_add_executor_job(_write_file, file_name, content)
     except Exception as e:
-        _LOGGER.debug("_async_load_yaml3 file_name for %s", file_name)
+        _LOGGER.debug("Error saving YAML %s: %s", file_name, e)
 
 
 async def _load_meta_data(hass, group_name: str):
     """Read in meta data for a particular group.
     """
     async with _meta_lock:
-        data = await _async_load_json(default_meta_file(hass))
+        data = await _async_load_json(hass, default_meta_file(hass))
         return data.get(ATTR_DEVICES, {}).get(group_name, {})
 
 
@@ -121,7 +122,7 @@ async def _save_meta_data(hass, group_name, meta_data):
     async with _meta_lock:
 
         # Read in current meta data
-        devices = await _async_load_json(default_meta_file(hass))
+        devices = await _async_load_json(hass, default_meta_file(hass))
         devices = devices.get(ATTR_DEVICES, {})
 
         # Update (or add) the group piece.
@@ -132,7 +133,7 @@ async def _save_meta_data(hass, group_name, meta_data):
         _LOGGER.debug(f"meta after {devices}")
 
         # Write it back out.
-        await _async_save_json(default_meta_file(hass), {
+        await _async_save_json(hass, default_meta_file(hass), {
             ATTR_VERSION: 1,
             ATTR_DEVICES: devices
         })
@@ -144,30 +145,30 @@ async def _delete_meta_data(hass, group_name):
     async with _meta_lock:
 
         # Read in current meta data
-        devices = await _async_load_json(default_meta_file(hass))
+        devices = await _async_load_json(hass, default_meta_file(hass))
         devices = devices.get(ATTR_DEVICES, {})
 
         # Delete the group piece.
         _LOGGER.debug(f"meta before {devices}")
-        devices.pop(group_name)
+        devices.pop(group_name, None)
         _LOGGER.debug(f"meta after {devices}")
 
         # Write it back out.
-        await _async_save_json(default_meta_file(hass), {
+        await _async_save_json(hass, default_meta_file(hass), {
             ATTR_VERSION: 1,
             ATTR_DEVICES: devices
         })
 
 
-async def _save_user_data(file_name, devices):
-    await _async_save_yaml(file_name, {
+async def _save_user_data(hass, file_name, devices):
+    await _async_save_yaml(hass, file_name, {
         ATTR_VERSION: 1,
         ATTR_DEVICES: devices
     })
 
 
-async def _load_user_data(file_name):
-    entities = await _async_load_yaml(file_name)
+async def _load_user_data(hass, file_name):
+    entities = await _async_load_yaml(hass, file_name)
     # make devices: optional.
     return entities.get(ATTR_DEVICES, entities)
 
@@ -286,7 +287,7 @@ class BlendedCfg(object):
 
     async def async_load(self):
         meta_data = await _load_meta_data(self._hass, self._group_name)
-        devices = await _load_user_data(self._file_name)
+        devices = await _load_user_data(self._hass, self._file_name)
         changed = False
 
         _LOGGER.debug(f"loaded-meta-data={meta_data}")
@@ -459,7 +460,7 @@ class UpgradeCfg(object):
 
         _LOGGER.debug(f"devices-meta-data={devices_meta_data}")
 
-        await _save_user_data(default_config_file(hass), devices)
+        await _save_user_data(hass, default_config_file(hass), devices)
         await _save_meta_data(hass, IMPORTED_GROUP_NAME, devices_meta_data)
 
     @staticmethod
