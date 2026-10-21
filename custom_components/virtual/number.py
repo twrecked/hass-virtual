@@ -13,21 +13,7 @@ from homeassistant.components.number import (
     NumberEntity,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    CONF_UNIT_OF_MEASUREMENT,
-    LIGHT_LUX,
-    PERCENTAGE,
-    SIGNAL_STRENGTH_DECIBELS,
-    UnitOfApparentPower,
-    UnitOfElectricCurrent,
-    UnitOfElectricPotential,
-    UnitOfEnergy,
-    UnitOfFrequency,
-    UnitOfPower,
-    UnitOfPressure,
-    UnitOfReactivePower,
-    UnitOfVolume,
-)
+from homeassistant.const import CONF_UNIT_OF_MEASUREMENT
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -43,6 +29,7 @@ from .const import (
     CONF_MAX,
     CONF_MIN,
     CONF_YAML_CONFIG,
+    DEVICE_CLASS_UNITS,
 )
 from .entity import VirtualEntity, virtual_schema
 
@@ -66,36 +53,6 @@ NUMBER_SCHEMA = vol.Schema(virtual_schema(DEFAULT_NUMBER_VALUE, {
     vol.Optional(CONF_UNIT_OF_MEASUREMENT, default=""): cv.string,
 }))
 
-UNITS_OF_MEASUREMENT = {
-    NumberDeviceClass.APPARENT_POWER: UnitOfApparentPower.VOLT_AMPERE,  # apparent power (VA)
-    NumberDeviceClass.BATTERY: PERCENTAGE,  # % of battery that is left
-    NumberDeviceClass.CO: CONCENTRATION_PARTS_PER_MILLION,  # ppm of CO concentration
-    NumberDeviceClass.CO2: CONCENTRATION_PARTS_PER_MILLION,  # ppm of CO2 concentration
-    NumberDeviceClass.HUMIDITY: PERCENTAGE,  # % of humidity in the air
-    NumberDeviceClass.ILLUMINANCE: LIGHT_LUX,  # current light level (lx/lm)
-    NumberDeviceClass.NITROGEN_DIOXIDE: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of nitrogen dioxide
-    NumberDeviceClass.NITROGEN_MONOXIDE: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of nitrogen monoxide
-    NumberDeviceClass.NITROUS_OXIDE: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of nitrogen oxide
-    NumberDeviceClass.OZONE: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of ozone
-    NumberDeviceClass.PM1: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of PM1
-    NumberDeviceClass.PM10: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of PM10
-    NumberDeviceClass.PM25: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of PM2.5
-    NumberDeviceClass.SIGNAL_STRENGTH: SIGNAL_STRENGTH_DECIBELS,  # signal strength (dB/dBm)
-    NumberDeviceClass.SULPHUR_DIOXIDE: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of sulphur dioxide
-    NumberDeviceClass.TEMPERATURE: "C",  # temperature (C/F)
-    NumberDeviceClass.PRESSURE: UnitOfPressure.HPA,  # pressure (hPa/mbar)
-    NumberDeviceClass.POWER: UnitOfPower.KILO_WATT,  # power (W/kW)
-    NumberDeviceClass.CURRENT: UnitOfElectricCurrent.AMPERE,  # current (A)
-    NumberDeviceClass.ENERGY: UnitOfEnergy.KILO_WATT_HOUR,  # energy (Wh/kWh/MWh)
-    NumberDeviceClass.FREQUENCY: UnitOfFrequency.GIGAHERTZ,  # energy (Hz/kHz/MHz/GHz)
-    NumberDeviceClass.POWER_FACTOR: PERCENTAGE,  # power factor (no unit, min: -1.0, max: 1.0)
-    NumberDeviceClass.REACTIVE_POWER: UnitOfReactivePower.VOLT_AMPERE_REACTIVE,  # reactive power (var)
-    NumberDeviceClass.VOLATILE_ORGANIC_COMPOUNDS: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of vocs
-    NumberDeviceClass.VOLTAGE: UnitOfElectricPotential.VOLT,  # voltage (V)
-    NumberDeviceClass.GAS: UnitOfVolume.CUBIC_METERS,  # gas (m³)
-}
-
-
 async def async_setup_platform(
         hass: HomeAssistant,
         config: ConfigType,
@@ -105,8 +62,8 @@ async def async_setup_platform(
     if hass.data[COMPONENT_CONFIG].get(CONF_YAML_CONFIG, False):
         _LOGGER.debug("setting up old config...")
 
-        sensors = [VirtualNumber(config, True)]
-        async_add_entities(sensors, True)
+        numbers = [VirtualNumber(config, True)]
+        async_add_entities(numbers, True)
 
 
 async def async_setup_entry(
@@ -135,9 +92,13 @@ class VirtualNumber(VirtualEntity, NumberEntity):
         self._attr_native_max_value = float(config.get(CONF_MAX))
 
         # Set unit of measurement
-        self._attr_native_unit_of_measurement = config.get(CONF_UNIT_OF_MEASUREMENT)
-        if not self._attr_native_unit_of_measurement and self._attr_device_class in UNITS_OF_MEASUREMENT:
-            self._attr_native_unit_of_measurement = UNITS_OF_MEASUREMENT[self._attr_device_class]
+        unit = config.get(CONF_UNIT_OF_MEASUREMENT)
+        if unit in ("C", "c") and self._attr_device_class == NumberDeviceClass.TEMPERATURE:
+            unit = DEVICE_CLASS_UNITS["temperature"]
+        elif not unit and self._attr_device_class:
+            unit = DEVICE_CLASS_UNITS.get(str(self._attr_device_class))
+
+        self._attr_native_unit_of_measurement = unit
 
         _LOGGER.info(f"VirtualNumber: {self.name} created")
 

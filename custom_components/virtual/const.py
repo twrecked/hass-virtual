@@ -3,6 +3,32 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from homeassistant.const import (
+    ATTR_ENTITY_ID,
+    LIGHT_LUX,
+    PERCENTAGE,
+    SIGNAL_STRENGTH_DECIBELS,
+    UnitOfApparentPower,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfEnergy,
+    UnitOfFrequency,
+    UnitOfPower,
+    UnitOfPressure,
+    UnitOfReactivePower,
+    UnitOfTemperature,
+    UnitOfVolume,
+)
+try:
+    from homeassistant.const import UnitOfDensity, UnitOfRatio
+    MICROGRAMS_PER_CUBIC_METER = UnitOfDensity.MICROGRAMS_PER_CUBIC_METER
+    PARTS_PER_MILLION = UnitOfRatio.PARTS_PER_MILLION
+except ImportError:
+    from homeassistant.const import (
+        CONCENTRATION_MICROGRAMS_PER_CUBIC_METER as MICROGRAMS_PER_CUBIC_METER,
+        CONCENTRATION_PARTS_PER_MILLION as PARTS_PER_MILLION,
+    )
+
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
@@ -39,6 +65,39 @@ DEFAULT_AVAILABILITY = True
 DEFAULT_PERSISTENT = True
 
 IMPORTED_GROUP_NAME = "imported"
+
+DEVICE_CLASS_UNITS: dict[str, str] = {
+    "apparent_power": UnitOfApparentPower.VOLT_AMPERE,
+    "battery": PERCENTAGE,
+    "carbon_monoxide": PARTS_PER_MILLION,
+    "carbon_dioxide": PARTS_PER_MILLION,
+    "co": PARTS_PER_MILLION,
+    "co2": PARTS_PER_MILLION,
+    "humidity": PERCENTAGE,
+    "illuminance": LIGHT_LUX,
+    "nitrogen_dioxide": MICROGRAMS_PER_CUBIC_METER,
+    "nitrogen_monoxide": MICROGRAMS_PER_CUBIC_METER,
+    "nitrous_oxide": MICROGRAMS_PER_CUBIC_METER,
+    "ozone": MICROGRAMS_PER_CUBIC_METER,
+    "pm1": MICROGRAMS_PER_CUBIC_METER,
+    "pm10": MICROGRAMS_PER_CUBIC_METER,
+    "pm25": MICROGRAMS_PER_CUBIC_METER,
+    "signal_strength": SIGNAL_STRENGTH_DECIBELS,
+    "sulphur_dioxide": MICROGRAMS_PER_CUBIC_METER,
+    "temperature": UnitOfTemperature.CELSIUS,
+    "pressure": UnitOfPressure.HPA,
+    "power": UnitOfPower.KILO_WATT,
+    "current": UnitOfElectricCurrent.AMPERE,
+    "energy": UnitOfEnergy.KILO_WATT_HOUR,
+    "frequency": UnitOfFrequency.GIGAHERTZ,
+    "power_factor": PERCENTAGE,
+    "reactive_power": UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
+    "volatile_organic_compounds": MICROGRAMS_PER_CUBIC_METER,
+    "voltage": UnitOfElectricPotential.VOLT,
+    "gas": UnitOfVolume.CUBIC_METERS,
+}
+
+UNITS_OF_MEASUREMENT = DEVICE_CLASS_UNITS
 
 
 def default_config_file(hass: HomeAssistant) -> str:

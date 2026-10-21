@@ -17,20 +17,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     CONF_UNIT_OF_MEASUREMENT,
-    LIGHT_LUX,
-    PERCENTAGE,
-    SIGNAL_STRENGTH_DECIBELS,
     STATE_UNAVAILABLE,
     STATE_UNKNOWN,
-    UnitOfApparentPower,
-    UnitOfElectricCurrent,
-    UnitOfElectricPotential,
-    UnitOfEnergy,
-    UnitOfFrequency,
-    UnitOfPower,
-    UnitOfPressure,
-    UnitOfReactivePower,
-    UnitOfVolume,
 )
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
@@ -47,6 +35,7 @@ from .const import (
     CONF_CLASS,
     CONF_INITIAL_VALUE,
     CONF_YAML_CONFIG,
+    DEVICE_CLASS_UNITS,
 )
 from .entity import VirtualEntity, virtual_schema
 
@@ -72,39 +61,10 @@ SERVICE_SCHEMA = vol.Schema({
     vol.Required(ATTR_VALUE): cv.string,
 })
 
-UNITS_OF_MEASUREMENT = {
-    SensorDeviceClass.APPARENT_POWER: UnitOfApparentPower.VOLT_AMPERE,  # apparent power (VA)
-    SensorDeviceClass.BATTERY: PERCENTAGE,  # % of battery that is left
-    SensorDeviceClass.CO: CONCENTRATION_PARTS_PER_MILLION,  # ppm of CO concentration
-    SensorDeviceClass.CO2: CONCENTRATION_PARTS_PER_MILLION,  # ppm of CO2 concentration
-    SensorDeviceClass.HUMIDITY: PERCENTAGE,  # % of humidity in the air
-    SensorDeviceClass.ILLUMINANCE: LIGHT_LUX,  # current light level (lx/lm)
-    SensorDeviceClass.NITROGEN_DIOXIDE: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of nitrogen dioxide
-    SensorDeviceClass.NITROGEN_MONOXIDE: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of nitrogen monoxide
-    SensorDeviceClass.NITROUS_OXIDE: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of nitrogen oxide
-    SensorDeviceClass.OZONE: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of ozone
-    SensorDeviceClass.PM1: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of PM1
-    SensorDeviceClass.PM10: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of PM10
-    SensorDeviceClass.PM25: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of PM2.5
-    SensorDeviceClass.SIGNAL_STRENGTH: SIGNAL_STRENGTH_DECIBELS,  # signal strength (dB/dBm)
-    SensorDeviceClass.SULPHUR_DIOXIDE: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of sulphur dioxide
-    SensorDeviceClass.TEMPERATURE: "C",  # temperature (C/F)
-    SensorDeviceClass.PRESSURE: UnitOfPressure.HPA,  # pressure (hPa/mbar)
-    SensorDeviceClass.POWER: UnitOfPower.KILO_WATT,  # power (W/kW)
-    SensorDeviceClass.CURRENT: UnitOfElectricCurrent.AMPERE,  # current (A)
-    SensorDeviceClass.ENERGY: UnitOfEnergy.KILO_WATT_HOUR,  # energy (Wh/kWh/MWh)
-    SensorDeviceClass.FREQUENCY: UnitOfFrequency.GIGAHERTZ,  # energy (Hz/kHz/MHz/GHz)
-    SensorDeviceClass.POWER_FACTOR: PERCENTAGE,  # power factor (no unit, min: -1.0, max: 1.0)
-    SensorDeviceClass.REACTIVE_POWER: UnitOfReactivePower.VOLT_AMPERE_REACTIVE,  # reactive power (var)
-    SensorDeviceClass.VOLATILE_ORGANIC_COMPOUNDS: CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,  # µg/m³ of vocs
-    SensorDeviceClass.VOLTAGE: UnitOfElectricPotential.VOLT,  # voltage (V)
-    SensorDeviceClass.GAS: UnitOfVolume.CUBIC_METERS,  # gas (m³)
-}
-
 
 def setup_services(hass: HomeAssistant) -> None:
 
-    async def async_virtual_service(call):
+    async def async_virtual_service(call: ServiceCall) -> None:
         """Call virtual service handler."""
         _LOGGER.debug(f"{call.service} service called")
         await async_virtual_set_service(hass, call)
@@ -151,15 +111,19 @@ class VirtualSensor(VirtualEntity, SensorEntity):
     """An implementation of a Virtual Sensor."""
 
     def __init__(self, config, old_style: bool):
-        """Initialize an Virtual Sensor."""
+        """Initialize a Virtual Sensor."""
         super().__init__(config, PLATFORM_DOMAIN, old_style)
 
         self._attr_device_class = config.get(CONF_CLASS)
 
         # Set unit of measurement
-        self._attr_native_unit_of_measurement = config.get(CONF_UNIT_OF_MEASUREMENT)
-        if not self._attr_native_unit_of_measurement and self._attr_device_class in UNITS_OF_MEASUREMENT:
-            self._attr_native_unit_of_measurement = UNITS_OF_MEASUREMENT[self._attr_device_class]
+        unit = config.get(CONF_UNIT_OF_MEASUREMENT)
+        if unit in ("C", "c") and self._attr_device_class == SensorDeviceClass.TEMPERATURE:
+            unit = DEVICE_CLASS_UNITS["temperature"]
+        elif not unit and self._attr_device_class:
+            unit = DEVICE_CLASS_UNITS.get(str(self._attr_device_class))
+
+        self._attr_native_unit_of_measurement = unit
 
         _LOGGER.info(f"VirtualSensor: {self.name} created")
 

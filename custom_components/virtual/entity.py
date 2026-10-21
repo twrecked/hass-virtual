@@ -24,7 +24,6 @@ from homeassistant.util import slugify
 from .const import (
     ATTR_AVAILABLE,
     ATTR_DEVICE_ID,
-    ATTR_ENTITY_ID,
     ATTR_PERSISTENT,
     ATTR_UNIQUE_ID,
     COMPONENT_DOMAIN,

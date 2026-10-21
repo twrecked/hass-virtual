@@ -212,9 +212,11 @@ class VirtualDeviceTracker(VirtualEntity, TrackerEntity):
             self._coords = {}
 
     @property
-    def location_name(self) -> str | None:
-        """Return a location name for the current location of the device."""
-        return self._location
+    def state(self) -> str | None:
+        """Return the device state."""
+        if self._location is not None:
+            return self._location
+        return super().state
 
     @property
     def source_type(self) -> SourceType | str:
