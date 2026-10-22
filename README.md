@@ -4,16 +4,20 @@ _Virtual_ is a custom integration for [Home Assistant](https://www.home-assistan
 
 ![icon](images/virtual-icon.png)
 
-_Virtual_ provides support for 10 distinct entity platforms:
+_Virtual_ provides support for 14 distinct entity platforms:
+- **Alarm Control Panels**: Virtual security panels with arming/trigger delays and PIN codes.
 - **Binary Sensors**: Motion, presence, door, window, smoke, and moisture sensors.
+- **Buttons**: Stateless push-buttons to trigger automations and actions.
 - **Covers**: Timed position-based blinds, garage doors, shutters, and shades.
 - **Device Trackers**: GPS coordinates and named location zones.
 - **Fans**: Multi-speed, oscillating, and reversible fans.
 - **Lights**: Dimmable, RGB color (HS), color temperature, and animated effects.
 - **Locks**: Lockable doors with optional locking duration and jamming tests.
 - **Numbers**: Configurable sliders and numeric inputs with custom ranges and units.
+- **Selects**: Dropdown selectors for modes, states, and presets.
 - **Sensors**: Environmental (temperature, humidity, pressure), power, energy, and battery monitors.
 - **Switches**: Simple on/off switches and power outlets.
+- **Texts**: Configurable text input fields with string length and regex pattern constraints.
 - **Valves**: Timed water and gas valves with position reporting.
 
 ---
@@ -46,10 +50,14 @@ _Virtual_ provides support for 10 distinct entity platforms:
 - [Entity Configuration & File Layout](#entity-configuration--file-layout)
   - [File Structure](#file-structure)
   - [Common Attributes](#common-attributes)
+  - [Alarm Control Panels](#alarm-control-panels)
   - [Switches](#switches)
   - [Binary Sensors](#binary-sensors)
+  - [Buttons](#buttons)
   - [Sensors](#sensors)
   - [Numbers](#numbers)
+  - [Selects](#selects)
+  - [Texts](#texts)
   - [Lights](#lights)
   - [Locks](#locks)
   - [Fans](#fans)
@@ -223,6 +231,28 @@ All entity types support the following common configuration options:
 
 ---
 
+### Alarm Control Panels
+
+Simulates virtual alarm systems with customizable PIN codes and exit/entry delays.
+
+```yaml
+House Alarm:
+  - platform: alarm_control_panel
+    initial_value: disarmed
+    code: "1234"
+    code_arm_required: false
+    arming_time: 10
+    trigger_time: 10
+```
+
+* `code`: Optional PIN code (e.g. `"1234"`). When defined, entering the code is required to disarm.
+* `code_arm_required`: Default `false`. If `true`, entering the code is also required to arm.
+* `arming_time`: Optional exit delay in seconds (transitions through `arming` before becoming armed).
+* `trigger_time`: Optional entry delay in seconds (transitions through `pending` before becoming `triggered`).
+* *Controllable via native `alarm_control_panel.alarm_arm_home`, `alarm_control_panel.alarm_arm_away`, `alarm_control_panel.alarm_arm_night`, `alarm_control_panel.alarm_arm_vacation`, `alarm_control_panel.alarm_disarm`, and `alarm_control_panel.alarm_trigger` services.*
+
+---
+
 ### Switches
 
 Simulates standard power switches or outlets.
@@ -248,6 +278,20 @@ Front Door:
 ```
 
 *Controllable via the `virtual.turn_on`, `virtual.turn_off`, and `virtual.toggle` services.*
+
+---
+
+### Buttons
+
+Simulates push-button trigger entities (supporting device classes `identify`, `restart`, `update`). When pressed, fires the `virtual_button_pressed` event on the Home Assistant event bus for automations.
+
+```yaml
+System Controls:
+  - platform: button
+    class: restart
+```
+
+*Controllable via the native `button.press` service.*
 
 ---
 
@@ -282,6 +326,38 @@ Target Temperature:
 ```
 
 *Controllable via the native `number.set_value` service.*
+
+---
+
+### Selects
+
+Simulates multi-option dropdown selectors. Ideal for home modes, states, and automation presets.
+
+```yaml
+House Mode:
+  - platform: select
+    options: ["Home", "Away", "Night", "Vacation"]
+    initial_value: "Home"
+```
+
+*Controllable via the native `select.select_option`, `select.select_first`, `select.select_last`, and `select.select_next` services.*
+
+---
+
+### Texts
+
+Simulates text input fields with optional min/max lengths, regex validation patterns, and display mode (`text` or `password`).
+
+```yaml
+Announcement:
+  - platform: text
+    initial_value: "Welcome guests!"
+    min: 0
+    max: 255
+    mode: text
+```
+
+*Controllable via the native `text.set_value` service.*
 
 ---
 

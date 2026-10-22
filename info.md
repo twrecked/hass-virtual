@@ -4,15 +4,19 @@ Virtual components for testing Home Assistant systems.
 
 ## Features
 It provides:
+* Virtual alarm control panels
 * Virtual binary sensors
+* Virtual buttons
 * Virtual covers
 * Virtual device trackers
 * Virtual fans
 * Virtual lights
 * Virtual locks
 * Virtual numbers
+* Virtual selects
 * Virtual sensors
 * Virtual switches
+* Virtual texts
 * Virtual valves
 
 

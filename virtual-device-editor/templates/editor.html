@@ -147,10 +147,57 @@
                   </div>
 
                   <!-- Initial Value -->
-                  <div class="form-group">
+                  <div v-if="entity.platform !== 'button'" class="form-group">
                     <label>Initial Value</label>
                     <input v-model="entity.initial_value" class="form-control" placeholder="e.g. on, off, 0" />
                   </div>
+
+                  <!-- Select Options -->
+                  <template v-if="entity.platform === 'select'">
+                    <div class="form-group" style="grid-column: span 2;">
+                      <label>Options (comma-separated)</label>
+                      <input v-model="entity.options_str" class="form-control" placeholder="e.g. Home, Away, Night, Vacation" />
+                    </div>
+                  </template>
+
+                  <!-- Text Settings -->
+                  <template v-if="entity.platform === 'text'">
+                    <div class="form-group">
+                      <label>Mode</label>
+                      <select v-model="entity.mode" class="form-control">
+                        <option value="text">text</option>
+                        <option value="password">password</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>Min Length</label>
+                      <input v-model="entity.min" type="number" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                      <label>Max Length</label>
+                      <input v-model="entity.max" type="number" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                      <label>Pattern (Regex)</label>
+                      <input v-model="entity.pattern" class="form-control" placeholder="e.g. ^[A-Z0-9]+$" />
+                    </div>
+                  </template>
+
+                  <!-- Alarm Control Panel Settings -->
+                  <template v-if="entity.platform === 'alarm_control_panel'">
+                    <div class="form-group">
+                      <label>PIN Code (Optional)</label>
+                      <input v-model="entity.code" class="form-control" placeholder="e.g. 1234" />
+                    </div>
+                    <div class="form-group">
+                      <label>Arming Exit Delay (sec)</label>
+                      <input v-model="entity.arming_time" type="number" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                      <label>Trigger Entry Delay (sec)</label>
+                      <input v-model="entity.trigger_time" type="number" class="form-control" />
+                    </div>
+                  </template>
 
                   <!-- Unit of Measurement (Sensor/Number) -->
                   <div v-if="entity.platform === 'sensor' || entity.platform === 'number'" class="form-group">
@@ -232,6 +279,14 @@
                   <label class="checkbox-group">
                     <input type="checkbox" v-model="entity.oscillate" />
                     <span>Oscillate</span>
+                  </label>
+                </div>
+
+                <!-- Alarm Control Panel Toggles -->
+                <div v-if="entity.platform === 'alarm_control_panel' && entity.code" style="margin-top: 0.75rem;">
+                  <label class="checkbox-group">
+                    <input type="checkbox" v-model="entity.code_arm_required" />
+                    <span>PIN Code required to Arm</span>
                   </label>
                 </div>
 

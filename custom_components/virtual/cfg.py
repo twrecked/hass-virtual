@@ -271,17 +271,10 @@ def _make_unique_id():
 
 
 def _make_suffix(platform, device_class):
-    """Make a suitable suffix for an unnamed entity.
-    
-    Binary sensors, covers and sensors have a class so we append that,
-    everything else gets left as-is.
-    """
-    if platform in [Platform.BINARY_SENSOR, Platform.COVER, Platform.SENSOR]:
-        if device_class is None:
-            return platform
-        else:
-            return f"{device_class}"
-    return ""
+    """Make a suitable suffix for an unnamed entity."""
+    if device_class is not None:
+        return f"{device_class}"
+    return f"{platform}"
 
 
 class BlendedCfg:

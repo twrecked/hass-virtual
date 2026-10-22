@@ -45,7 +45,7 @@ from .const import (
 from .cfg import BlendedCfg, UpgradeCfg
 
 
-__version__ = '0.10.0-alpha.1'
+__version__ = '0.10.0-alpha.2'
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -64,16 +64,20 @@ SERVICE_SCHEMA = vol.Schema({
 })
 
 VIRTUAL_PLATFORMS = [
+    Platform.ALARM_CONTROL_PANEL,
     Platform.BINARY_SENSOR,
+    Platform.BUTTON,
     Platform.COVER,
     Platform.DEVICE_TRACKER,
     Platform.FAN,
     Platform.LIGHT,
     Platform.LOCK,
     Platform.NUMBER,
+    Platform.SELECT,
     Platform.SENSOR,
     Platform.SWITCH,
-    Platform.VALVE
+    Platform.TEXT,
+    Platform.VALVE,
 ]
 
 

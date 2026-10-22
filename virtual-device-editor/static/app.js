@@ -45,15 +45,19 @@ const DEVICE_CLASS_UNITS = {
 };
 
 const PLATFORMS = [
+  "alarm_control_panel",
   "binary_sensor",
+  "button",
   "cover",
   "device_tracker",
   "fan",
   "light",
   "lock",
   "number",
+  "select",
   "sensor",
   "switch",
+  "text",
   "valve",
 ];
 
@@ -64,6 +68,7 @@ const DEVICE_CLASSES = {
     "moving", "occupancy", "opening", "plug", "power", "presence", "problem",
     "running", "safety", "smoke", "sound", "tamper", "update", "vibration", "window",
   ],
+  button: ["", "identify", "restart", "update"],
   sensor: [
     "", "apparent_power", "battery", "carbon_dioxide", "carbon_monoxide", "current",
     "energy", "frequency", "gas", "humidity", "illuminance", "moisture",
@@ -230,6 +235,78 @@ const TEMPLATES = [
       ],
     }),
   },
+  {
+    id: "alarm_system",
+    name: "Security Alarm Panel",
+    description: "Alarm control panel with PIN code and entry/exit delays",
+    create: (name) => ({
+      name: name || "Home Security",
+      entities: [
+        {
+          platform: "alarm_control_panel",
+          initial_value: "disarmed",
+          code: "1234",
+          code_arm_required: false,
+          arming_time: 10,
+          trigger_time: 10,
+          persistent: true,
+          initial_availability: true,
+        },
+      ],
+    }),
+  },
+  {
+    id: "mode_selector",
+    name: "Mode Selector",
+    description: "Multi-option dropdown selector (e.g. House Mode)",
+    create: (name) => ({
+      name: name || "House Mode",
+      entities: [
+        {
+          platform: "select",
+          options_str: "Home, Away, Night, Vacation",
+          initial_value: "Home",
+          persistent: true,
+          initial_availability: true,
+        },
+      ],
+    }),
+  },
+  {
+    id: "action_button",
+    name: "Action Button",
+    description: "Virtual push button to trigger automations",
+    create: (name) => ({
+      name: name || "Trigger Action",
+      entities: [
+        {
+          platform: "button",
+          class: "restart",
+          persistent: false,
+          initial_availability: true,
+        },
+      ],
+    }),
+  },
+  {
+    id: "custom_text",
+    name: "Text Input",
+    description: "Configurable text input field",
+    create: (name) => ({
+      name: name || "Announcement Text",
+      entities: [
+        {
+          platform: "text",
+          initial_value: "Welcome",
+          min: 0,
+          max: 255,
+          mode: "text",
+          persistent: true,
+          initial_availability: true,
+        },
+      ],
+    }),
+  },
 ];
 
 createApp({
@@ -311,6 +388,22 @@ createApp({
             if (ent.locking_time) item.locking_time = Number(ent.locking_time);
             if (ent.jamming_test) item.jamming_test = Number(ent.jamming_test);
           }
+          if (ent.platform === "select") {
+            const rawOpts = ent.options_str ? ent.options_str.split(",").map((s) => s.trim()).filter((s) => s) : (ent.options || []);
+            item.options = rawOpts;
+          }
+          if (ent.platform === "text") {
+            if (ent.min !== undefined && ent.min !== "") item.min = Number(ent.min);
+            if (ent.max !== undefined && ent.max !== "") item.max = Number(ent.max);
+            if (ent.mode) item.mode = ent.mode;
+            if (ent.pattern) item.pattern = ent.pattern;
+          }
+          if (ent.platform === "alarm_control_panel") {
+            if (ent.code) item.code = String(ent.code);
+            if (ent.code_arm_required) item.code_arm_required = true;
+            if (ent.arming_time) item.arming_time = Number(ent.arming_time);
+            if (ent.trigger_time) item.trigger_time = Number(ent.trigger_time);
+          }
 
           output.devices[deviceName].push(item);
         }
@@ -379,6 +472,23 @@ createApp({
         base.initial_value = 50;
       } else if (platform === "device_tracker") {
         base.initial_value = "home";
+      } else if (platform === "button") {
+        base.initial_value = "";
+        base.persistent = false;
+      } else if (platform === "select") {
+        base.options_str = "Home, Away, Night, Vacation";
+        base.initial_value = "Home";
+      } else if (platform === "text") {
+        base.initial_value = "";
+        base.min = 0;
+        base.max = 255;
+        base.mode = "text";
+      } else if (platform === "alarm_control_panel") {
+        base.initial_value = "disarmed";
+        base.code = "1234";
+        base.code_arm_required = false;
+        base.arming_time = 0;
+        base.trigger_time = 0;
       }
 
       return base;
@@ -441,6 +551,14 @@ createApp({
             oscillate: item.oscillate || false,
             locking_time: item.locking_time || 0,
             jamming_test: item.jamming_test || 0,
+            options: item.options || [],
+            options_str: Array.isArray(item.options) ? item.options.join(", ") : (item.options || ""),
+            mode: item.mode || "text",
+            pattern: item.pattern || "",
+            code: item.code || "",
+            code_arm_required: item.code_arm_required || false,
+            arming_time: item.arming_time || 0,
+            trigger_time: item.trigger_time || 0,
           }));
 
           newDevices.push({
