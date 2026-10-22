@@ -37,11 +37,10 @@ class VirtualFlowHandler(config_entries.ConfigFlow, domain=COMPONENT_DOMAIN):
         return VirtualOptionsFlowHandler()
 
     async def validate_input(self, user_input: dict[str, Any]) -> dict[str, str]:
-        for group, values in self.hass.data.get(COMPONENT_DOMAIN, {}).items():
-            _LOGGER.debug(f"checking {group}")
-            if group == user_input[ATTR_GROUP_NAME]:
+        for entry in self.hass.config_entries.async_entries(COMPONENT_DOMAIN):
+            if entry.data.get(ATTR_GROUP_NAME) == user_input.get(ATTR_GROUP_NAME):
                 raise GroupNameAlreadyUsed
-            if values[ATTR_FILE_NAME] == user_input[ATTR_FILE_NAME]:
+            if entry.data.get(ATTR_FILE_NAME) == user_input.get(ATTR_FILE_NAME):
                 raise FileNameAlreadyUsed
         return {
             "title": f"{user_input[ATTR_GROUP_NAME]} - {COMPONENT_DOMAIN}"
@@ -132,7 +131,7 @@ class VirtualOptionsFlowHandler(config_entries.OptionsFlow):
 
         webhook_id = f"virtual_{entry.entry_id}"
         token = (
-            self.hass.data.get(COMPONENT_DOMAIN, {})
+            self.hass.data.get(f"{COMPONENT_DOMAIN}_webhooks", {})
             .get(entry.entry_id, {})
             .get("webhook_token", "")
         )

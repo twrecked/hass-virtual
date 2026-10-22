@@ -13,6 +13,7 @@ It provides:
 * Virtual fans
 * Virtual lights
 * Virtual locks
+* Virtual media players
 * Virtual numbers
 * Virtual selects
 * Virtual sensors

@@ -1,0 +1,65 @@
+version: 1
+devices:
+  Test Umbrella:
+    # 1. Virtual Thermostat / Climate
+    - platform: climate
+      name: Umbrella Thermostat
+      initial_value: heat
+      initial_temperature: 21
+      initial_current_temperature: 19.5
+      min_temp: 10
+      max_temp: 32
+      target_temperature_step: 0.5
+      hvac_modes:
+        - 'off'
+        - heat
+        - cool
+        - auto
+      preset_modes:
+        - none
+        - eco
+        - comfort
+        - away
+
+    # 2. Virtual Alarm Control Panel
+    - platform: alarm_control_panel
+      name: Umbrella Security
+      initial_value: disarmed
+      code: "1234"
+      code_arm_required: false
+      arming_time: 10
+      trigger_time: 10
+
+    # 3. Virtual Button
+    - platform: button
+      name: Umbrella Action
+      class: restart
+
+    # 4. Virtual Select Dropdown
+    - platform: select
+      name: Umbrella Mode
+      options:
+        - Home
+        - Away
+        - Night
+        - Vacation
+      initial_value: Home
+
+    # 5. Virtual Text Input
+    - platform: text
+      name: Umbrella Message
+      initial_value: "Testing Tier 1 and Tier 2 devices"
+      min: 0
+      max: 255
+      mode: text
+
+    # 6. Virtual Media Player
+    - platform: media_player
+      name: Umbrella Speaker
+      class: speaker
+      initial_value: idle
+      initial_volume: 0.5
+      source_list:
+        - Radio
+        - Spotify
+        - AirPlay

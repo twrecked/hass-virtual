@@ -1,4 +1,4 @@
-# 🚀 Virtual v0.10.0-alpha.2 — Climate, Alarm Panel, Button, Select, and Text Platform Expansion
+# 🚀 Virtual v0.10.0-alpha.2 — Media Player, Climate, Alarm Panel, Button, Select, and Text Platform Expansion
 
 > ### ⚠️ Alpha Release & Community Testing Notice
 > **Virtual v0.10 is an active alpha pre-release.**
@@ -11,29 +11,32 @@
 
 ## 🌟 What's New in v0.10.0-alpha.2
 
-### 1. Five New Virtual Platforms
-Expanded the virtual device platform lineup from 10 to **15 supported platforms**:
+### 1. Six New Virtual Platforms
+Expanded the virtual device platform lineup from 10 to **16 supported platforms**:
 
-1. **`climate` (`ClimateEntity`)**:
+1. **`media_player` (`MediaPlayerEntity`)**:
+   - Virtual TVs, speakers, and receivers for testing dashboard media cards, automations, and silent TTS / announcement playback.
+   - Supports play/pause/stop, volume slider (0.0–1.0), mute toggle, input source selection, sound mode selection, and `play_media`.
+2. **`climate` (`ClimateEntity`)**:
    - Virtual thermostat and HVAC units supporting target setpoints, presets, and fan modes.
    - Dynamic `hvac_action` calculation (`heating`, `cooling`, `idle`, `off`) automatically computed from ambient temperature vs. setpoint.
    - Controllable via native `climate.set_temperature`, `climate.set_hvac_mode`, `climate.set_preset_mode`, `climate.set_fan_mode`.
    - Custom `virtual.set_current_temperature` service for simulating ambient room temperature drops/rises in automations.
-2. **`alarm_control_panel` (`AlarmControlPanelEntity`)**:
+3. **`alarm_control_panel` (`AlarmControlPanelEntity`)**:
    - Virtual security alarm panel with configurable PIN codes (`code`), arming exit delays (`arming_time`), and trigger entry delays (`trigger_time`).
    - Supports states: `disarmed`, `armed_home`, `armed_away`, `armed_night`, `armed_vacation`, `arming`, `pending`, and `triggered`.
    - Controllable via native services: `alarm_arm_home`, `alarm_arm_away`, `alarm_arm_night`, `alarm_arm_vacation`, `alarm_disarm`, and `alarm_trigger`.
-3. **`button` (`ButtonEntity`)**:
+4. **`button` (`ButtonEntity`)**:
    - Push-button entities to trigger automations and actions.
    - Supports standard device classes (`identify`, `restart`, `update`).
    - Fires a `virtual_button_pressed` event on the Home Assistant event bus with `entity_id` and `name` when pressed.
    - Controllable via the native `button.press` service.
-4. **`select` (`SelectEntity`)**:
+5. **`select` (`SelectEntity`)**:
    - Multi-option dropdown selectors.
    - Configure custom option lists (`options: ["Home", "Away", "Night", "Vacation"]`).
    - Remembers current option across restarts with `persistent: true`.
    - Controllable via the native `select.select_option`, `select.select_first`, `select.select_last`, and `select.select_next` services.
-5. **`text` (`TextEntity`)**:
+6. **`text` (`TextEntity`)**:
    - Text input entities with customizable string constraints.
    - Supports `min` and `max` character limits.
    - Supports input display modes (`text` or `password`).
@@ -41,8 +44,10 @@ Expanded the virtual device platform lineup from 10 to **15 supported platforms*
    - Controllable via the native `text.set_value` service.
 
 ### 2. Virtual Device Editor Updates
-- Added `climate`, `alarm_control_panel`, `button`, `select`, and `text` platform support to the Visual Device Editor.
+- Added `media_player`, `climate`, `alarm_control_panel`, `button`, `select`, and `text` platform support to the Visual Device Editor.
 - Added new preset templates:
+  - **Smart Television**: Virtual TV with volume controls and selectable HDMI/App sources.
+  - **Media Speaker**: Virtual speaker for audio and silent TTS testing.
   - **Smart Thermostat**: Climate entity with target & ambient temps, heat/cool/auto modes, and presets.
   - **Security Alarm Panel**: Alarm panel with PIN code `1234` and 10s entry/exit delays.
   - **Mode Selector**: Preset dropdown with *Home, Away, Night, Vacation*.

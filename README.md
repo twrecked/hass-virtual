@@ -4,7 +4,7 @@ _Virtual_ is a custom integration for [Home Assistant](https://www.home-assistan
 
 ![icon](images/virtual-icon.png)
 
-_Virtual_ provides support for 15 distinct entity platforms:
+_Virtual_ provides support for 16 distinct entity platforms:
 - **Alarm Control Panels**: Virtual security panels with arming/trigger delays and PIN codes.
 - **Binary Sensors**: Motion, presence, door, window, smoke, and moisture sensors.
 - **Buttons**: Stateless push-buttons to trigger automations and actions.
@@ -14,6 +14,7 @@ _Virtual_ provides support for 15 distinct entity platforms:
 - **Fans**: Multi-speed, oscillating, and reversible fans.
 - **Lights**: Dimmable, RGB color (HS), color temperature, and animated effects.
 - **Locks**: Lockable doors with optional locking duration and jamming tests.
+- **Media Players**: Virtual TVs, speakers, and receivers for silent TTS announcement and automation testing.
 - **Numbers**: Configurable sliders and numeric inputs with custom ranges and units.
 - **Selects**: Dropdown selectors for modes, states, and presets.
 - **Sensors**: Environmental (temperature, humidity, pressure), power, energy, and battery monitors.
@@ -62,6 +63,7 @@ _Virtual_ provides support for 15 distinct entity platforms:
   - [Texts](#texts)
   - [Lights](#lights)
   - [Locks](#locks)
+  - [Media Players](#media-players)
   - [Fans](#fans)
   - [Covers](#covers)
   - [Valves](#valves)
@@ -435,6 +437,37 @@ Front Door Lock:
 * `locking_time`: Optional duration in seconds for the locking/unlocking transition phase.
 * `jamming_test`: Positive integer; triggers a random jamming failure approximately 1 out of every X attempts.
 * *Controllable via native `lock.lock`, `lock.unlock`, and `lock.open` services.*
+
+---
+
+### Media Players
+
+Simulates TVs, speakers, and media players. Ideal for testing automations, volume sync, and silent TTS / announcement testing without sounding real speakers.
+
+```yaml
+Living Room TV:
+  - platform: media_player
+    class: tv
+    initial_value: idle
+    initial_volume: 0.4
+    source_list:
+      - TV
+      - HDMI 1
+      - HDMI 2
+      - Netflix
+      - YouTube
+    sound_mode_list:
+      - Standard
+      - Cinema
+      - Night
+```
+
+* `class`: Optional device class (`tv`, `speaker`, `receiver`).
+* `initial_value`: Initial state (`off`, `on`, `idle`, `playing`, `paused`).
+* `initial_volume`: Volume slider level from `0.0` to `1.0`.
+* `source_list`: Optional list of selectable input sources.
+* `sound_mode_list`: Optional list of selectable sound modes.
+* *Controllable via native `media_player.turn_on`, `media_player.turn_off`, `media_player.media_play`, `media_player.media_pause`, `media_player.media_stop`, `media_player.volume_set`, `media_player.volume_mute`, `media_player.select_source`, `media_player.select_sound_mode`, and `media_player.play_media` services.*
 
 ---
 

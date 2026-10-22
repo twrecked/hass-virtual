@@ -280,6 +280,22 @@
                       <input v-model="entity.preset_modes_str" class="form-control" placeholder="none, eco, comfort, away" />
                     </div>
                   </template>
+
+                  <!-- Media Player Settings -->
+                  <template v-if="entity.platform === 'media_player'">
+                    <div class="form-group">
+                      <label>Initial Volume (0.0 - 1.0)</label>
+                      <input v-model="entity.initial_volume" type="number" step="0.05" min="0" max="1" class="form-control" />
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                      <label>Input Sources (comma-separated)</label>
+                      <input v-model="entity.source_list_str" class="form-control" placeholder="e.g. TV, HDMI 1, HDMI 2, Netflix, Spotify" />
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                      <label>Sound Modes (comma-separated, optional)</label>
+                      <input v-model="entity.sound_mode_list_str" class="form-control" placeholder="e.g. Standard, Cinema, Night" />
+                    </div>
+                  </template>
                 </div>
 
                 <!-- Light Feature Toggles -->

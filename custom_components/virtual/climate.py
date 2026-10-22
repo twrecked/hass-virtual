@@ -76,13 +76,31 @@ HVAC_MODE_MAP = {
     "fan_only": HVACMode.FAN_ONLY,
 }
 
+CONF_MIN_TEMP = "min_temp"
+CONF_MAX_TEMP = "max_temp"
+
+
+def _normalize_mode_list(modes: Any) -> list[str]:
+    result = []
+    for m in cv.ensure_list(modes):
+        if m is False:
+            result.append("off")
+        elif m is True:
+            result.append("on")
+        elif m is not None:
+            result.append(str(m))
+    return result
+
+
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_CLIMATE_VALUE, {
     vol.Optional(CONF_INITIAL_TEMPERATURE, default=DEFAULT_TARGET_TEMP): vol.Coerce(float),
     vol.Optional(CONF_INITIAL_CURRENT_TEMPERATURE, default=DEFAULT_CURRENT_TEMP): vol.Coerce(float),
-    vol.Optional(CONF_MIN, default=DEFAULT_MIN_TEMP): vol.Coerce(float),
-    vol.Optional(CONF_MAX, default=DEFAULT_MAX_TEMP): vol.Coerce(float),
+    vol.Optional(CONF_MIN): vol.Coerce(float),
+    vol.Optional(CONF_MAX): vol.Coerce(float),
+    vol.Optional(CONF_MIN_TEMP): vol.Coerce(float),
+    vol.Optional(CONF_MAX_TEMP): vol.Coerce(float),
     vol.Optional(CONF_TARGET_TEMP_STEP, default=DEFAULT_TARGET_TEMP_STEP): vol.Coerce(float),
-    vol.Optional(CONF_HVAC_MODES, default=["off", "heat", "cool", "auto"]): vol.All(cv.ensure_list, [cv.string]),
+    vol.Optional(CONF_HVAC_MODES, default=["off", "heat", "cool", "auto"]): _normalize_mode_list,
     vol.Optional(CONF_PRESET_MODES, default=[]): vol.All(cv.ensure_list, [cv.string]),
     vol.Optional(CONF_FAN_MODES, default=[]): vol.All(cv.ensure_list, [cv.string]),
 }))
@@ -90,10 +108,12 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(virtual_schema(DEFAULT_CLIMATE_VALUE, {
 CLIMATE_SCHEMA = vol.Schema(virtual_schema(DEFAULT_CLIMATE_VALUE, {
     vol.Optional(CONF_INITIAL_TEMPERATURE, default=DEFAULT_TARGET_TEMP): vol.Coerce(float),
     vol.Optional(CONF_INITIAL_CURRENT_TEMPERATURE, default=DEFAULT_CURRENT_TEMP): vol.Coerce(float),
-    vol.Optional(CONF_MIN, default=DEFAULT_MIN_TEMP): vol.Coerce(float),
-    vol.Optional(CONF_MAX, default=DEFAULT_MAX_TEMP): vol.Coerce(float),
+    vol.Optional(CONF_MIN): vol.Coerce(float),
+    vol.Optional(CONF_MAX): vol.Coerce(float),
+    vol.Optional(CONF_MIN_TEMP): vol.Coerce(float),
+    vol.Optional(CONF_MAX_TEMP): vol.Coerce(float),
     vol.Optional(CONF_TARGET_TEMP_STEP, default=DEFAULT_TARGET_TEMP_STEP): vol.Coerce(float),
-    vol.Optional(CONF_HVAC_MODES, default=["off", "heat", "cool", "auto"]): vol.All(cv.ensure_list, [cv.string]),
+    vol.Optional(CONF_HVAC_MODES, default=["off", "heat", "cool", "auto"]): _normalize_mode_list,
     vol.Optional(CONF_PRESET_MODES, default=[]): vol.All(cv.ensure_list, [cv.string]),
     vol.Optional(CONF_FAN_MODES, default=[]): vol.All(cv.ensure_list, [cv.string]),
 }))
@@ -158,13 +178,22 @@ class VirtualClimate(VirtualEntity, ClimateEntity):
         super().__init__(config, PLATFORM_DOMAIN, old_style)
 
         self._attr_temperature_unit = UnitOfTemperature.CELSIUS
-        self._attr_min_temp = float(config.get(CONF_MIN, DEFAULT_MIN_TEMP))
-        self._attr_max_temp = float(config.get(CONF_MAX, DEFAULT_MAX_TEMP))
+
+        min_val = config.get(CONF_MIN_TEMP)
+        if min_val is None:
+            min_val = config.get(CONF_MIN, DEFAULT_MIN_TEMP)
+        self._attr_min_temp = float(min_val)
+
+        max_val = config.get(CONF_MAX_TEMP)
+        if max_val is None:
+            max_val = config.get(CONF_MAX, DEFAULT_MAX_TEMP)
+        self._attr_max_temp = float(max_val)
+
         self._attr_target_temperature_step = float(config.get(CONF_TARGET_TEMP_STEP, DEFAULT_TARGET_TEMP_STEP))
         self._attr_precision = PRECISION_HALVES if self._attr_target_temperature_step == 0.5 else PRECISION_TENTHS
 
         # HVAC modes
-        raw_modes = config.get(CONF_HVAC_MODES, ["off", "heat", "cool", "auto"])
+        raw_modes = _normalize_mode_list(config.get(CONF_HVAC_MODES, ["off", "heat", "cool", "auto"]))
         self._attr_hvac_modes = [HVAC_MODE_MAP[m.lower()] for m in raw_modes if m.lower() in HVAC_MODE_MAP]
         if not self._attr_hvac_modes:
             self._attr_hvac_modes = [HVACMode.OFF, HVACMode.HEAT]

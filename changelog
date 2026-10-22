@@ -1,10 +1,11 @@
 0.10.0-alpha.2:
+  Add virtual media_player platform with volume, mute, source selection, and silent TTS / play_media testing.
   Add virtual climate platform with target setpoints, presets, dynamic hvac_action calculation, and virtual.set_current_temperature service.
   Add virtual alarm_control_panel platform with PIN codes, exit/entry delays, and arm/disarm/trigger services.
   Add virtual button platform (`button.press`).
   Add virtual select platform (`select.select_option`).
   Add virtual text platform (`text.set_value`).
-  Update Virtual Device Editor with support for climate, alarm_control_panel, button, select, and text platforms and templates.
+  Update Virtual Device Editor with support for media_player, climate, alarm_control_panel, button, select, and text platforms and templates.
 0.10.0-alpha.1:
   Fix lock entity hanging when locking_time is configured.
   Fix AttributeError in lock async_open.

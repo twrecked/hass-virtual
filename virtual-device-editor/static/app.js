@@ -54,6 +54,7 @@ const PLATFORMS = [
   "fan",
   "light",
   "lock",
+  "media_player",
   "number",
   "select",
   "sensor",
@@ -87,6 +88,7 @@ const DEVICE_CLASSES = {
   cover: ["", "awning", "blind", "curtain", "damper", "door", "garage", "gate", "shade", "shutter", "window"],
   valve: ["", "water", "gas"],
   switch: ["", "outlet", "switch"],
+  media_player: ["", "tv", "speaker", "receiver"],
 };
 
 const TEMPLATES = [
@@ -233,6 +235,45 @@ const TEMPLATES = [
         { platform: "sensor", class: "temperature", unit_of_measurement: "°C", initial_value: "20", persistent: true, initial_availability: true },
         { platform: "sensor", class: "humidity", unit_of_measurement: "%", initial_value: "50", persistent: true, initial_availability: true },
         { platform: "sensor", class: "pressure", unit_of_measurement: "hPa", initial_value: "1013", persistent: true, initial_availability: true },
+      ],
+    }),
+  },
+  {
+    id: "smart_tv",
+    name: "Smart Television",
+    description: "Virtual TV with volume control and selectable HDMI/App sources",
+    create: (name) => ({
+      name: name || "Living Room TV",
+      entities: [
+        {
+          platform: "media_player",
+          class: "tv",
+          initial_value: "idle",
+          initial_volume: 0.4,
+          source_list_str: "TV, HDMI 1, HDMI 2, Netflix, YouTube",
+          sound_mode_list_str: "Standard, Cinema, Night",
+          persistent: true,
+          initial_availability: true,
+        },
+      ],
+    }),
+  },
+  {
+    id: "media_speaker",
+    name: "Media Speaker",
+    description: "Virtual audio speaker for music and TTS announcement testing",
+    create: (name) => ({
+      name: name || "Kitchen Speaker",
+      entities: [
+        {
+          platform: "media_player",
+          class: "speaker",
+          initial_value: "idle",
+          initial_volume: 0.5,
+          source_list_str: "Radio, Spotify, AirPlay",
+          persistent: true,
+          initial_availability: true,
+        },
       ],
     }),
   },
@@ -450,6 +491,17 @@ createApp({
               item.fan_modes = ent.fan_modes_str.split(",").map((s) => s.trim().toLowerCase()).filter((s) => s);
             }
           }
+          if (ent.platform === "media_player") {
+            if (ent.initial_volume !== undefined && ent.initial_volume !== "") {
+              item.initial_volume = Number(ent.initial_volume);
+            }
+            if (ent.source_list_str) {
+              item.source_list = ent.source_list_str.split(",").map((s) => s.trim()).filter((s) => s);
+            }
+            if (ent.sound_mode_list_str) {
+              item.sound_mode_list = ent.sound_mode_list_str.split(",").map((s) => s.trim()).filter((s) => s);
+            }
+          }
 
           output.devices[deviceName].push(item);
         }
@@ -535,6 +587,10 @@ createApp({
         base.code_arm_required = false;
         base.arming_time = 0;
         base.trigger_time = 0;
+      } else if (platform === "media_player") {
+        base.initial_value = "idle";
+        base.initial_volume = 0.5;
+        base.source_list_str = "TV, HDMI 1, HDMI 2, Netflix, YouTube";
       } else if (platform === "climate") {
         base.initial_value = "heat";
         base.initial_temperature = 21;
@@ -620,6 +676,9 @@ createApp({
             hvac_modes_str: Array.isArray(item.hvac_modes) ? item.hvac_modes.join(", ") : (item.hvac_modes || ""),
             preset_modes_str: Array.isArray(item.preset_modes) ? item.preset_modes.join(", ") : (item.preset_modes || ""),
             fan_modes_str: Array.isArray(item.fan_modes) ? item.fan_modes.join(", ") : (item.fan_modes || ""),
+            initial_volume: item.initial_volume !== undefined ? item.initial_volume : 0.5,
+            source_list_str: Array.isArray(item.source_list) ? item.source_list.join(", ") : (item.source_list || ""),
+            sound_mode_list_str: Array.isArray(item.sound_mode_list) ? item.sound_mode_list.join(", ") : (item.sound_mode_list || ""),
           }));
 
           newDevices.push({
