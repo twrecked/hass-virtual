@@ -9,7 +9,7 @@ Hosted version available at: **[https://virtual-dot-twrecked-tools.nn.r.appspot.
 ## Features
 
 - **Visual Tree Builder**: Add and organize devices and child entities with an intuitive card-based UI.
-- **Support for all 14 Platforms**: `alarm_control_panel`, `binary_sensor`, `button`, `cover`, `device_tracker`, `fan`, `light`, `lock`, `number`, `select`, `sensor`, `switch`, `text`, and `valve`.
+- **Support for all 15 Platforms**: `alarm_control_panel`, `binary_sensor`, `button`, `climate`, `cover`, `device_tracker`, `fan`, `light`, `lock`, `number`, `select`, `sensor`, `switch`, `text`, and `valve`.
 - **Dynamic Field Validation**: Form fields automatically adjust to the chosen platform (color/brightness controls for lights, timing sliders for covers/valves, speed counts for fans, and standard Home Assistant device classes and units).
 - **Device Templates**: One-click creation of common multi-entity devices (e.g. motion sensor with battery, dimmable lights, window blinds, power meter outlets, weather stations).
 - **Live YAML Preview**: Real-time YAML generation side-by-side with your visual cards.

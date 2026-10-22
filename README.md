@@ -4,10 +4,11 @@ _Virtual_ is a custom integration for [Home Assistant](https://www.home-assistan
 
 ![icon](images/virtual-icon.png)
 
-_Virtual_ provides support for 14 distinct entity platforms:
+_Virtual_ provides support for 15 distinct entity platforms:
 - **Alarm Control Panels**: Virtual security panels with arming/trigger delays and PIN codes.
 - **Binary Sensors**: Motion, presence, door, window, smoke, and moisture sensors.
 - **Buttons**: Stateless push-buttons to trigger automations and actions.
+- **Climate**: Virtual thermostats and HVAC units with target setpoints, presets, and dynamic heating/cooling action calculation.
 - **Covers**: Timed position-based blinds, garage doors, shutters, and shades.
 - **Device Trackers**: GPS coordinates and named location zones.
 - **Fans**: Multi-speed, oscillating, and reversible fans.
@@ -51,6 +52,7 @@ _Virtual_ provides support for 14 distinct entity platforms:
   - [File Structure](#file-structure)
   - [Common Attributes](#common-attributes)
   - [Alarm Control Panels](#alarm-control-panels)
+  - [Climate](#climate)
   - [Switches](#switches)
   - [Binary Sensors](#binary-sensors)
   - [Buttons](#buttons)
@@ -250,6 +252,41 @@ House Alarm:
 * `arming_time`: Optional exit delay in seconds (transitions through `arming` before becoming armed).
 * `trigger_time`: Optional entry delay in seconds (transitions through `pending` before becoming `triggered`).
 * *Controllable via native `alarm_control_panel.alarm_arm_home`, `alarm_control_panel.alarm_arm_away`, `alarm_control_panel.alarm_arm_night`, `alarm_control_panel.alarm_arm_vacation`, `alarm_control_panel.alarm_disarm`, and `alarm_control_panel.alarm_trigger` services.*
+
+---
+
+### Climate
+
+Simulates virtual thermostats and HVAC units. Automatically computes `hvac_action` (`heating`, `cooling`, `idle`, `off`) dynamically based on ambient room temperature vs. target temperature setpoints.
+
+```yaml
+Living Room Thermostat:
+  - platform: climate
+    initial_value: heat
+    initial_temperature: 21
+    initial_current_temperature: 19.5
+    min_temp: 10
+    max_temp: 32
+    target_temperature_step: 0.5
+    hvac_modes:
+      - off
+      - heat
+      - cool
+      - auto
+    preset_modes:
+      - none
+      - eco
+      - comfort
+      - away
+```
+
+* `initial_value`: Initial HVAC mode (`off`, `heat`, `cool`, `auto`).
+* `initial_temperature`: Target temperature setpoint.
+* `initial_current_temperature`: Initial ambient room temperature.
+* `min_temp` / `max_temp`: Bounds for temperature adjustment.
+* `target_temperature_step`: Temperature step increment (default `0.5`).
+* *Controllable via native `climate.set_temperature`, `climate.set_hvac_mode`, `climate.set_preset_mode`, and `climate.set_fan_mode` services.*
+* *Simulate ambient room temperature changes using the custom `virtual.set_current_temperature` service.*
 
 ---
 
@@ -523,3 +560,10 @@ Moves a virtual device tracker to a new zone or GPS coordinates.
   * `location`: Named zone or location string (e.g. `home`, `work`, `away`).
   * `gps`: Object containing `latitude` and `longitude`.
   * `gps_accuracy`: Optional accuracy radius in meters.
+
+### `virtual.set_current_temperature`
+Sets the current ambient temperature of a virtual climate entity.
+
+* **Target**: Virtual climate entities
+* **Fields**:
+  * `temperature`: Number representing the new ambient room temperature (e.g. `19.5`).

@@ -248,6 +248,38 @@
                       <input v-model="entity.speed_count" type="number" class="form-control" />
                     </div>
                   </template>
+
+                  <!-- Climate Settings -->
+                  <template v-if="entity.platform === 'climate'">
+                    <div class="form-group">
+                      <label>Target Temp (°C)</label>
+                      <input v-model="entity.initial_temperature" type="number" step="0.5" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                      <label>Ambient Temp (°C)</label>
+                      <input v-model="entity.initial_current_temperature" type="number" step="0.5" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                      <label>Min Temp</label>
+                      <input v-model="entity.min" type="number" class="form-control" placeholder="7" />
+                    </div>
+                    <div class="form-group">
+                      <label>Max Temp</label>
+                      <input v-model="entity.max" type="number" class="form-control" placeholder="35" />
+                    </div>
+                    <div class="form-group">
+                      <label>Temp Step</label>
+                      <input v-model="entity.target_temperature_step" type="number" step="0.1" class="form-control" placeholder="0.5" />
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                      <label>HVAC Modes (comma-separated)</label>
+                      <input v-model="entity.hvac_modes_str" class="form-control" placeholder="off, heat, cool, auto" />
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                      <label>Preset Modes (Optional)</label>
+                      <input v-model="entity.preset_modes_str" class="form-control" placeholder="none, eco, comfort, away" />
+                    </div>
+                  </template>
                 </div>
 
                 <!-- Light Feature Toggles -->

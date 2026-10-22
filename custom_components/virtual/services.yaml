@@ -82,3 +82,21 @@ move:
           min: 0
           mode: box
           unit_of_measurement: "m"
+
+set_current_temperature:
+  name: Set Current Temperature
+  description: Set the ambient current temperature of a virtual climate entity.
+  target:
+    entity:
+      integration: virtual
+      domain: climate
+  fields:
+    temperature:
+      name: Temperature
+      description: The current ambient temperature to set.
+      example: 19.5
+      required: true
+      selector:
+        number:
+          step: 0.1
+          mode: box

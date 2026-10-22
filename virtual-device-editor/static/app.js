@@ -48,6 +48,7 @@ const PLATFORMS = [
   "alarm_control_panel",
   "binary_sensor",
   "button",
+  "climate",
   "cover",
   "device_tracker",
   "fan",
@@ -236,6 +237,29 @@ const TEMPLATES = [
     }),
   },
   {
+    id: "smart_thermostat",
+    name: "Smart Thermostat",
+    description: "Thermostat with target and current temperatures, presets, and auto actions",
+    create: (name) => ({
+      name: name || "Living Room Thermostat",
+      entities: [
+        {
+          platform: "climate",
+          initial_value: "heat",
+          initial_temperature: 21,
+          initial_current_temperature: 19.5,
+          min: 10,
+          max: 32,
+          target_temperature_step: 0.5,
+          hvac_modes_str: "off, heat, cool, auto",
+          preset_modes_str: "none, eco, comfort, away",
+          persistent: true,
+          initial_availability: true,
+        },
+      ],
+    }),
+  },
+  {
     id: "alarm_system",
     name: "Security Alarm Panel",
     description: "Alarm control panel with PIN code and entry/exit delays",
@@ -404,6 +428,28 @@ createApp({
             if (ent.arming_time) item.arming_time = Number(ent.arming_time);
             if (ent.trigger_time) item.trigger_time = Number(ent.trigger_time);
           }
+          if (ent.platform === "climate") {
+            if (ent.initial_temperature !== undefined && ent.initial_temperature !== "") {
+              item.initial_temperature = Number(ent.initial_temperature);
+            }
+            if (ent.initial_current_temperature !== undefined && ent.initial_current_temperature !== "") {
+              item.initial_current_temperature = Number(ent.initial_current_temperature);
+            }
+            if (ent.min !== undefined && ent.min !== "") item.min = Number(ent.min);
+            if (ent.max !== undefined && ent.max !== "") item.max = Number(ent.max);
+            if (ent.target_temperature_step !== undefined && ent.target_temperature_step !== "") {
+              item.target_temperature_step = Number(ent.target_temperature_step);
+            }
+            if (ent.hvac_modes_str) {
+              item.hvac_modes = ent.hvac_modes_str.split(",").map((s) => s.trim().toLowerCase()).filter((s) => s);
+            }
+            if (ent.preset_modes_str) {
+              item.preset_modes = ent.preset_modes_str.split(",").map((s) => s.trim().toLowerCase()).filter((s) => s);
+            }
+            if (ent.fan_modes_str) {
+              item.fan_modes = ent.fan_modes_str.split(",").map((s) => s.trim().toLowerCase()).filter((s) => s);
+            }
+          }
 
           output.devices[deviceName].push(item);
         }
@@ -489,6 +535,15 @@ createApp({
         base.code_arm_required = false;
         base.arming_time = 0;
         base.trigger_time = 0;
+      } else if (platform === "climate") {
+        base.initial_value = "heat";
+        base.initial_temperature = 21;
+        base.initial_current_temperature = 20;
+        base.min = 7;
+        base.max = 35;
+        base.target_temperature_step = 0.5;
+        base.hvac_modes_str = "off, heat, cool, auto";
+        base.preset_modes_str = "none, eco, comfort, away";
       }
 
       return base;
@@ -559,6 +614,12 @@ createApp({
             code_arm_required: item.code_arm_required || false,
             arming_time: item.arming_time || 0,
             trigger_time: item.trigger_time || 0,
+            initial_temperature: item.initial_temperature,
+            initial_current_temperature: item.initial_current_temperature,
+            target_temperature_step: item.target_temperature_step,
+            hvac_modes_str: Array.isArray(item.hvac_modes) ? item.hvac_modes.join(", ") : (item.hvac_modes || ""),
+            preset_modes_str: Array.isArray(item.preset_modes) ? item.preset_modes.join(", ") : (item.preset_modes || ""),
+            fan_modes_str: Array.isArray(item.fan_modes) ? item.fan_modes.join(", ") : (item.fan_modes || ""),
           }));
 
           newDevices.push({

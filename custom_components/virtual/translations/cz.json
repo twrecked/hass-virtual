@@ -99,6 +99,20 @@
           "description": "Přesnost souřadnic GPS."
         }
       }
+    },
+    "set_current_temperature": {
+      "name": "Nastavit aktuální teplotu",
+      "description": "Nastavit aktuální teplotu virtuální klimatizace.",
+      "fields": {
+        "entity_id": {
+          "name": "Id Entity",
+          "description": "Názvy entit, které se mají nastavit"
+        },
+        "temperature": {
+          "name": "Teplota",
+          "description": "Aktuální teplota okolí."
+        }
+      }
     }
   }
 }

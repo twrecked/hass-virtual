@@ -7,6 +7,7 @@ It provides:
 * Virtual alarm control panels
 * Virtual binary sensors
 * Virtual buttons
+* Virtual climates (thermostats)
 * Virtual covers
 * Virtual device trackers
 * Virtual fans

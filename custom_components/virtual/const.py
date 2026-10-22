@@ -63,11 +63,19 @@ CONF_CODE = "code"
 CONF_CODE_ARM_REQUIRED = "code_arm_required"
 CONF_ARMING_TIME = "arming_time"
 CONF_TRIGGER_TIME = "trigger_time"
+CONF_INITIAL_TEMPERATURE = "initial_temperature"
+CONF_INITIAL_CURRENT_TEMPERATURE = "initial_current_temperature"
+CONF_HVAC_MODES = "hvac_modes"
+CONF_PRESET_MODES = "preset_modes"
+CONF_FAN_MODES = "fan_modes"
+CONF_TARGET_TEMP_STEP = "target_temperature_step"
 CONF_OPEN_CLOSE_DURATION = "open_close_duration"
 CONF_OPEN_CLOSE_TICK = "open_close_tick"
 CONF_PERSISTENT = "persistent"
 CONF_YAML_CONFIG = "yaml_config"
 CONF_EDITOR_URL = "editor_url"
+
+SERVICE_SET_CURRENT_TEMPERATURE = "set_current_temperature"
 
 DEFAULT_AVAILABILITY = True
 DEFAULT_PERSISTENT = True

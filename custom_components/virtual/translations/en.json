@@ -99,6 +99,20 @@
           "description": "Accuracy of the GPS coordinates."
         }
       }
+    },
+    "set_current_temperature": {
+      "name": "Set Current Temperature",
+      "description": "Set the current ambient temperature of a virtual climate entity.",
+      "fields": {
+        "entity_id": {
+          "name": "Entity Id",
+          "description": "Name(s) of climate entities to set"
+        },
+        "temperature": {
+          "name": "Temperature",
+          "description": "The current ambient temperature."
+        }
+      }
     }
   }
 }
