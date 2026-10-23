@@ -70,6 +70,13 @@ _Virtual_ provides support for 16 distinct entity platforms:
   - [Device Trackers](#device-trackers)
 - [Legacy YAML Configuration](#legacy-yaml-configuration)
 - [Services](#services)
+  - [virtual.set_available](#virtualset_available)
+  - [virtual.turn_on](#virtualturn_on)
+  - [virtual.turn_off](#virtualturn_off)
+  - [virtual.toggle](#virtualtoggle)
+  - [virtual.set](#virtualset)
+  - [virtual.move](#virtualmove)
+  - [virtual.set_current_temperature](#virtualset_current_temperature)
 
 ---
 
@@ -89,8 +96,8 @@ All entity states are maintained in-memory and can persist cleanly across Home A
 2. **Options Flow & Webhook Sync**:
    - Clicking **Configure** on any Virtual group in Home Assistant launches the visual editor preloaded with your YAML.
    * Clicking **Save & Return** in the editor writes your changes to disk and reloads the integration automatically via an authenticated webhook.
-3. **Number and Valve Platforms**:
-   - Native support for `number` and `valve` entities with standard Home Assistant device classes and units.
+3. **Major Platform Expansion (16 Supported Platforms)**:
+   - Added native support for `alarm_control_panel`, `button`, `climate`, `media_player`, `number`, `select`, `text`, and `valve` entities with standard Home Assistant device classes, units, and services.
 4. **Strict Home Assistant & Python Modernization**:
    - Entities now directly inherit from core entity classes (`NumberEntity`, `SensorEntity`), eliminating threadpool worker overhead.
    - State persistence and storage use Home Assistant's managed non-blocking `Store` helper and async executor, eliminating the external `aiofiles` dependency.
