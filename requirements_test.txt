@@ -1,0 +1,6 @@
+homeassistant==2025.6.3; python_version == "3.13"
+pytest-homeassistant-custom-component==0.13.254; python_version == "3.13"
+pycares==4.11.0; python_version == "3.13"
+homeassistant==2026.10.1; python_version == "3.14"
+pytest-homeassistant-custom-component==0.13.372; python_version == "3.14"
+aiofiles==24.1.0

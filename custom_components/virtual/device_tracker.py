@@ -219,14 +219,17 @@ class VirtualDeviceTracker(TrackerEntity, VirtualEntity):
                 ATTR_LATITUDE: state.attributes[ATTR_LATITUDE],
                 ATTR_RADIUS: 0
             }
+            self._gps_accuracy = state.attributes.get(CONF_GPS_ACCURACY, 0)
         else:
             self._location = state.state
             self._coords = {}
 
     @property
-    def location_name(self) -> str | None:
-        """Return a location name for the current location of the device."""
-        return self._location
+    def state(self) -> str | None:
+        """Return a virtual label or let Home Assistant resolve GPS zones."""
+        if self._location is not None:
+            return self._location
+        return super().state
 
     @property
     def source_type(self) -> SourceType | str:

@@ -533,3 +533,7 @@ This service will turn off a binary sensor.
 
 Move a device tracker. You use one of the parameters.
 
+## Development
+
+See [the compatibility tests](tests/README.md) for running the native Home Assistant unit and tracker tests on Python 3.13 and 3.14.
+
