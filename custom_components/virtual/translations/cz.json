@@ -113,6 +113,34 @@
           "description": "Aktuální teplota okolí."
         }
       }
+    },
+    "set_image_url": {
+      "name": "Nastavit URL obrázku",
+      "description": "Nastavit URL obrázku nebo lokální cestu pro virtuální kameru.",
+      "fields": {
+        "entity_id": {
+          "name": "Id Entity",
+          "description": "Názvy entit, které se mají nastavit"
+        },
+        "image_url": {
+          "name": "Image URL",
+          "description": "URL nebo lokální cesta ke snímku kamery."
+        }
+      }
+    },
+    "set_stream_url": {
+      "name": "Nastavit URL streamu",
+      "description": "Nastavit URL streamu pro virtuální kameru.",
+      "fields": {
+        "entity_id": {
+          "name": "Id Entity",
+          "description": "Názvy entit, které se mají nastavit"
+        },
+        "stream_url": {
+          "name": "Stream URL",
+          "description": "URL HLS, RTSP nebo HTTP streamu pro kameru."
+        }
+      }
     }
   }
 }

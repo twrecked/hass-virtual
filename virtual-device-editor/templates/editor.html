@@ -281,6 +281,18 @@
                     </div>
                   </template>
 
+                  <!-- Camera Settings -->
+                  <template v-if="entity.platform === 'camera'">
+                    <div class="form-group" style="grid-column: span 2;">
+                      <label>Image URL (Snapshot / Picture Card)</label>
+                      <input v-model="entity.image_url" class="form-control" placeholder="e.g. https://... or /local/camera.jpg" />
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                      <label>Stream URL (Live Feed / HLS / RTSP)</label>
+                      <input v-model="entity.stream_url" class="form-control" placeholder="e.g. https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" />
+                    </div>
+                  </template>
+
                   <!-- Media Player Settings -->
                   <template v-if="entity.platform === 'media_player'">
                     <div class="form-group">

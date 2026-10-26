@@ -100,3 +100,35 @@ set_current_temperature:
         number:
           step: 0.1
           mode: box
+
+set_image_url:
+  name: Set Image URL
+  description: Set the still image URL or local path for a virtual camera.
+  target:
+    entity:
+      integration: virtual
+      domain: camera
+  fields:
+    image_url:
+      name: Image URL
+      description: URL or local file path to the camera snapshot image.
+      example: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=640"
+      required: true
+      selector:
+        text:
+
+set_stream_url:
+  name: Set Stream URL
+  description: Set the live stream URL for a virtual camera.
+  target:
+    entity:
+      integration: virtual
+      domain: camera
+  fields:
+    stream_url:
+      name: Stream URL
+      description: HLS, RTSP, or HTTP stream URL for the camera. Set to empty or "none" to disable live streaming.
+      example: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+      required: true
+      selector:
+        text:

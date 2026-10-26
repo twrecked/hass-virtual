@@ -447,6 +447,24 @@ Front Door Lock:
 
 ---
 
+### Cameras
+
+Simulates security and CCTV cameras for testing dashboard Picture Entity Cards, camera proxy streaming, and live feeds.
+
+```yaml
+Front Porch Camera:
+  - platform: camera
+    image_url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=640"
+    stream_url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+```
+
+* `image_url`: Optional HTTP(S) image URL or local file path (e.g. `/local/camera.jpg` or `/config/www/camera.jpg`). Used by Picture Entity Cards and snapshot previews. When omitted, an embedded test placeholder image is served.
+* `stream_url`: Optional stream source URL (HLS `.m3u8`, RTSP, or HTTP MP4). Defaults out-of-the-box to the public Mux Big Buck Bunny HLS test stream (`https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8`). Set to `none` or empty string `""` to disable live streaming and operate snapshot-only.
+* `initial_value`: Optional initial state (`idle` by default, or `off`).
+* *Controllable via native `camera.turn_on` and `camera.turn_off` services, as well as `virtual.set_image_url` and `virtual.set_stream_url`.*
+
+---
+
 ### Media Players
 
 Simulates TVs, speakers, and media players. Ideal for testing automations, volume sync, and silent TTS / announcement testing without sounding real speakers.
@@ -607,3 +625,17 @@ Sets the current ambient temperature of a virtual climate entity.
 * **Target**: Virtual climate entities
 * **Fields**:
   * `temperature`: Number representing the new ambient room temperature (e.g. `19.5`).
+
+### `virtual.set_image_url`
+Sets the still image URL or local file path for a virtual camera.
+
+* **Target**: Virtual camera entities
+* **Fields**:
+  * `image_url`: HTTP(S) URL or local path to the still snapshot image.
+
+### `virtual.set_stream_url`
+Sets the live stream URL for a virtual camera.
+
+* **Target**: Virtual camera entities
+* **Fields**:
+  * `stream_url`: HLS, RTSP, or HTTP stream URL (or `""` / `none` to disable streaming).

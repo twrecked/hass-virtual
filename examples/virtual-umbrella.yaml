@@ -63,3 +63,10 @@ devices:
         - Radio
         - Spotify
         - AirPlay
+
+    # 7. Virtual Camera
+    - platform: camera
+      name: Umbrella Camera
+      initial_value: idle
+      image_url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=640"
+      stream_url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"

@@ -48,6 +48,7 @@ const PLATFORMS = [
   "alarm_control_panel",
   "binary_sensor",
   "button",
+  "camera",
   "climate",
   "cover",
   "device_tracker",
@@ -71,6 +72,7 @@ const DEVICE_CLASSES = {
     "running", "safety", "smoke", "sound", "tamper", "update", "vibration", "window",
   ],
   button: ["", "identify", "restart", "update"],
+  camera: [""],
   sensor: [
     "", "apparent_power", "battery", "carbon_dioxide", "carbon_monoxide", "current",
     "energy", "frequency", "gas", "humidity", "illuminance", "moisture",
@@ -354,6 +356,24 @@ const TEMPLATES = [
     }),
   },
   {
+    id: "security_camera",
+    name: "Security Camera",
+    description: "Virtual camera with snapshot and live HLS stream",
+    create: (name) => ({
+      name: name || "Front Door Camera",
+      entities: [
+        {
+          platform: "camera",
+          initial_value: "idle",
+          image_url: "",
+          stream_url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+          persistent: true,
+          initial_availability: true,
+        },
+      ],
+    }),
+  },
+  {
     id: "custom_text",
     name: "Text Input",
     description: "Configurable text input field",
@@ -491,6 +511,10 @@ createApp({
               item.fan_modes = ent.fan_modes_str.split(",").map((s) => s.trim().toLowerCase()).filter((s) => s);
             }
           }
+          if (ent.platform === "camera") {
+            if (ent.image_url) item.image_url = ent.image_url;
+            if (ent.stream_url) item.stream_url = ent.stream_url;
+          }
           if (ent.platform === "media_player") {
             if (ent.initial_volume !== undefined && ent.initial_volume !== "") {
               item.initial_volume = Number(ent.initial_volume);
@@ -587,6 +611,10 @@ createApp({
         base.code_arm_required = false;
         base.arming_time = 0;
         base.trigger_time = 0;
+      } else if (platform === "camera") {
+        base.initial_value = "idle";
+        base.image_url = "";
+        base.stream_url = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
       } else if (platform === "media_player") {
         base.initial_value = "idle";
         base.initial_volume = 0.5;
@@ -677,6 +705,8 @@ createApp({
             preset_modes_str: Array.isArray(item.preset_modes) ? item.preset_modes.join(", ") : (item.preset_modes || ""),
             fan_modes_str: Array.isArray(item.fan_modes) ? item.fan_modes.join(", ") : (item.fan_modes || ""),
             initial_volume: item.initial_volume !== undefined ? item.initial_volume : 0.5,
+            image_url: item.image_url || "",
+            stream_url: item.stream_url !== undefined ? item.stream_url : (item.platform === "camera" ? "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" : ""),
             source_list_str: Array.isArray(item.source_list) ? item.source_list.join(", ") : (item.source_list || ""),
             sound_mode_list_str: Array.isArray(item.sound_mode_list) ? item.sound_mode_list.join(", ") : (item.sound_mode_list || ""),
           }));

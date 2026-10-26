@@ -113,6 +113,34 @@
           "description": "The current ambient temperature."
         }
       }
+    },
+    "set_image_url": {
+      "name": "Set Image URL",
+      "description": "Set the image URL or local file path for a virtual camera.",
+      "fields": {
+        "entity_id": {
+          "name": "Entity Id",
+          "description": "Name(s) of entities to set"
+        },
+        "image_url": {
+          "name": "Image URL",
+          "description": "URL or local file path to the camera snapshot image."
+        }
+      }
+    },
+    "set_stream_url": {
+      "name": "Set Stream URL",
+      "description": "Set the stream URL for a virtual camera.",
+      "fields": {
+        "entity_id": {
+          "name": "Entity Id",
+          "description": "Name(s) of entities to set"
+        },
+        "stream_url": {
+          "name": "Stream URL",
+          "description": "HLS, RTSP, or HTTP stream URL for the camera."
+        }
+      }
     }
   }
 }

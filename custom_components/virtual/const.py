@@ -75,13 +75,23 @@ CONF_SOUND_MODE_LIST = "sound_mode_list"
 CONF_OPEN_CLOSE_DURATION = "open_close_duration"
 CONF_OPEN_CLOSE_TICK = "open_close_tick"
 CONF_PERSISTENT = "persistent"
+CONF_IMAGE_URL = "image_url"
+CONF_STREAM_URL = "stream_url"
 CONF_YAML_CONFIG = "yaml_config"
 CONF_EDITOR_URL = "editor_url"
 
+ATTR_IMAGE_URL = "image_url"
+ATTR_STREAM_URL = "stream_url"
+
 SERVICE_SET_CURRENT_TEMPERATURE = "set_current_temperature"
+SERVICE_SET_IMAGE_URL = "set_image_url"
+SERVICE_SET_STREAM_URL = "set_stream_url"
 
 DEFAULT_AVAILABILITY = True
 DEFAULT_PERSISTENT = True
+DEFAULT_CAMERA_VALUE = "idle"
+DEFAULT_IMAGE_URL = ""
+DEFAULT_STREAM_URL = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
 DEFAULT_EDITOR_URL = "https://virtual-dot-twrecked-tools.nn.r.appspot.com"
 
 IMPORTED_GROUP_NAME = "imported"
