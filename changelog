@@ -4,7 +4,9 @@
   Add recurring scheduled duty cycles (clock-aligned e.g. 10 mins hourly) for water heaters and cyclic appliances.
   Add virtual.run_cycle and virtual.set_load services for testing and AppDaemon automations.
   Expose load_state, control_mode, cycle_active, and cycle_remaining in sensor state attributes.
-  Update Virtual Device Editor with load simulation settings and Water Heater template.
+  Add auto-off timeouts (off_delay) and entity gating (linked_entity) to binary sensors (motion, sound, occupancy).
+  Enhance virtual.turn_on service with optional duration parameter for pulsing binary sensors.
+  Update Virtual Device Editor with load simulation settings, binary sensor brains, and templates.
 0.10.0-alpha.3:
   Add virtual camera platform with snapshot image and live stream playback.
   Support Picture Entity Cards with remote HTTP/HTTPS image URLs or local files.

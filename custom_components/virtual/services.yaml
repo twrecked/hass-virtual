@@ -2,11 +2,22 @@
 
 turn_on:
   name: Turn On
-  description: Turn on a binary sensor.
+  description: Turn on a binary sensor, with optional auto-off duration in seconds.
   target:
     entity:
       integration: virtual
       domain: binary_sensor
+  fields:
+    duration:
+      name: Duration
+      description: Optional duration in seconds before automatically resetting back to off.
+      example: 10
+      required: false
+      selector:
+        number:
+          min: 1
+          mode: box
+          unit_of_measurement: "s"
 
 turn_off:
   name: Turn Off

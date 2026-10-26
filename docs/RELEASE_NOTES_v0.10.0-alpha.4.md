@@ -1,4 +1,4 @@
-# 🚀 Virtual v0.10.0-alpha.4 — Appliance Load Simulation, Power Profiling & Duty Cycles
+# 🚀 Virtual v0.10.0-alpha.4 — Appliance Load Simulation, Duty Cycles & Binary Sensor Brains
 
 > ### ⚠️ Alpha Release & Community Testing Notice
 > **Virtual v0.10 is an active alpha pre-release.**
@@ -30,6 +30,20 @@ Virtual power sensors can now simulate realistic appliance loads coupled to a co
 - **`virtual.set_load`**: Set the operating state (`active`, `standby`, `off`, or `auto` to resume schedule) or inject custom power wattage.
 - **`virtual.run_cycle`**: Trigger an active appliance cycle for a specified duration in seconds, automatically reverting to standby or scheduled mode when complete.
 
-### 3. Virtual Device Editor Updates
+### 3. Binary Sensor Brains: Auto-Off Timeouts & Device Gating
+Added intelligent simulation capabilities to `binary_sensor` (motion, sound, occupancy, etc.):
+
+- **Auto-Off Timeouts (`off_delay`)**:
+  - Automatically resets the sensor back to `off` after `off_delay` seconds.
+  - Re-triggering the sensor while active resets and extends the countdown timer.
+  - Enhanced `virtual.turn_on` service with an optional `duration` field (e.g. `duration: 10`) to pulse the sensor for testing.
+- **Device Gating (`linked_entity`)**:
+  - Link motion or sound sensors to cameras, switches, or other devices.
+  - Sensors can only trigger when the linked device is powered on.
+  - If the linked camera/device powers off while motion is active, the binary sensor immediately clears to `off`.
+- **Introspection**:
+  - Exposes `off_delay`, `linked_entity`, and `time_remaining` in `extra_state_attributes`.
+
+### 4. Virtual Device Editor Updates
 - Added appliance load simulation settings directly to the Sensor card in the visual editor.
 - Added a pre-configured **Water Heater** device template with scheduled 10-minute hourly heating cycles.

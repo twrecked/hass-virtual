@@ -389,21 +389,45 @@ const TEMPLATES = [
   },
   {
     id: "security_camera",
-    name: "Security Camera",
-    description: "Virtual camera with snapshot and live HLS stream",
-    create: (name) => ({
-      name: name || "Front Door Camera",
-      entities: [
-        {
-          platform: "camera",
-          initial_value: "idle",
-          image_url: "",
-          stream_url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
-          persistent: true,
-          initial_availability: true,
-        },
-      ],
-    }),
+    name: "Security Camera with Motion & Sound",
+    description: "Virtual camera with live stream and auto-resetting motion & sound triggers",
+    create: (name) => {
+      const devName = name || "Front Door Camera";
+      return {
+        name: devName,
+        entities: [
+          {
+            platform: "camera",
+            name: devName,
+            initial_value: "idle",
+            image_url: "",
+            stream_url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+            persistent: true,
+            initial_availability: true,
+          },
+          {
+            platform: "binary_sensor",
+            name: `${devName} Motion`,
+            class: "motion",
+            initial_value: "off",
+            off_delay: 15,
+            linked_entity: devName,
+            persistent: true,
+            initial_availability: true,
+          },
+          {
+            platform: "binary_sensor",
+            name: `${devName} Sound`,
+            class: "sound",
+            initial_value: "off",
+            off_delay: 5,
+            linked_entity: devName,
+            persistent: true,
+            initial_availability: true,
+          },
+        ],
+      };
+    },
   },
   {
     id: "custom_text",
@@ -542,6 +566,10 @@ createApp({
             if (ent.fan_modes_str) {
               item.fan_modes = ent.fan_modes_str.split(",").map((s) => s.trim().toLowerCase()).filter((s) => s);
             }
+          }
+          if (ent.platform === "binary_sensor") {
+            if (ent.off_delay !== undefined && ent.off_delay !== "") item.off_delay = Number(ent.off_delay);
+            if (ent.linked_entity) item.linked_entity = ent.linked_entity;
           }
           if (ent.platform === "sensor") {
             if (ent.linked_switch) {
@@ -749,6 +777,8 @@ createApp({
             preset_modes_str: Array.isArray(item.preset_modes) ? item.preset_modes.join(", ") : (item.preset_modes || ""),
             fan_modes_str: Array.isArray(item.fan_modes) ? item.fan_modes.join(", ") : (item.fan_modes || ""),
             initial_volume: item.initial_volume !== undefined ? item.initial_volume : 0.5,
+            off_delay: item.off_delay,
+            linked_entity: item.linked_entity || "",
             linked_switch: item.linked_switch || "",
             standby_power: item.standby_power !== undefined ? item.standby_power : 0,
             active_power: item.active_power !== undefined ? item.active_power : 100,

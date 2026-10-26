@@ -329,7 +329,31 @@ Front Door:
     class: door
 ```
 
-*Controllable via the `virtual.turn_on`, `virtual.turn_off`, and `virtual.toggle` services.*
+#### Auto-Off Timeouts & Device Gating
+Binary sensors (such as motion, sound, or occupancy detectors) can automatically reset back to `off` after a configured duration, and optionally gate their activation to another device (such as a camera or power switch):
+
+```yaml
+Front Porch Camera:
+  - platform: camera
+    name: Porch Camera
+    image_url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=640"
+
+  - platform: binary_sensor
+    name: Porch Motion
+    class: motion
+    off_delay: 15                      # Automatically resets back to 'off' after 15 seconds
+    linked_entity: Porch Camera        # Can only trigger when Porch Camera is powered on
+
+  - platform: binary_sensor
+    name: Porch Sound
+    class: sound
+    off_delay: 5
+    linked_entity: Porch Camera
+```
+
+* `off_delay`: Duration in seconds before the sensor automatically turns back `off`. If triggered again while already active, the countdown timer resets and extends.
+* `linked_entity`: Sibling entity name or entity ID (e.g. `camera.porch_camera`, `switch.plug`). The binary sensor can only turn on when the linked entity is energized/on. If the linked entity powers off while motion is active, the binary sensor immediately clears to `off`.
+* *Controllable via `virtual.turn_on` (with optional `duration` override), `virtual.turn_off`, and `virtual.toggle`.*
 
 ---
 
@@ -643,9 +667,11 @@ Sets the availability state of any virtual entity.
   * `value`: Boolean (`true` or `false`)
 
 ### `virtual.turn_on`
-Turns on a virtual binary sensor.
+Turns on a virtual binary sensor, with an optional duration parameter to pulse the sensor for a specific number of seconds before resetting to off.
 
 * **Target**: Virtual binary sensor entities
+* **Fields**:
+  * `duration`: Optional seconds to stay on before resetting to off (overrides default `off_delay`).
 
 ### `virtual.turn_off`
 Turns off a virtual binary sensor.

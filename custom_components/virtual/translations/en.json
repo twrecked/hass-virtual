@@ -35,6 +35,10 @@
         "entity_id": {
           "name": "Entity Id",
           "description": "Name(s) of entities to set"
+        },
+        "duration": {
+          "name": "Duration",
+          "description": "Optional duration in seconds before resetting to off."
         }
       }
     },

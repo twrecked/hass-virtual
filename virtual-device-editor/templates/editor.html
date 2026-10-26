@@ -199,6 +199,18 @@
                     </div>
                   </template>
 
+                  <!-- Binary Sensor Auto-Off & Gating Settings -->
+                  <template v-if="entity.platform === 'binary_sensor'">
+                    <div class="form-group">
+                      <label>Auto-Off Delay (seconds)</label>
+                      <input v-model="entity.off_delay" type="number" step="1" class="form-control" placeholder="e.g. 15 (optional)" />
+                    </div>
+                    <div class="form-group">
+                      <label>Linked Entity (Gating)</label>
+                      <input v-model="entity.linked_entity" class="form-control" placeholder="e.g. Front Porch Camera" />
+                    </div>
+                  </template>
+
                   <!-- Unit of Measurement (Sensor/Number) -->
                   <div v-if="entity.platform === 'sensor' || entity.platform === 'number'" class="form-group">
                     <label>Unit of Measurement</label>

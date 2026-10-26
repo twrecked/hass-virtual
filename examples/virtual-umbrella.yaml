@@ -103,3 +103,20 @@ devices:
       cycle_duration: 600
       cycle_interval: 3600
       cycle_align: "hour"
+
+  # 10. Security Camera with Gated Motion & Sound Detection
+  Driveway Security:
+    - platform: camera
+      name: Driveway Camera
+      image_url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=640"
+      stream_url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    - platform: binary_sensor
+      name: Driveway Motion
+      class: motion
+      off_delay: 10
+      linked_entity: "Driveway Camera"
+    - platform: binary_sensor
+      name: Driveway Sound
+      class: sound
+      off_delay: 5
+      linked_entity: "Driveway Camera"

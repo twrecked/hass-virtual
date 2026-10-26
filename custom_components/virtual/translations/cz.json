@@ -35,6 +35,10 @@
         "entity_id": {
           "name": "Id Entity",
           "description": "Názvy entit, které se mají nastavit"
+        },
+        "duration": {
+          "name": "Duration",
+          "description": "Optional duration in seconds before resetting to off."
         }
       }
     },
