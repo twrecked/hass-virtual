@@ -1,3 +1,10 @@
+0.10.0-alpha.3:
+  Add virtual camera platform with snapshot image and live stream playback.
+  Support Picture Entity Cards with remote HTTP/HTTPS image URLs or local files.
+  Provide default Mux Big Buck Bunny HLS test stream for live camera testing.
+  Add embedded fallback offline JPEG placeholder.
+  Add virtual.set_image_url and virtual.set_stream_url services.
+  Update Virtual Device Editor with camera platform support and Security Camera template.
 0.10.0-alpha.2:
   Add virtual media_player platform with volume, mute, source selection, and silent TTS / play_media testing.
   Add virtual climate platform with target setpoints, presets, dynamic hvac_action calculation, and virtual.set_current_temperature service.
