@@ -4,10 +4,11 @@ _Virtual_ is a custom integration for [Home Assistant](https://www.home-assistan
 
 ![icon](images/virtual-icon.png)
 
-_Virtual_ provides support for 16 distinct entity platforms:
+_Virtual_ provides support for 17 distinct entity platforms:
 - **Alarm Control Panels**: Virtual security panels with arming/trigger delays and PIN codes.
 - **Binary Sensors**: Motion, presence, door, window, smoke, and moisture sensors.
 - **Buttons**: Stateless push-buttons to trigger automations and actions.
+- **Cameras**: Security and CCTV cameras with snapshot images, fallback test cards, and live HLS stream playback.
 - **Climate**: Virtual thermostats and HVAC units with target setpoints, presets, and dynamic heating/cooling action calculation.
 - **Covers**: Timed position-based blinds, garage doors, shutters, and shades.
 - **Device Trackers**: GPS coordinates and named location zones.
@@ -63,6 +64,7 @@ _Virtual_ provides support for 16 distinct entity platforms:
   - [Texts](#texts)
   - [Lights](#lights)
   - [Locks](#locks)
+  - [Cameras](#cameras)
   - [Media Players](#media-players)
   - [Fans](#fans)
   - [Covers](#covers)
@@ -77,6 +79,8 @@ _Virtual_ provides support for 16 distinct entity platforms:
   - [virtual.set](#virtualset)
   - [virtual.move](#virtualmove)
   - [virtual.set_current_temperature](#virtualset_current_temperature)
+  - [virtual.set_image_url](#virtualset_image_url)
+  - [virtual.set_stream_url](#virtualset_stream_url)
 
 ---
 
@@ -96,8 +100,8 @@ All entity states are maintained in-memory and can persist cleanly across Home A
 2. **Options Flow & Webhook Sync**:
    - Clicking **Configure** on any Virtual group in Home Assistant launches the visual editor preloaded with your YAML.
    * Clicking **Save & Return** in the editor writes your changes to disk and reloads the integration automatically via an authenticated webhook.
-3. **Major Platform Expansion (16 Supported Platforms)**:
-   - Added native support for `alarm_control_panel`, `button`, `climate`, `media_player`, `number`, `select`, `text`, and `valve` entities with standard Home Assistant device classes, units, and services.
+3. **Major Platform Expansion (17 Supported Platforms)**:
+   - Added native support for `alarm_control_panel`, `button`, `camera`, `climate`, `media_player`, `number`, `select`, `text`, and `valve` entities with standard Home Assistant device classes, units, and services.
 4. **Strict Home Assistant & Python Modernization**:
    - Entities now directly inherit from core entity classes (`NumberEntity`, `SensorEntity`), eliminating threadpool worker overhead.
    - State persistence and storage use Home Assistant's managed non-blocking `Store` helper and async executor, eliminating the external `aiofiles` dependency.
