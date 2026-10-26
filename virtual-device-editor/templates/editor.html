@@ -205,6 +205,43 @@
                     <input v-model="entity.unit_of_measurement" class="form-control" placeholder="e.g. °C, %, W" />
                   </div>
 
+                  <!-- Load Simulation Settings for Sensor -->
+                  <template v-if="entity.platform === 'sensor'">
+                    <div class="form-group" style="grid-column: span 2;">
+                      <label>Linked Switch (Appliance Simulation)</label>
+                      <input v-model="entity.linked_switch" class="form-control" placeholder="Sibling switch name or entity ID (e.g. TV Plug)" />
+                    </div>
+                    <template v-if="entity.linked_switch">
+                      <div class="form-group">
+                        <label>Standby Power (W)</label>
+                        <input v-model="entity.standby_power" type="number" step="0.1" class="form-control" placeholder="e.g. 2.5" />
+                      </div>
+                      <div class="form-group">
+                        <label>Active Power (W)</label>
+                        <input v-model="entity.active_power" type="number" step="0.1" class="form-control" placeholder="e.g. 120" />
+                      </div>
+                      <div class="form-group">
+                        <label>Cycle Duration (sec)</label>
+                        <input v-model="entity.cycle_duration" type="number" class="form-control" placeholder="e.g. 600 (optional)" />
+                      </div>
+                      <div class="form-group">
+                        <label>Cycle Interval (sec)</label>
+                        <input v-model="entity.cycle_interval" type="number" class="form-control" placeholder="e.g. 3600 (optional)" />
+                      </div>
+                      <div class="form-group">
+                        <label>Cycle Align</label>
+                        <select v-model="entity.cycle_align" class="form-control">
+                          <option value="hour">Top of Hour (:00)</option>
+                          <option value="interval">Interval from Startup</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label>Power Variance / Jitter (±W)</label>
+                        <input v-model="entity.variance" type="number" step="0.1" class="form-control" placeholder="e.g. 1.5" />
+                      </div>
+                    </template>
+                  </template>
+
                   <!-- Min / Max for Number -->
                   <template v-if="entity.platform === 'number'">
                     <div class="form-group">

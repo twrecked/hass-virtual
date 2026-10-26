@@ -141,6 +141,38 @@
           "description": "HLS, RTSP, or HTTP stream URL for the camera."
         }
       }
+    },
+    "set_load": {
+      "name": "Set Simulated Load",
+      "description": "Set the load state or power consumption of a simulated appliance power sensor.",
+      "fields": {
+        "entity_id": {
+          "name": "Entity Id",
+          "description": "Name(s) of entities to set"
+        },
+        "state": {
+          "name": "Load State",
+          "description": "Appliance operating state (active, standby, off, or auto)."
+        },
+        "power": {
+          "name": "Power",
+          "description": "Optional power wattage override."
+        }
+      }
+    },
+    "run_cycle": {
+      "name": "Run Load Cycle",
+      "description": "Trigger an active appliance cycle for a specified duration.",
+      "fields": {
+        "entity_id": {
+          "name": "Entity Id",
+          "description": "Name(s) of entities to set"
+        },
+        "duration": {
+          "name": "Duration",
+          "description": "Cycle duration in seconds."
+        }
+      }
     }
   }
 }

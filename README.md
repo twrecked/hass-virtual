@@ -81,6 +81,8 @@ _Virtual_ provides support for 17 distinct entity platforms:
   - [virtual.set_current_temperature](#virtualset_current_temperature)
   - [virtual.set_image_url](#virtualset_image_url)
   - [virtual.set_stream_url](#virtualset_stream_url)
+  - [virtual.set_load](#virtualset_load)
+  - [virtual.run_cycle](#virtualrun_cycle)
 
 ---
 
@@ -347,7 +349,7 @@ System Controls:
 
 ### Sensors
 
-Simulates numeric or string sensor entities. Standard device classes automatically assign appropriate units (`temperature` -> `°C`, `humidity` -> `%`, `power` -> `kW`, `battery` -> `%`).
+Simulates numeric or string sensor entities. Standard device classes automatically assign appropriate units (`temperature` -> `°C`, `humidity` -> `%`, `power` -> `W`, `battery` -> `%`).
 
 ```yaml
 Outdoor Weather:
@@ -357,7 +359,55 @@ Outdoor Weather:
     unit_of_measurement: '°C'
 ```
 
-*Controllable via the `virtual.set` service.*
+#### Appliance Load Simulation & Power Profiling
+Virtual sensors can simulate realistic appliance loads linked to a controlling switch (e.g. Sonoff smart plugs or relay-switched water heaters). The sensor automatically drops to `0 W` when the linked switch is turned `off`, and simulates `standby` vs `active` power draws with optional noise/jitter when the switch is energized.
+
+**Example 1: Smart Plug with TV Load**
+```yaml
+Living Room TV Outlet:
+  - platform: switch
+    name: TV Plug
+    class: outlet
+    initial_value: "on"
+  - platform: sensor
+    name: TV Power
+    class: power
+    unit_of_measurement: "W"
+    linked_switch: "TV Plug"
+    standby_power: 3.5
+    active_power: 140.0
+    initial_load: "standby"
+    variance: 1.5
+```
+
+**Example 2: Water Heater with Recurring Scheduled Duty Cycle**
+```yaml
+Utility Water Heater:
+  - platform: switch
+    name: Water Heater Switch
+    initial_value: "on"
+  - platform: sensor
+    name: Water Heater Power
+    class: power
+    unit_of_measurement: "W"
+    linked_switch: "Water Heater Switch"
+    standby_power: 0.0
+    active_power: 2400.0
+    cycle_duration: 600      # 10 minutes active
+    cycle_interval: 3600     # Repeats every 1 hour
+    cycle_align: "hour"      # Aligned to :00 on the clock
+```
+
+* `linked_switch`: Name or entity ID of the switch supplying mains power.
+* `standby_power`: Numeric wattage when switch is energized and appliance is idling.
+* `active_power`: Numeric wattage when appliance is active/running.
+* `initial_load`: Initial appliance state (`standby`, `active`, or `off`).
+* `variance`: Optional random uniform jitter (`±W`) so power graphs look authentic.
+* `cycle_duration`: Duration in seconds of the active load cycle.
+* `cycle_interval`: Frequency in seconds for recurring cycles.
+* `cycle_align`: `"hour"` (aligns active phase with `:00` past the hour) or `"interval"` (relative to startup).
+* *Exposes `load_state`, `control_mode`, `cycle_active`, `cycle_remaining`, and `next_cycle_start` in attributes for automated testing in AppDaemon and automations.*
+* *Controllable via `virtual.set`, `virtual.set_load`, and `virtual.run_cycle`.*
 
 ---
 
@@ -643,3 +693,18 @@ Sets the live stream URL for a virtual camera.
 * **Target**: Virtual camera entities
 * **Fields**:
   * `stream_url`: HLS, RTSP, or HTTP stream URL (or `""` / `none` to disable streaming).
+
+### `virtual.set_load`
+Sets the load state (`active`, `standby`, `off`, or `auto` to resume scheduled duty cycles) or injects custom power into an appliance power sensor.
+
+* **Target**: Virtual power sensor entities
+* **Fields**:
+  * `state`: Operating state (`active`, `standby`, `off`, `auto`).
+  * `power`: Optional wattage override.
+
+### `virtual.run_cycle`
+Triggers an active appliance load cycle for a specified duration (in seconds), after which the sensor automatically returns to standby or resumes its background schedule.
+
+* **Target**: Virtual power sensor entities
+* **Fields**:
+  * `duration`: Run duration in seconds (optional; defaults to `cycle_duration`).

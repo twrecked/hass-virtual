@@ -228,6 +228,38 @@ const TEMPLATES = [
     }),
   },
   {
+    id: "water_heater",
+    name: "Water Heater",
+    description: "Switch with scheduled 10-min hourly heating cycle and power simulation",
+    create: (name) => ({
+      name: name || "Water Heater",
+      entities: [
+        {
+          platform: "switch",
+          name: "Water Heater Switch",
+          class: "switch",
+          initial_value: "on",
+          persistent: true,
+          initial_availability: true,
+        },
+        {
+          platform: "sensor",
+          name: "Water Heater Power",
+          class: "power",
+          unit_of_measurement: "W",
+          linked_switch: "Water Heater Switch",
+          standby_power: 0,
+          active_power: 2400,
+          cycle_duration: 600,
+          cycle_interval: 3600,
+          cycle_align: "hour",
+          persistent: true,
+          initial_availability: true,
+        },
+      ],
+    }),
+  },
+  {
     id: "weather_station",
     name: "Weather Station",
     description: "Temperature, humidity, and atmospheric pressure sensors",
@@ -511,6 +543,18 @@ createApp({
               item.fan_modes = ent.fan_modes_str.split(",").map((s) => s.trim().toLowerCase()).filter((s) => s);
             }
           }
+          if (ent.platform === "sensor") {
+            if (ent.linked_switch) {
+              item.linked_switch = ent.linked_switch;
+              if (ent.standby_power !== undefined && ent.standby_power !== "") item.standby_power = Number(ent.standby_power);
+              if (ent.active_power !== undefined && ent.active_power !== "") item.active_power = Number(ent.active_power);
+              if (ent.initial_load) item.initial_load = ent.initial_load;
+              if (ent.variance !== undefined && ent.variance !== "") item.variance = Number(ent.variance);
+              if (ent.cycle_duration !== undefined && ent.cycle_duration !== "") item.cycle_duration = Number(ent.cycle_duration);
+              if (ent.cycle_interval !== undefined && ent.cycle_interval !== "") item.cycle_interval = Number(ent.cycle_interval);
+              if (ent.cycle_align) item.cycle_align = ent.cycle_align;
+            }
+          }
           if (ent.platform === "camera") {
             if (ent.image_url) item.image_url = ent.image_url;
             if (ent.stream_url) item.stream_url = ent.stream_url;
@@ -705,6 +749,14 @@ createApp({
             preset_modes_str: Array.isArray(item.preset_modes) ? item.preset_modes.join(", ") : (item.preset_modes || ""),
             fan_modes_str: Array.isArray(item.fan_modes) ? item.fan_modes.join(", ") : (item.fan_modes || ""),
             initial_volume: item.initial_volume !== undefined ? item.initial_volume : 0.5,
+            linked_switch: item.linked_switch || "",
+            standby_power: item.standby_power !== undefined ? item.standby_power : 0,
+            active_power: item.active_power !== undefined ? item.active_power : 100,
+            initial_load: item.initial_load || "standby",
+            variance: item.variance !== undefined ? item.variance : 0,
+            cycle_duration: item.cycle_duration,
+            cycle_interval: item.cycle_interval,
+            cycle_align: item.cycle_align || "hour",
             image_url: item.image_url || "",
             stream_url: item.stream_url !== undefined ? item.stream_url : (item.platform === "camera" ? "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" : ""),
             source_list_str: Array.isArray(item.source_list) ? item.source_list.join(", ") : (item.source_list || ""),

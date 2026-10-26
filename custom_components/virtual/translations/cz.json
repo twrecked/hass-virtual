@@ -141,6 +141,38 @@
           "description": "URL HLS, RTSP nebo HTTP streamu pro kameru."
         }
       }
+    },
+    "set_load": {
+      "name": "Nastavit simulovanou zátěž",
+      "description": "Nastaví stav zátěže nebo spotřebu simulovaného senzoru příkonu.",
+      "fields": {
+        "entity_id": {
+          "name": "Id Entity",
+          "description": "Názvy entit, které se mají nastavit"
+        },
+        "state": {
+          "name": "Stav zátěže",
+          "description": "Provozní stav spotřebiče (active, standby, off nebo auto)."
+        },
+        "power": {
+          "name": "Příkon",
+          "description": "Volitelný přepis příkonu ve Wattech."
+        }
+      }
+    },
+    "run_cycle": {
+      "name": "Spustit cyklus zátěže",
+      "description": "Spustí aktivní cyklus spotřebiče na zadanou dobu.",
+      "fields": {
+        "entity_id": {
+          "name": "Id Entity",
+          "description": "Názvy entit, které se mají nastavit"
+        },
+        "duration": {
+          "name": "Doba trvání",
+          "description": "Doba trvání cyklu v sekundách."
+        }
+      }
     }
   }
 }

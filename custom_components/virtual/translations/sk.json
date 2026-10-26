@@ -141,6 +141,38 @@
           "description": "URL HLS, RTSP alebo HTTP streamu pre kameru."
         }
       }
+    },
+    "set_load": {
+      "name": "Nastaviť simulovanú záťaž",
+      "description": "Nastaví stav záťaže alebo spotrebu simulovaného snímača príkonu.",
+      "fields": {
+        "entity_id": {
+          "name": "Id entity",
+          "description": "Názvy entít, ktoré sa majú nastaviť"
+        },
+        "state": {
+          "name": "Stav záťaže",
+          "description": "Prevádzkový stav spotrebiča (active, standby, off alebo auto)."
+        },
+        "power": {
+          "name": "Príkon",
+          "description": "Voliteľný prepis príkonu vo Wattoch."
+        }
+      }
+    },
+    "run_cycle": {
+      "name": "Spustiť cyklus záťaže",
+      "description": "Spustí aktívny cyklus spotrebiča na zadaný čas.",
+      "fields": {
+        "entity_id": {
+          "name": "Id entity",
+          "description": "Názvy entít, ktoré sa majú nastaviť"
+        },
+        "duration": {
+          "name": "Doba trvania",
+          "description": "Doba trvania cyklu v sekundách."
+        }
+      }
     }
   }
 }

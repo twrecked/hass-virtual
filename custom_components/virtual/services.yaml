@@ -132,3 +132,53 @@ set_stream_url:
       required: true
       selector:
         text:
+
+set_load:
+  name: Set Simulated Load
+  description: Set the load state or power consumption of a simulated appliance power sensor.
+  target:
+    entity:
+      integration: virtual
+      domain: sensor
+  fields:
+    state:
+      name: Load State
+      description: Appliance operating state ("active", "standby", "off", or "auto" to resume schedule).
+      example: "active"
+      required: true
+      selector:
+        select:
+          options:
+            - "active"
+            - "standby"
+            - "off"
+            - "auto"
+    power:
+      name: Power
+      description: Optional wattage override to set when in active state.
+      example: 2400
+      required: false
+      selector:
+        number:
+          min: 0
+          mode: box
+          unit_of_measurement: "W"
+
+run_cycle:
+  name: Run Load Cycle
+  description: Trigger an active appliance run cycle for a specified duration, after which it automatically reverts to standby or scheduled mode.
+  target:
+    entity:
+      integration: virtual
+      domain: sensor
+  fields:
+    duration:
+      name: Duration
+      description: Run duration in seconds.
+      example: 60
+      required: false
+      selector:
+        number:
+          min: 1
+          mode: box
+          unit_of_measurement: "s"

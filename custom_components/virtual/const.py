@@ -77,21 +77,41 @@ CONF_OPEN_CLOSE_TICK = "open_close_tick"
 CONF_PERSISTENT = "persistent"
 CONF_IMAGE_URL = "image_url"
 CONF_STREAM_URL = "stream_url"
+CONF_LINKED_SWITCH = "linked_switch"
+CONF_STANDBY_POWER = "standby_power"
+CONF_ACTIVE_POWER = "active_power"
+CONF_INITIAL_LOAD = "initial_load"
+CONF_VARIANCE = "variance"
+CONF_CYCLE_DURATION = "cycle_duration"
+CONF_CYCLE_INTERVAL = "cycle_interval"
+CONF_CYCLE_ALIGN = "cycle_align"
 CONF_YAML_CONFIG = "yaml_config"
 CONF_EDITOR_URL = "editor_url"
 
 ATTR_IMAGE_URL = "image_url"
 ATTR_STREAM_URL = "stream_url"
+ATTR_LOAD_STATE = "load_state"
+ATTR_CONTROL_MODE = "control_mode"
+ATTR_CYCLE_ACTIVE = "cycle_active"
+ATTR_CYCLE_REMAINING = "cycle_remaining"
+ATTR_NEXT_CYCLE_START = "next_cycle_start"
+ATTR_LINKED_SWITCH = "linked_switch"
 
 SERVICE_SET_CURRENT_TEMPERATURE = "set_current_temperature"
 SERVICE_SET_IMAGE_URL = "set_image_url"
 SERVICE_SET_STREAM_URL = "set_stream_url"
+SERVICE_SET_LOAD = "set_load"
+SERVICE_RUN_CYCLE = "run_cycle"
 
 DEFAULT_AVAILABILITY = True
 DEFAULT_PERSISTENT = True
 DEFAULT_CAMERA_VALUE = "idle"
 DEFAULT_IMAGE_URL = ""
 DEFAULT_STREAM_URL = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+DEFAULT_STANDBY_POWER = 0.0
+DEFAULT_ACTIVE_POWER = 100.0
+DEFAULT_INITIAL_LOAD = "standby"
+DEFAULT_CYCLE_ALIGN = "hour"
 DEFAULT_EDITOR_URL = "https://virtual-dot-twrecked-tools.nn.r.appspot.com"
 
 IMPORTED_GROUP_NAME = "imported"

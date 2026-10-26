@@ -70,3 +70,36 @@ devices:
       initial_value: idle
       image_url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=640"
       stream_url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+
+  # 8. Smart Plug with Simulated TV Load
+  Living Room TV Outlet:
+    - platform: switch
+      name: TV Plug
+      class: outlet
+      initial_value: "on"
+    - platform: sensor
+      name: TV Power
+      class: power
+      unit_of_measurement: "W"
+      linked_switch: "TV Plug"
+      standby_power: 3.5
+      active_power: 140.0
+      initial_load: "standby"
+      variance: 1.5
+
+  # 9. Water Heater with Scheduled Hourly Heating Cycle
+  Utility Water Heater:
+    - platform: switch
+      name: Water Heater Switch
+      class: switch
+      initial_value: "on"
+    - platform: sensor
+      name: Water Heater Power
+      class: power
+      unit_of_measurement: "W"
+      linked_switch: "Water Heater Switch"
+      standby_power: 0.0
+      active_power: 2400.0
+      cycle_duration: 600
+      cycle_interval: 3600
+      cycle_align: "hour"
