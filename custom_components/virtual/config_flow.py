@@ -43,7 +43,7 @@ class VirtualFlowHandler(config_entries.ConfigFlow, domain=COMPONENT_DOMAIN):
             if entry.data.get(ATTR_FILE_NAME) == user_input.get(ATTR_FILE_NAME):
                 raise FileNameAlreadyUsed
         return {
-            "title": f"{user_input[ATTR_GROUP_NAME]} - {COMPONENT_DOMAIN}"
+            "title": user_input[ATTR_GROUP_NAME]
         }
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> config_entries.ConfigFlowResult:
