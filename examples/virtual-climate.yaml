@@ -1,0 +1,50 @@
+version: 1
+devices:
+  # 1. Closed-Loop Thermal HVAC with Ambient Weather Sync
+  Main House HVAC:
+    - platform: climate
+      name: Main House Thermostat
+      initial_value: "heat"
+      initial_temperature: 21.0
+      initial_current_temperature: 20.0
+      indoor_sensor: "Main Indoor Temp"
+      outdoor_sensor: "Main Outdoor Temp"
+      power_sensor: "Main HVAC Power"
+      sim_speed: 1.0
+      house_leakage_rate: 0.3
+    - platform: sensor
+      name: Main Indoor Temp
+      class: temperature
+      unit_of_measurement: "°C"
+      initial_value: "20.0"
+    - platform: sensor
+      name: Main Outdoor Temp
+      class: temperature
+      unit_of_measurement: "°C"
+      initial_value: "4.0"
+    - platform: sensor
+      name: Main HVAC Power
+      class: power
+      unit_of_measurement: "W"
+      initial_value: "1800"
+
+  # 2. Standalone Simple Thermostat
+  Basic Thermostat:
+    - platform: climate
+      name: Basic Thermostat
+      initial_value: heat
+      initial_temperature: 21
+      initial_current_temperature: 19.5
+      min_temp: 10
+      max_temp: 32
+      target_temperature_step: 0.5
+      hvac_modes:
+        - "off"
+        - heat
+        - cool
+        - auto
+      preset_modes:
+        - none
+        - eco
+        - comfort
+        - away

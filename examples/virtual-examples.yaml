@@ -1,43 +1,24 @@
 version: 1
 devices:
-  Test Umbrella:
-    # 1. Virtual Thermostat / Climate
-    - platform: climate
-      name: Umbrella Thermostat
-      initial_value: heat
-      initial_temperature: 21
-      initial_current_temperature: 19.5
-      min_temp: 10
-      max_temp: 32
-      target_temperature_step: 0.5
-      hvac_modes:
-        - 'off'
-        - heat
-        - cool
-        - auto
-      preset_modes:
-        - none
-        - eco
-        - comfort
-        - away
-
-    # 2. Virtual Alarm Control Panel
+  # Multi-entity showcase device
+  Example Devices:
+    # 1. Virtual Alarm Control Panel
     - platform: alarm_control_panel
-      name: Umbrella Security
+      name: Example Security
       initial_value: disarmed
       code: "1234"
       code_arm_required: false
       arming_time: 10
       trigger_time: 10
 
-    # 3. Virtual Button
+    # 2. Virtual Button
     - platform: button
-      name: Umbrella Action
+      name: Example Action
       class: restart
 
-    # 4. Virtual Select Dropdown
+    # 3. Virtual Select Dropdown
     - platform: select
-      name: Umbrella Mode
+      name: Example Mode
       options:
         - Home
         - Away
@@ -45,17 +26,17 @@ devices:
         - Vacation
       initial_value: Home
 
-    # 5. Virtual Text Input
+    # 4. Virtual Text Input
     - platform: text
-      name: Umbrella Message
+      name: Example Message
       initial_value: "Testing Tier 1 and Tier 2 devices"
       min: 0
       max: 255
       mode: text
 
-    # 6. Virtual Media Player
+    # 5. Virtual Media Player
     - platform: media_player
-      name: Umbrella Speaker
+      name: Example Speaker
       class: speaker
       initial_value: idle
       initial_volume: 0.5
@@ -64,14 +45,14 @@ devices:
         - Spotify
         - AirPlay
 
-    # 7. Virtual Camera
+    # 6. Virtual Camera
     - platform: camera
-      name: Umbrella Camera
+      name: Example Camera
       initial_value: idle
       image_url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=640"
       stream_url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
 
-  # 8. Smart Plug with Simulated TV Load
+  # 7. Smart Plug with Simulated TV Load
   Living Room TV Outlet:
     - platform: switch
       name: TV Plug
@@ -87,7 +68,7 @@ devices:
       initial_load: "standby"
       variance: 1.5
 
-  # 9. Water Heater with Scheduled Hourly Heating Cycle
+  # 8. Water Heater with Scheduled Hourly Heating Cycle
   Utility Water Heater:
     - platform: switch
       name: Water Heater Switch
@@ -104,7 +85,7 @@ devices:
       cycle_interval: 3600
       cycle_align: "hour"
 
-  # 10. Security Camera with Gated Motion & Sound Detection
+  # 9. Security Camera with Gated Motion & Sound Detection
   Driveway Security:
     - platform: camera
       name: Driveway Camera
@@ -120,31 +101,3 @@ devices:
       class: sound
       off_delay: 5
       linked_entity: "Driveway Camera"
-
-  # 11. Closed-Loop Thermal HVAC with Ambient Weather Sync
-  Main House HVAC:
-    - platform: climate
-      name: Main House Thermostat
-      initial_value: "heat"
-      initial_temperature: 21.0
-      initial_current_temperature: 20.0
-      indoor_sensor: "Main Indoor Temp"
-      outdoor_sensor: "Main Outdoor Temp"
-      power_sensor: "Main HVAC Power"
-      sim_speed: 1.0
-      house_leakage_rate: 0.3
-    - platform: sensor
-      name: Main Indoor Temp
-      class: temperature
-      unit_of_measurement: "°C"
-      initial_value: "20.0"
-    - platform: sensor
-      name: Main Outdoor Temp
-      class: temperature
-      unit_of_measurement: "°C"
-      initial_value: "4.0"
-    - platform: sensor
-      name: Main HVAC Power
-      class: power
-      unit_of_measurement: "W"
-      initial_value: "1800"
