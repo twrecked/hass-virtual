@@ -60,11 +60,15 @@ devices:
   # IN-WALL LIGHT SWITCHES (STANDALONE DEVICES)
   # ==========================================
 
-  # 7. Living Room Switch
-  Living Room Light Switch:
-    - platform: switch
-      name: Living Room Switch
+  # 7. Living Room In-Wall Dimmer
+  Living Room Dimmer:
+    - platform: light
+      name: Living Room Light
       initial_value: "off"
+      support_brightness: true
+      initial_brightness: 254
+      support_color: false
+      support_color_temp: false
 
   # 8. Kitchen Switch
   Kitchen Light Switch:
