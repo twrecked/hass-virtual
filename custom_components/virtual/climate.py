@@ -307,6 +307,7 @@ class VirtualClimate(VirtualEntity, ClimateEntity):
         self._outdoor_temp: float = 20.0
         self._hvac_stage: str = "idle"
         self._hvac_power: float = 0.0
+        self._sim_current_temp: float = float(config.get(CONF_INITIAL_CURRENT_TEMPERATURE, DEFAULT_CURRENT_TEMP))
         self._last_tick_time: datetime.datetime | None = None
         self._tick_timer_cancel: Callable[[], None] | None = None
         self._outdoor_unsub: Callable[[], None] | None = None
@@ -385,6 +386,7 @@ class VirtualClimate(VirtualEntity, ClimateEntity):
         self._attr_current_temperature = float(config.get(CONF_INITIAL_CURRENT_TEMPERATURE, DEFAULT_CURRENT_TEMP))
         self._attr_preset_mode = self._attr_preset_modes[0] if self._attr_preset_modes else None
         self._attr_fan_mode = self._attr_fan_modes[0] if self._attr_fan_modes else None
+        self._sim_current_temp = float(self._attr_current_temperature)
         self._attr_hvac_action = self._calculate_hvac_action()
         self._hvac_stage, _, self._hvac_power = self._evaluate_hvac_stage_and_power()
 
@@ -417,6 +419,7 @@ class VirtualClimate(VirtualEntity, ClimateEntity):
 
         self._attr_preset_mode = state.attributes.get(ATTR_PRESET_MODE)
         self._attr_fan_mode = state.attributes.get(ATTR_FAN_MODE)
+        self._sim_current_temp = float(self._attr_current_temperature)
         self._attr_hvac_action = self._calculate_hvac_action()
 
         restored_speed = state.attributes.get(ATTR_SIM_SPEED)
@@ -478,7 +481,10 @@ class VirtualClimate(VirtualEntity, ClimateEntity):
 
         dt_hours = (dt_seconds * self._sim_speed) / 3600.0
 
-        cur_temp = self._attr_current_temperature
+        if self._sim_current_temp is None:
+            self._sim_current_temp = float(self._attr_current_temperature)
+
+        cur_temp = self._sim_current_temp
         delta_ambient = self._outdoor_temp - cur_temp
 
         # Passive heat transfer toward outdoor temperature
@@ -491,7 +497,7 @@ class VirtualClimate(VirtualEntity, ClimateEntity):
         self._hvac_power = power
         dt_hvac = hvac_rate * dt_hours
 
-        # Net temperature computation
+        # Net temperature computation (unrounded accumulator)
         new_temp = cur_temp + dt_leak + dt_hvac
 
         # Clamp: passive leakage alone cannot cross ambient outdoor temp
@@ -503,7 +509,8 @@ class VirtualClimate(VirtualEntity, ClimateEntity):
 
         # Clamp within thermostat hardware limits
         new_temp = max(self._attr_min_temp, min(self._attr_max_temp, new_temp))
-        self._attr_current_temperature = round(new_temp, 2)
+        self._sim_current_temp = new_temp
+        self._attr_current_temperature = round(new_temp, 1)
         self._attr_hvac_action = self._calculate_hvac_action()
         self._update_attributes()
         self.async_write_ha_state()
@@ -512,7 +519,7 @@ class VirtualClimate(VirtualEntity, ClimateEntity):
         if self._indoor_sensor_id:
             try:
                 indoor_ent = get_entity_from_domain(self.hass, "sensor", self._indoor_sensor_id)
-                indoor_ent.set(str(round(self._attr_current_temperature, 1)))
+                indoor_ent.set(str(self._attr_current_temperature))
             except Exception:
                 pass
 
@@ -646,6 +653,7 @@ class VirtualClimate(VirtualEntity, ClimateEntity):
         """Update current ambient temperature directly."""
         _LOGGER.debug(f"Setting current temperature of {self.name} to {temperature}")
         self._attr_current_temperature = float(temperature)
+        self._sim_current_temp = float(self._attr_current_temperature)
         self._attr_hvac_action = self._calculate_hvac_action()
         self._hvac_stage, _, self._hvac_power = self._evaluate_hvac_stage_and_power()
         self._update_attributes()

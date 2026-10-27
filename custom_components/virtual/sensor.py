@@ -203,10 +203,7 @@ class VirtualSensor(VirtualEntity, SensorEntity):
         self._cycle_align: str = str(config.get(CONF_CYCLE_ALIGN, DEFAULT_CYCLE_ALIGN)).lower()
 
         self._is_load_simulation: bool = bool(
-            self._linked_switch_config
-            or self._cycle_interval is not None
-            or config.get(CONF_ACTIVE_POWER) is not None
-            or (self._attr_device_class and str(self._attr_device_class).lower() == "power" and self._linked_switch_config)
+            self._linked_switch_config or self._cycle_interval is not None
         )
 
         self._linked_switch_id: str | None = None
