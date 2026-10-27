@@ -65,8 +65,18 @@ DEFAULT_INITIAL_BRIGHTNESS = 255
 DEFAULT_SUPPORT_COLOR = False
 DEFAULT_INITIAL_COLOR = [0, 100]
 DEFAULT_SUPPORT_COLOR_TEMP = False
-DEFAULT_INITIAL_COLOR_TEMP = 240
+DEFAULT_INITIAL_COLOR_TEMP = 2700
 DEFAULT_SUPPORT_WHITE_VALUE = False
+
+def _color_temp_to_kelvin(val: Any) -> int:
+    """Convert color temperature to Kelvin, handling legacy mireds if <= 500."""
+    num = int(val)
+    if num <= 500:
+        if num <= 0:
+            return DEFAULT_INITIAL_COLOR_TEMP
+        # Convert mireds to Kelvin: K = 1,000,000 / mireds
+        return int(1_000_000 / num)
+    return num
 DEFAULT_INITIAL_WHITE_VALUE = 240
 DEFAULT_SUPPORT_EFFECT = False
 DEFAULT_INITIAL_EFFECT = "none"
@@ -78,7 +88,7 @@ BASE_SCHEMA = virtual_schema(DEFAULT_LIGHT_VALUE, {
     vol.Optional(CONF_SUPPORT_COLOR, default=DEFAULT_SUPPORT_COLOR): cv.boolean,
     vol.Optional(CONF_INITIAL_COLOR, default=DEFAULT_INITIAL_COLOR): cv.ensure_list,
     vol.Optional(CONF_SUPPORT_COLOR_TEMP, default=DEFAULT_SUPPORT_COLOR_TEMP): cv.boolean,
-    vol.Optional(CONF_INITIAL_COLOR_TEMP, default=DEFAULT_INITIAL_COLOR_TEMP): cv.byte,
+    vol.Optional(CONF_INITIAL_COLOR_TEMP, default=DEFAULT_INITIAL_COLOR_TEMP): vol.All(vol.Coerce(int), _color_temp_to_kelvin),
     vol.Optional(CONF_SUPPORT_WHITE_VALUE, default=DEFAULT_SUPPORT_WHITE_VALUE): cv.boolean,
     vol.Optional(CONF_INITIAL_WHITE_VALUE, default=DEFAULT_INITIAL_WHITE_VALUE): cv.byte,
     vol.Optional(CONF_SUPPORT_EFFECT, default=DEFAULT_SUPPORT_EFFECT): cv.boolean,
@@ -166,6 +176,8 @@ class VirtualLight(VirtualEntity, LightEntity):
 
         if config.get(CONF_SUPPORT_COLOR_TEMP):
             self._attr_supported_color_modes.add(ColorMode.COLOR_TEMP)
+            self._attr_min_color_temp_kelvin = 2000
+            self._attr_max_color_temp_kelvin = 6535
         if config.get(CONF_SUPPORT_COLOR):
             self._attr_supported_color_modes.add(ColorMode.HS)
         if config.get(CONF_SUPPORT_BRIGHTNESS):
