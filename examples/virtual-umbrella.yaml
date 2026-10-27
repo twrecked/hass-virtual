@@ -120,3 +120,31 @@ devices:
       class: sound
       off_delay: 5
       linked_entity: "Driveway Camera"
+
+  # 11. Closed-Loop Thermal HVAC with Ambient Weather Sync
+  Main House HVAC:
+    - platform: climate
+      name: Main House Thermostat
+      initial_value: "heat"
+      initial_temperature: 21.0
+      initial_current_temperature: 20.0
+      indoor_sensor: "Main Indoor Temp"
+      outdoor_sensor: "Main Outdoor Temp"
+      power_sensor: "Main HVAC Power"
+      sim_speed: 1.0
+      house_leakage_rate: 0.3
+    - platform: sensor
+      name: Main Indoor Temp
+      class: temperature
+      unit_of_measurement: "°C"
+      initial_value: "20.0"
+    - platform: sensor
+      name: Main Outdoor Temp
+      class: temperature
+      unit_of_measurement: "°C"
+      initial_value: "4.0"
+    - platform: sensor
+      name: Main HVAC Power
+      class: power
+      unit_of_measurement: "W"
+      initial_value: "1800"

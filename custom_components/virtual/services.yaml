@@ -193,3 +193,23 @@ run_cycle:
           min: 1
           mode: box
           unit_of_measurement: "s"
+
+set_sim_speed:
+  name: Set Simulation Speed
+  description: Adjust the simulation speed multiplier for a virtual climate entity with thermal modeling.
+  target:
+    entity:
+      integration: virtual
+      domain: climate
+  fields:
+    speed:
+      name: Speed Multiplier
+      description: Simulation acceleration multiplier (e.g. 1.0 for real-time, 10.0 for 10x speed).
+      example: 10.0
+      required: true
+      selector:
+        number:
+          min: 0.1
+          max: 1000
+          step: 0.5
+          mode: box

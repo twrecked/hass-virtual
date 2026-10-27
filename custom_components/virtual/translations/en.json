@@ -177,6 +177,20 @@
           "description": "Cycle duration in seconds."
         }
       }
+    },
+    "set_sim_speed": {
+      "name": "Set Simulation Speed",
+      "description": "Adjust the simulation speed multiplier for virtual climate thermal modeling.",
+      "fields": {
+        "entity_id": {
+          "name": "Entity Id",
+          "description": "Name(s) of entities to set"
+        },
+        "speed": {
+          "name": "Speed Multiplier",
+          "description": "Simulation acceleration multiplier (e.g. 1.0 for real-time, 10.0 for 10x)."
+        }
+      }
     }
   }
 }

@@ -273,6 +273,60 @@ const TEMPLATES = [
     }),
   },
   {
+    id: "thermal_hvac",
+    name: "Thermal House HVAC",
+    description: "Thermostat with indoor temp, outdoor weather sync, and HVAC power tracking",
+    create: (name) => {
+      const devName = name || "House HVAC";
+      return {
+        name: devName,
+        entities: [
+          {
+            platform: "climate",
+            name: `${devName} Thermostat`,
+            initial_value: "heat",
+            initial_temperature: 21.0,
+            initial_current_temperature: 20.0,
+            indoor_sensor: `${devName} Indoor Temp`,
+            outdoor_sensor: `${devName} Outdoor Temp`,
+            power_sensor: `${devName} Power`,
+            sim_speed: 1.0,
+            house_leakage_rate: 0.3,
+            persistent: true,
+            initial_availability: true,
+          },
+          {
+            platform: "sensor",
+            name: `${devName} Indoor Temp`,
+            class: "temperature",
+            unit_of_measurement: "°C",
+            initial_value: "20.0",
+            persistent: true,
+            initial_availability: true,
+          },
+          {
+            platform: "sensor",
+            name: `${devName} Outdoor Temp`,
+            class: "temperature",
+            unit_of_measurement: "°C",
+            initial_value: "5.0",
+            persistent: true,
+            initial_availability: true,
+          },
+          {
+            platform: "sensor",
+            name: `${devName} Power`,
+            class: "power",
+            unit_of_measurement: "W",
+            initial_value: "1800",
+            persistent: true,
+            initial_availability: true,
+          },
+        ],
+      };
+    },
+  },
+  {
     id: "smart_tv",
     name: "Smart Television",
     description: "Virtual TV with volume control and selectable HDMI/App sources",
@@ -566,6 +620,11 @@ createApp({
             if (ent.fan_modes_str) {
               item.fan_modes = ent.fan_modes_str.split(",").map((s) => s.trim().toLowerCase()).filter((s) => s);
             }
+            if (ent.indoor_sensor) item.indoor_sensor = ent.indoor_sensor;
+            if (ent.outdoor_sensor) item.outdoor_sensor = ent.outdoor_sensor;
+            if (ent.power_sensor) item.power_sensor = ent.power_sensor;
+            if (ent.sim_speed !== undefined && ent.sim_speed !== "") item.sim_speed = Number(ent.sim_speed);
+            if (ent.house_leakage_rate !== undefined && ent.house_leakage_rate !== "") item.house_leakage_rate = Number(ent.house_leakage_rate);
           }
           if (ent.platform === "binary_sensor") {
             if (ent.off_delay !== undefined && ent.off_delay !== "") item.off_delay = Number(ent.off_delay);
@@ -773,6 +832,11 @@ createApp({
             initial_temperature: item.initial_temperature,
             initial_current_temperature: item.initial_current_temperature,
             target_temperature_step: item.target_temperature_step,
+            indoor_sensor: item.indoor_sensor || "",
+            outdoor_sensor: item.outdoor_sensor || "",
+            power_sensor: item.power_sensor || "",
+            sim_speed: item.sim_speed,
+            house_leakage_rate: item.house_leakage_rate,
             hvac_modes_str: Array.isArray(item.hvac_modes) ? item.hvac_modes.join(", ") : (item.hvac_modes || ""),
             preset_modes_str: Array.isArray(item.preset_modes) ? item.preset_modes.join(", ") : (item.preset_modes || ""),
             fan_modes_str: Array.isArray(item.fan_modes) ? item.fan_modes.join(", ") : (item.fan_modes || ""),

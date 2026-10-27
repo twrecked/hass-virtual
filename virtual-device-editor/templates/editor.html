@@ -328,6 +328,28 @@
                       <label>Preset Modes (Optional)</label>
                       <input v-model="entity.preset_modes_str" class="form-control" placeholder="none, eco, comfort, away" />
                     </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                      <label>Indoor Sensor (Thermal Simulation)</label>
+                      <input v-model="entity.indoor_sensor" class="form-control" placeholder="e.g. Indoor Temperature" />
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                      <label>Outdoor Sensor (Weather Ambient)</label>
+                      <input v-model="entity.outdoor_sensor" class="form-control" placeholder="e.g. Outdoor Temperature" />
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                      <label>Power Sensor (Optional Wattage Sync)</label>
+                      <input v-model="entity.power_sensor" class="form-control" placeholder="e.g. HVAC Power" />
+                    </div>
+                    <template v-if="entity.indoor_sensor || entity.outdoor_sensor">
+                      <div class="form-group">
+                        <label>Sim Speed Multiplier</label>
+                        <input v-model="entity.sim_speed" type="number" step="0.5" class="form-control" placeholder="1.0" />
+                      </div>
+                      <div class="form-group">
+                        <label>House Leakage Rate (°C/hr)</label>
+                        <input v-model="entity.house_leakage_rate" type="number" step="0.1" class="form-control" placeholder="0.3" />
+                      </div>
+                    </template>
                   </template>
 
                   <!-- Camera Settings -->

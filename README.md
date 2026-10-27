@@ -79,6 +79,7 @@ _Virtual_ provides support for 17 distinct entity platforms:
   - [virtual.set](#virtualset)
   - [virtual.move](#virtualmove)
   - [virtual.set_current_temperature](#virtualset_current_temperature)
+  - [virtual.set_sim_speed](#virtualset_sim_speed)
   - [virtual.set_image_url](#virtualset_image_url)
   - [virtual.set_stream_url](#virtualset_stream_url)
   - [virtual.set_load](#virtualset_load)
@@ -302,6 +303,47 @@ Living Room Thermostat:
 * `target_temperature_step`: Temperature step increment (default `0.5`).
 * *Controllable via native `climate.set_temperature`, `climate.set_hvac_mode`, `climate.set_preset_mode`, and `climate.set_fan_mode` services.*
 * *Simulate ambient room temperature changes using the custom `virtual.set_current_temperature` service.*
+
+#### Closed-Loop HVAC & House Thermal Simulation
+Virtual climate entities can run an active, closed-loop thermal physics engine that models house insulation, outdoor weather leakage, and multi-stage heating/cooling with realistic electrical power draws:
+
+```yaml
+House HVAC:
+  - platform: climate
+    name: House Thermostat
+    initial_value: "heat"
+    initial_temperature: 21.0
+    initial_current_temperature: 20.0
+    indoor_sensor: "Indoor Temperature"   # Syncs indoor temperature in real-time
+    outdoor_sensor: "Outdoor Temperature" # Reacts to changing outdoor weather
+    power_sensor: "HVAC Power"           # Syncs active stage power wattage (W)
+    sim_speed: 1.0                       # Simulation speed (e.g. 10.0 for 10x fast forward)
+    house_leakage_rate: 0.3              # °C/hr drift per 10°C indoor/outdoor delta
+  - platform: sensor
+    name: Indoor Temperature
+    class: temperature
+    unit_of_measurement: "°C"
+  - platform: sensor
+    name: Outdoor Temperature
+    class: temperature
+    unit_of_measurement: "°C"
+    initial_value: "5.0"
+  - platform: sensor
+    name: HVAC Power
+    class: power
+    unit_of_measurement: "W"
+```
+
+* **Passive Heat Transfer**: The house naturally gains or loses heat towards the `outdoor_sensor` temperature based on insulation (`house_leakage_rate`). Without active HVAC, indoor temperature will never drift past the outdoor ambient reading.
+* **Intelligent Staging**:
+  * **Stage 2 Heat** (3.0°C/hr, ~3800W): Activates when outdoor is freezing (<0°C) or indoor is >1.5°C below target setpoint.
+  * **Stage 1 Heat** (1.5°C/hr, ~1800W): Activates during moderate cold or small setpoint deltas.
+  * **Stage 2 Cool** (-3.0°C/hr, ~2800W): Activates during heatwaves (>30°C) or when indoor is >1.5°C above target setpoint.
+  * **Stage 1 Cool** (-1.5°C/hr, ~1400W): Activates during mild cooling needs.
+  * **Fan** (-0.2°C/hr, ~120W): Activates in `fan_only` mode.
+  * **Idle/Standby** (~10W) / **Off** (0W).
+* **Sensor Synchronization**: Automatically updates both the linked `indoor_sensor` and `power_sensor` in lockstep.
+* *Control simulation acceleration via the `virtual.set_sim_speed` service.*
 
 ---
 
@@ -734,3 +776,10 @@ Triggers an active appliance load cycle for a specified duration (in seconds), a
 * **Target**: Virtual power sensor entities
 * **Fields**:
   * `duration`: Run duration in seconds (optional; defaults to `cycle_duration`).
+
+### `virtual.set_sim_speed`
+Sets the simulation speed multiplier for a virtual climate entity with thermal modeling.
+
+* **Target**: Virtual climate entities
+* **Fields**:
+  * `speed`: Float multiplier (e.g. `1.0` for real-time, `10.0` for 10x speed).
