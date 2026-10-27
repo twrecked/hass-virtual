@@ -1,0 +1,86 @@
+version: 1
+devices:
+  # --- White-Only Dimmable Lights ---
+
+  # 1. Mani's Bedroom
+  Manis Bedroom:
+    - platform: light
+      name: Manis Bedroom Light
+      initial_value: "off"
+      support_brightness: true
+      initial_brightness: 254
+      support_color: false
+      support_color_temp: false
+
+  # 2. Margo's Bedroom
+  Margos Bedroom:
+    - platform: light
+      name: Margos Bedroom Light
+      initial_value: "off"
+      support_brightness: true
+      initial_brightness: 254
+      support_color: false
+      support_color_temp: false
+
+  # 3. Master Bedroom Closet
+  Master Bedroom Closet:
+    - platform: light
+      name: Master Closet Light
+      initial_value: "off"
+      support_brightness: true
+      initial_brightness: 254
+      support_color: false
+      support_color_temp: false
+
+  # --- Multi-Coloured Lights (Color & Color Temp) ---
+
+  # 4. Front Porch Light
+  Front Porch:
+    - platform: light
+      name: Front Porch Light
+      initial_value: "off"
+      support_brightness: true
+      initial_brightness: 254
+      support_color: true
+      initial_color: [30, 80]       # Warm amber
+      support_color_temp: true
+      initial_color_temp: 2700      # 2700K Warm White
+      support_effect: true
+      initial_effect_list:
+        - candle
+        - fire
+        - prism
+
+  # 5. Back Deck Light 1
+  Back Deck Light 1:
+    - platform: light
+      name: Back Deck Light 1
+      initial_value: "off"
+      support_brightness: true
+      initial_brightness: 254
+      support_color: true
+      initial_color: [120, 90]
+      support_color_temp: true
+      initial_color_temp: 2700
+      support_effect: true
+      initial_effect_list:
+        - candle
+        - fire
+        - prism
+
+  # 6. Back Deck Light 2
+  Back Deck Light 2:
+    - platform: light
+      name: Back Deck Light 2
+      initial_value: "off"
+      support_brightness: true
+      initial_brightness: 254
+      support_color: true
+      initial_color: [120, 90]
+      support_color_temp: true
+      initial_color_temp: 2700
+      support_effect: true
+      initial_effect_list:
+        - candle
+        - fire
+        - prism

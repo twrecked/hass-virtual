@@ -1,0 +1,201 @@
+version: 1
+devices:
+  # ==========================================
+  # SMART LOCKS
+  # ==========================================
+
+  # 1. Front Door Lock (Schlage)
+  Front Door Lock:
+    - platform: lock
+      name: Front Door Lock
+      initial_value: "locked"
+      locking_time: 2             # Schlage motorized bolt transit
+      jamming_test: 0
+    - platform: sensor
+      name: Front Door Lock Battery
+      class: battery
+      unit_of_measurement: "%"
+      initial_value: "85"
+
+  # ==========================================
+  # DOOR CONTACT SENSORS (STANDALONE DEVICES)
+  # ==========================================
+
+  # 2. Front Door Sensor
+  Front Door Sensor:
+    - platform: binary_sensor
+      name: Front Door Sensor
+      class: door
+      initial_value: "off"
+
+  # 3. Back Door Sensor
+  Back Door Sensor:
+    - platform: binary_sensor
+      name: Back Door Sensor
+      class: door
+      initial_value: "off"
+
+  # 4. Garage Door Sensor
+  Garage Door Sensor:
+    - platform: binary_sensor
+      name: Garage Door Sensor
+      class: door
+      initial_value: "off"
+
+  # 5. Shed Door Sensor
+  Shed Door Sensor:
+    - platform: binary_sensor
+      name: Shed Door Sensor
+      class: door
+      initial_value: "off"
+
+  # 6. Basement Door Sensor
+  Basement Door Sensor:
+    - platform: binary_sensor
+      name: Basement Door Sensor
+      class: door
+      initial_value: "off"
+
+  # ==========================================
+  # IN-WALL LIGHT SWITCHES (STANDALONE DEVICES)
+  # ==========================================
+
+  # 7. Living Room Switch
+  Living Room Light Switch:
+    - platform: switch
+      name: Living Room Switch
+      initial_value: "off"
+
+  # 8. Kitchen Switch
+  Kitchen Light Switch:
+    - platform: switch
+      name: Kitchen Switch
+      initial_value: "off"
+
+  # 9. Sun Room Switch
+  Sun Room Light Switch:
+    - platform: switch
+      name: Sun Room Switch
+      initial_value: "off"
+
+  # 10. Entrance Switch
+  Entrance Light Switch:
+    - platform: switch
+      name: Entrance Switch
+      initial_value: "off"
+
+  # 11. Office Switch
+  Office Light Switch:
+    - platform: switch
+      name: Office Switch
+      initial_value: "off"
+
+  # 12. Mani's Room Switch
+  Manis Room Light Switch:
+    - platform: switch
+      name: Manis Room Switch
+      initial_value: "off"
+
+  # 13. Margo's Room Switch
+  Margos Room Light Switch:
+    - platform: switch
+      name: Margos Room Switch
+      initial_value: "off"
+
+  # 14. Master Bedroom Switch
+  Master Bedroom Light Switch:
+    - platform: switch
+      name: Master Bedroom Switch
+      initial_value: "off"
+
+  # ==========================================
+  # MOTION SENSORS (STANDALONE DEVICES)
+  # ==========================================
+
+  # 15. Living Room Motion
+  Living Room Motion Sensor:
+    - platform: binary_sensor
+      name: Living Room Motion
+      class: motion
+      off_delay: 20
+      initial_value: "off"
+
+  # 16. Kitchen Motion
+  Kitchen Motion Sensor:
+    - platform: binary_sensor
+      name: Kitchen Motion
+      class: motion
+      off_delay: 20
+      initial_value: "off"
+
+  # 17. Sun Room Motion
+  Sun Room Motion Sensor:
+    - platform: binary_sensor
+      name: Sun Room Motion
+      class: motion
+      off_delay: 20
+      initial_value: "off"
+
+  # 18. Entrance Motion
+  Entrance Motion Sensor:
+    - platform: binary_sensor
+      name: Entrance Motion
+      class: motion
+      off_delay: 20
+      initial_value: "off"
+
+  # 19. Office Motion
+  Office Motion Sensor:
+    - platform: binary_sensor
+      name: Office Motion
+      class: motion
+      off_delay: 20
+      initial_value: "off"
+
+  # 20. Mani's Room Motion
+  Manis Room Motion Sensor:
+    - platform: binary_sensor
+      name: Manis Room Motion
+      class: motion
+      off_delay: 20
+      initial_value: "off"
+
+  # 21. Margo's Room Motion
+  Margos Room Motion Sensor:
+    - platform: binary_sensor
+      name: Margos Room Motion
+      class: motion
+      off_delay: 20
+      initial_value: "off"
+
+  # 22. Master Bedroom Motion
+  Master Bedroom Motion Sensor:
+    - platform: binary_sensor
+      name: Master Bedroom Motion
+      class: motion
+      off_delay: 20
+      initial_value: "off"
+
+  # 23. Garage Motion
+  Garage Motion Sensor:
+    - platform: binary_sensor
+      name: Garage Motion
+      class: motion
+      off_delay: 20
+      initial_value: "off"
+
+  # 24. Shed Motion
+  Shed Motion Sensor:
+    - platform: binary_sensor
+      name: Shed Motion
+      class: motion
+      off_delay: 20
+      initial_value: "off"
+
+  # 25. Basement Motion
+  Basement Motion Sensor:
+    - platform: binary_sensor
+      name: Basement Motion
+      class: motion
+      off_delay: 20
+      initial_value: "off"

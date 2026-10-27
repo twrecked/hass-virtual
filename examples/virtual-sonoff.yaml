@@ -1,0 +1,96 @@
+version: 1
+devices:
+  # 1. Living Room Television Socket
+  Living Room TV Outlet:
+    - platform: switch
+      name: TV Socket
+      class: outlet
+      initial_value: "on"
+    - platform: sensor
+      name: TV Socket Power
+      class: power
+      unit_of_measurement: "W"
+      linked_switch: "TV Socket"
+      standby_power: 2.5
+      active_power: 135.0
+      initial_load: "standby"
+      variance: 2.0
+
+  # 2. Audio Amplifier Socket
+  Living Room Amplifier Outlet:
+    - platform: switch
+      name: Amplifier Socket
+      class: outlet
+      initial_value: "on"
+    - platform: sensor
+      name: Amplifier Socket Power
+      class: power
+      unit_of_measurement: "W"
+      linked_switch: "Amplifier Socket"
+      standby_power: 1.5
+      active_power: 65.0
+      initial_load: "standby"
+      variance: 3.5
+
+  # 3. Chest Freezer (Recurring Compressor Cycle)
+  Utility Chest Freezer Outlet:
+    - platform: switch
+      name: Freezer Socket
+      class: outlet
+      initial_value: "on"
+    - platform: sensor
+      name: Freezer Socket Power
+      class: power
+      unit_of_measurement: "W"
+      linked_switch: "Freezer Socket"
+      standby_power: 0.8
+      active_power: 85.0
+      cycle_duration: 900        # 15 minutes compressor active
+      cycle_interval: 2700       # Repeats every 45 minutes
+      cycle_align: "interval"
+      variance: 1.0
+
+  # 4. Washing Machine Socket
+  Laundry Washer Outlet:
+    - platform: switch
+      name: Washer Socket
+      class: outlet
+      initial_value: "on"
+    - platform: sensor
+      name: Washer Socket Power
+      class: power
+      unit_of_measurement: "W"
+      linked_switch: "Washer Socket"
+      standby_power: 2.0
+      active_power: 380.0
+      initial_load: "standby"
+      variance: 5.0
+
+  # 5. Heat Pump Tumble Dryer Socket
+  Laundry Dryer Outlet:
+    - platform: switch
+      name: Dryer Socket
+      class: outlet
+      initial_value: "on"
+    - platform: sensor
+      name: Dryer Socket Power
+      class: power
+      unit_of_measurement: "W"
+      linked_switch: "Dryer Socket"
+      standby_power: 1.0
+      active_power: 650.0
+      initial_load: "standby"
+      variance: 8.0
+
+  # 6. Master Bedroom Fan & Light (Sonoff iFan)
+  Master Bedroom Ceiling Fan:
+    - platform: fan
+      name: Master Bedroom Fan
+      speed_count: 3              # 3 speeds: Low (33%), Medium (67%), High (100%)
+      initial_value: "off"
+    - platform: light
+      name: Master Bedroom Fan Light
+      initial_value: "off"
+      support_brightness: false   # Simple on/off light
+      support_color: false
+      support_color_temp: false
