@@ -45,7 +45,7 @@ from .const import (
 from .cfg import BlendedCfg, UpgradeCfg
 
 
-__version__ = '0.10.0-alpha.4'
+__version__ = '0.10.0-alpha.5'
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -1,3 +1,8 @@
+0.10.0-alpha.5:
+  Add modular hardware ecosystem example configurations (virtual-sonoff.yaml, virtual-hue.yaml, and virtual-zwave.yaml).
+  Extract closed-loop thermal HVAC simulation into dedicated virtual-climate.yaml.
+  Rename virtual-umbrella.yaml to virtual-examples.yaml for multi-platform device showcases.
+  Sanitize example room and device names.
 0.10.0-alpha.4:
   Add appliance load simulation and power profiling to virtual sensors.
   Support linked switches with automatic 0W power cut behavior.
