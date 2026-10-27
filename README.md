@@ -80,6 +80,7 @@ _Virtual_ provides support for 17 distinct entity platforms:
   - [virtual.move](#virtualmove)
   - [virtual.set_current_temperature](#virtualset_current_temperature)
   - [virtual.set_sim_speed](#virtualset_sim_speed)
+  - [virtual.set_light](#virtualset_light)
   - [virtual.set_image_url](#virtualset_image_url)
   - [virtual.set_stream_url](#virtualset_stream_url)
   - [virtual.set_load](#virtualset_load)
@@ -783,3 +784,15 @@ Sets the simulation speed multiplier for a virtual climate entity with thermal m
 * **Target**: Virtual climate entities
 * **Fields**:
   * `speed`: Float multiplier (e.g. `1.0` for real-time, `10.0` for 10x speed).
+
+### `virtual.set_light`
+Sets brightness, color (HS), color temperature (Kelvin), or effect on a virtual light without altering its on/off power state.
+
+*Ideal for circadian lighting, sleep modes, and nighttime automations that pre-stage brightness and warm amber color while lights are off, so they turn on at the desired level without blinding flashes.* (Attribution: @Perlmint / PR #182).
+
+* **Target**: Virtual light entities
+* **Fields**:
+  * `brightness`: Integer brightness level (`0`–`255`).
+  * `hs_color`: Color as `[hue (0-360), saturation (0-100)]`.
+  * `color_temp_kelvin`: Color temperature in Kelvin (`2000`–`6535`).
+  * `effect`: Effect name from `effect_list`.

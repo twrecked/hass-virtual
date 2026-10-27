@@ -24,19 +24,21 @@ from homeassistant.components.light import (
     LightEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_OFF, STATE_ON
-from homeassistant.core import HomeAssistant
+from homeassistant.const import ATTR_ENTITY_ID, STATE_OFF, STATE_ON
+from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
-from . import get_entity_configs
+from . import get_entity_configs, get_entity_from_domain
 from .const import (
     ATTR_GROUP_NAME,
     COMPONENT_CONFIG,
     COMPONENT_DOMAIN,
+    COMPONENT_SERVICES,
     CONF_INITIAL_VALUE,
     CONF_YAML_CONFIG,
+    SERVICE_SET_LIGHT,
 )
 from .entity import VirtualEntity, virtual_schema
 
@@ -89,6 +91,40 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(BASE_SCHEMA)
 LIGHT_SCHEMA = vol.Schema(BASE_SCHEMA)
 
 
+SERVICE_SET_LIGHT_SCHEMA = vol.Schema({
+    vol.Required(ATTR_ENTITY_ID): cv.comp_entity_ids,
+    vol.Optional(ATTR_BRIGHTNESS): cv.byte,
+    vol.Optional(ATTR_HS_COLOR): vol.All(
+        cv.ensure_list,
+        vol.Length(min=2, max=2),
+        [vol.Coerce(float)],
+        [vol.Range(min=0.0)],
+    ),
+    vol.Optional(ATTR_COLOR_TEMP_KELVIN): vol.All(vol.Coerce(int), vol.Range(min=2000, max=6535)),
+    vol.Optional(ATTR_EFFECT): cv.string,
+})
+
+
+def setup_services(hass: HomeAssistant) -> None:
+    """Register virtual light services."""
+
+    async def async_virtual_service(call: ServiceCall) -> None:
+        """Call virtual light service handler."""
+        _LOGGER.debug(f"{call.service} service called")
+        if call.service == SERVICE_SET_LIGHT:
+            await async_virtual_set_light_service(hass, call)
+
+    if PLATFORM_DOMAIN not in hass.data[COMPONENT_SERVICES]:
+        _LOGGER.debug("installing light service handlers")
+        hass.data[COMPONENT_SERVICES][PLATFORM_DOMAIN] = "installed"
+        hass.services.async_register(
+            COMPONENT_DOMAIN,
+            SERVICE_SET_LIGHT,
+            async_virtual_service,
+            schema=SERVICE_SET_LIGHT_SCHEMA,
+        )
+
+
 async def async_setup_platform(
         hass: HomeAssistant,
         config: ConfigType,
@@ -100,6 +136,7 @@ async def async_setup_platform(
 
         lights = [VirtualLight(config, True)]
         async_add_entities(lights, True)
+        setup_services(hass)
 
 
 async def async_setup_entry(
@@ -114,6 +151,7 @@ async def async_setup_entry(
         entity = LIGHT_SCHEMA(entity)
         entities.append(VirtualLight(entity, False))
     async_add_entities(entities)
+    setup_services(hass)
 
 
 class VirtualLight(VirtualEntity, LightEntity):
@@ -263,3 +301,62 @@ class VirtualLight(VirtualEntity, LightEntity):
         self._attr_is_on = False
         self._update_attributes()
         self.async_write_ha_state()
+
+    def set_light(
+        self,
+        brightness: int | None = None,
+        hs_color: tuple[float, float] | None = None,
+        color_temp_kelvin: int | None = None,
+        effect: str | None = None,
+    ) -> None:
+        """Set brightness, color, or effect without changing on/off power state (attribution: @Perlmint / PR #182)."""
+        _LOGGER.debug(
+            f"setting light attributes for {self.name}: brightness={brightness}, "
+            f"hs={hs_color}, ct={color_temp_kelvin}, effect={effect}"
+        )
+
+        if hs_color is not None and ColorMode.HS in self._attr_supported_color_modes:
+            self._attr_color_mode = ColorMode.HS
+            self._attr_hs_color = tuple(hs_color)
+            self._attr_color_temp_kelvin = None
+
+        if color_temp_kelvin is not None and ColorMode.COLOR_TEMP in self._attr_supported_color_modes:
+            self._attr_color_mode = ColorMode.COLOR_TEMP
+            self._attr_color_temp_kelvin = color_temp_kelvin
+            self._attr_hs_color = None
+
+        if brightness is not None:
+            if self._attr_color_mode not in self._attr_supported_color_modes:
+                if ColorMode.BRIGHTNESS in self._attr_supported_color_modes:
+                    self._attr_color_mode = ColorMode.BRIGHTNESS
+                else:
+                    self._attr_color_mode = self._default_color_mode()
+            self._attr_brightness = max(0, min(255, int(brightness)))
+
+        if effect is not None and self._attr_supported_features & LightEntityFeature.EFFECT:
+            self._attr_effect = effect
+
+        if self._attr_color_mode not in self._attr_supported_color_modes:
+            self._attr_color_mode = self._default_color_mode()
+
+        # Note: self._attr_is_on remains unchanged!
+        self._update_attributes()
+        self.async_write_ha_state()
+
+
+async def async_virtual_set_light_service(hass: HomeAssistant, call: ServiceCall) -> None:
+    """Handle virtual.set_light service calls (attribution: @Perlmint / PR #182)."""
+    brightness = call.data.get(ATTR_BRIGHTNESS)
+    raw_hs = call.data.get(ATTR_HS_COLOR)
+    hs_color = tuple(raw_hs) if raw_hs is not None else None
+    color_temp_kelvin = call.data.get(ATTR_COLOR_TEMP_KELVIN)
+    effect = call.data.get(ATTR_EFFECT)
+
+    for entity_id in call.data[ATTR_ENTITY_ID]:
+        light = get_entity_from_domain(hass, PLATFORM_DOMAIN, entity_id)
+        light.set_light(
+            brightness=brightness,
+            hs_color=hs_color,
+            color_temp_kelvin=color_temp_kelvin,
+            effect=effect,
+        )

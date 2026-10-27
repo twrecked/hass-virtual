@@ -131,6 +131,7 @@ SERVICE_SET_STREAM_URL = "set_stream_url"
 SERVICE_SET_LOAD = "set_load"
 SERVICE_RUN_CYCLE = "run_cycle"
 SERVICE_SET_SIM_SPEED = "set_sim_speed"
+SERVICE_SET_LIGHT = "set_light"
 
 DEFAULT_AVAILABILITY = True
 DEFAULT_PERSISTENT = True

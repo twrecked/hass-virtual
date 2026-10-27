@@ -213,3 +213,47 @@ set_sim_speed:
           max: 1000
           step: 0.5
           mode: box
+
+set_light:
+  name: Set Light
+  description: Set brightness, color, color temperature, or effect of a virtual light without changing its on/off power state (attribution @Perlmint).
+  target:
+    entity:
+      integration: virtual
+      domain: light
+  fields:
+    brightness:
+      name: Brightness
+      description: Target brightness level (0-255).
+      example: 128
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 255
+          mode: slider
+    hs_color:
+      name: Hue / Saturation Color
+      description: Color as [hue (0-360), saturation (0-100)].
+      example: "[120, 100]"
+      required: false
+      selector:
+        text:
+    color_temp_kelvin:
+      name: Color Temperature (Kelvin)
+      description: Color temperature in Kelvin (2000-6535).
+      example: 3500
+      required: false
+      selector:
+        number:
+          min: 2000
+          max: 6535
+          mode: slider
+          unit_of_measurement: "K"
+    effect:
+      name: Effect
+      description: Light effect name.
+      example: "rainbow"
+      required: false
+      selector:
+        text:

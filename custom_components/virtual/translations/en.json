@@ -191,6 +191,32 @@
           "description": "Simulation acceleration multiplier (e.g. 1.0 for real-time, 10.0 for 10x)."
         }
       }
+    },
+    "set_light": {
+      "name": "Set Light",
+      "description": "Set brightness, color, or color temperature without changing on/off state.",
+      "fields": {
+        "entity_id": {
+          "name": "Entity Id",
+          "description": "Name(s) of entities to set"
+        },
+        "brightness": {
+          "name": "Brightness",
+          "description": "Brightness level (0-255)."
+        },
+        "hs_color": {
+          "name": "Hue / Saturation Color",
+          "description": "Color as [hue, saturation]."
+        },
+        "color_temp_kelvin": {
+          "name": "Color Temperature (Kelvin)",
+          "description": "Color temperature in Kelvin."
+        },
+        "effect": {
+          "name": "Effect",
+          "description": "Light effect name."
+        }
+      }
     }
   }
 }

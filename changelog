@@ -9,6 +9,7 @@
   Add closed-loop thermal HVAC simulation engine modeling house leakage, outdoor ambient weather, and staged heating/cooling.
   Synchronize indoor temperature and HVAC power consumption across linked sensor entities.
   Add virtual.set_sim_speed service for accelerated thermal test automation.
+  Add virtual.set_light service to set brightness, color, and temperature without turning lights on (thanks @Perlmint / PR #182).
   Update Virtual Device Editor with thermal simulation settings and Thermal House HVAC template.
 0.10.0-alpha.3:
   Add virtual camera platform with snapshot image and live stream playback.

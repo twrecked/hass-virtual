@@ -29,6 +29,8 @@ Virtual power sensors can now simulate realistic appliance loads coupled to a co
 ### 2. New Services
 - **`virtual.set_load`**: Set the operating state (`active`, `standby`, `off`, or `auto` to resume schedule) or inject custom power wattage.
 - **`virtual.run_cycle`**: Trigger an active appliance cycle for a specified duration in seconds, automatically reverting to standby or scheduled mode when complete.
+- **`virtual.set_light`**: Pre-stage brightness, color (HS), color temperature (Kelvin), or effect without turning the light on (attribution: @Perlmint / PR #182).
+- **`virtual.set_sim_speed`**: Dynamically accelerate or decelerate thermal HVAC simulation time for test suites.
 
 ### 3. Closed-Loop Thermal HVAC & House Simulation Engine
 Added physical thermal modeling to `climate` entities:
