@@ -257,3 +257,45 @@ set_light:
       required: false
       selector:
         text:
+
+set_battery_soc:
+  name: Set Battery State of Charge
+  description: Manually set the battery State of Charge percentage for a virtual energy hub / solar inverter simulation.
+  fields:
+    value:
+      name: Battery SoC (%)
+      description: Target battery State of Charge percentage (0-100%).
+      example: 85
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: slider
+          unit_of_measurement: "%"
+    name:
+      name: Simulation Name
+      description: Optional simulation name to target if multiple simulations are configured.
+      example: "Sol-Ark Energy Manager"
+      required: false
+      selector:
+        text:
+
+set_solar_power:
+  name: Set Solar Power
+  description: Manually set solar generation wattage, or set to 'auto' to resume natural sun curve.
+  fields:
+    value:
+      name: Solar Power (W)
+      description: Solar output in Watts, or 'auto'.
+      example: "7500"
+      required: true
+      selector:
+        text:
+    name:
+      name: Simulation Name
+      description: Optional simulation name to target if multiple simulations are configured.
+      example: "Sol-Ark Energy Manager"
+      required: false
+      selector:
+        text:

@@ -103,6 +103,7 @@ CONF_FAN_POWER = "fan_power"
 CONF_HOUSE_LEAKAGE_RATE = "house_leakage_rate"
 CONF_TICK_INTERVAL = "tick_interval"
 CONF_SIM_SPEED = "sim_speed"
+CONF_SIMULATIONS = "simulations"
 CONF_YAML_CONFIG = "yaml_config"
 CONF_EDITOR_URL = "editor_url"
 
@@ -124,6 +125,7 @@ ATTR_INDOOR_SENSOR = "indoor_sensor"
 ATTR_OUTDOOR_SENSOR = "outdoor_sensor"
 ATTR_POWER_SENSOR = "power_sensor"
 ATTR_SIM_SPEED = "sim_speed"
+ATTR_BATTERY_SOC = "battery_soc"
 
 SERVICE_SET_CURRENT_TEMPERATURE = "set_current_temperature"
 SERVICE_SET_IMAGE_URL = "set_image_url"
@@ -132,6 +134,8 @@ SERVICE_SET_LOAD = "set_load"
 SERVICE_RUN_CYCLE = "run_cycle"
 SERVICE_SET_SIM_SPEED = "set_sim_speed"
 SERVICE_SET_LIGHT = "set_light"
+SERVICE_SET_BATTERY_SOC = "set_battery_soc"
+SERVICE_SET_SOLAR_POWER = "set_solar_power"
 
 DEFAULT_AVAILABILITY = True
 DEFAULT_PERSISTENT = True

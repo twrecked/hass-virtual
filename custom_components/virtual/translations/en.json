@@ -217,6 +217,34 @@
           "description": "Light effect name."
         }
       }
+    },
+    "set_battery_soc": {
+      "name": "Set Battery State of Charge",
+      "description": "Set battery SoC percentage for solar inverter simulation.",
+      "fields": {
+        "value": {
+          "name": "Battery SoC (%)",
+          "description": "Target battery State of Charge percentage (0-100%)."
+        },
+        "name": {
+          "name": "Simulation Name",
+          "description": "Optional simulation name to target."
+        }
+      }
+    },
+    "set_solar_power": {
+      "name": "Set Solar Power",
+      "description": "Set solar output in Watts, or auto.",
+      "fields": {
+        "value": {
+          "name": "Solar Power (W)",
+          "description": "Solar output in Watts, or auto."
+        },
+        "name": {
+          "name": "Simulation Name",
+          "description": "Optional simulation name to target."
+        }
+      }
     }
   }
 }

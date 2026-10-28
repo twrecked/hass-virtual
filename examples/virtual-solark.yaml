@@ -1,0 +1,99 @@
+version: 1
+
+simulations:
+  - type: solar_inverter
+    name: "Sol-Ark Energy Manager"
+    peak_solar_power: 11000          # 11 kW peak at noon
+    base_load: 250                   # Inverter self-consumption + standby draw (W)
+    battery_capacity: 15.0           # 15 kWh pack
+    battery_min_soc: 20              # 20% minimum discharge reserve
+    battery_max_power: 5000          # 5 kW max charge/discharge rate
+    sim_speed: 1.0                   # Simulation acceleration multiplier
+
+    # Linked Sensors in this file:
+    pv_power_sensor: "Sol-Ark PV Power"
+    pv_energy_sensor: "Sol-Ark PV Energy"
+    load_power_sensor: "Sol-Ark Load Power"
+    load_energy_sensor: "Sol-Ark Load Energy"
+    grid_power_sensor: "Sol-Ark Grid Power"
+    grid_energy_in_sensor: "Sol-Ark Grid Energy In"
+    grid_energy_out_sensor: "Sol-Ark Grid Energy Out"
+    battery_power_sensor: "Sol-Ark Battery Power"
+    battery_soc_sensor: "Sol-Ark Battery SoC"
+    battery_voltage_sensor: "Sol-Ark Battery Voltage"
+
+    # External appliances in your house to sum into the load:
+    linked_loads:
+      - "TV Socket Power"
+      - "Washer Socket Power"
+      - "Dryer Socket Power"
+      - "Freezer Socket Power"
+      - "Water Heater Power"
+      - "Main HVAC Power"
+
+devices:
+  # Device 1: Inverter & Grid
+  Sol-Ark Inverter:
+    - platform: sensor
+      name: Sol-Ark Grid Power
+      class: power
+      unit_of_measurement: "W"
+      initial_value: "0"
+
+    - platform: sensor
+      name: Sol-Ark Grid Energy In
+      class: energy
+      unit_of_measurement: "kWh"
+      initial_value: "100.0"
+
+    - platform: sensor
+      name: Sol-Ark Grid Energy Out
+      class: energy
+      unit_of_measurement: "kWh"
+      initial_value: "50.0"
+
+    - platform: sensor
+      name: Sol-Ark Load Power
+      class: power
+      unit_of_measurement: "W"
+      initial_value: "250"
+
+    - platform: sensor
+      name: Sol-Ark Load Energy
+      class: energy
+      unit_of_measurement: "kWh"
+      initial_value: "250.0"
+
+  # Device 2: Solar Panels
+  Sol-Ark Solar Array:
+    - platform: sensor
+      name: Sol-Ark PV Power
+      class: power
+      unit_of_measurement: "W"
+      initial_value: "0"
+
+    - platform: sensor
+      name: Sol-Ark PV Energy
+      class: energy
+      unit_of_measurement: "kWh"
+      initial_value: "300.0"
+
+  # Device 3: Battery Storage
+  Sol-Ark Battery Storage:
+    - platform: sensor
+      name: Sol-Ark Battery SoC
+      class: battery
+      unit_of_measurement: "%"
+      initial_value: "85"
+
+    - platform: sensor
+      name: Sol-Ark Battery Power
+      class: power
+      unit_of_measurement: "W"
+      initial_value: "0"
+
+    - platform: sensor
+      name: Sol-Ark Battery Voltage
+      class: voltage
+      unit_of_measurement: "V"
+      initial_value: "52.4"

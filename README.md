@@ -70,6 +70,7 @@ _Virtual_ provides support for 17 distinct entity platforms:
   - [Covers](#covers)
   - [Valves](#valves)
   - [Device Trackers](#device-trackers)
+- [Solar Inverter & Energy Hub Simulation](#solar-inverter--energy-hub-simulation-simulations)
 - [Legacy YAML Configuration](#legacy-yaml-configuration)
 - [Services](#services)
   - [virtual.set_available](#virtualset_available)
@@ -81,6 +82,8 @@ _Virtual_ provides support for 17 distinct entity platforms:
   - [virtual.set_current_temperature](#virtualset_current_temperature)
   - [virtual.set_sim_speed](#virtualset_sim_speed)
   - [virtual.set_light](#virtualset_light)
+  - [virtual.set_battery_soc](#virtualset_battery_soc)
+  - [virtual.set_solar_power](#virtualset_solar_power)
   - [virtual.set_image_url](#virtualset_image_url)
   - [virtual.set_stream_url](#virtualset_stream_url)
   - [virtual.set_load](#virtualset_load)
@@ -347,6 +350,112 @@ House HVAC:
 * *Control simulation acceleration via the `virtual.set_sim_speed` service.*
 
 ---
+
+
+---
+
+### Solar Inverter & Energy Hub Simulation (`simulations/`)
+
+Simulates hybrid solar inverters (such as Sol-Ark, Deye, Sunsynk, SolarEdge, Tesla Powerwall, or Enphase) bridged into Home Assistant via Solar Assistant or MQTT. The engine runs a brand-agnostic physics loop that continuously balances solar generation, house loads, battery storage, and the electricity grid:
+
+$$\\text{House Load} = \\text{Solar (PV)} + \\text{Battery Power} + \\text{Grid Power}$$
+
+```yaml
+version: 1
+
+simulations:
+  - type: solar_inverter
+    name: "Sol-Ark Energy Manager"
+    peak_solar_power: 11000          # 11 kW peak at noon
+    base_load: 250                   # Inverter self-consumption + standby draw (W)
+    battery_capacity: 15.0           # 15 kWh pack
+    battery_min_soc: 20              # 20% minimum discharge reserve
+    battery_max_power: 5000          # 5 kW max charge/discharge rate
+    sim_speed: 1.0                   # Simulation acceleration multiplier
+
+    # Linked Sensors in this file:
+    pv_power_sensor: "Sol-Ark PV Power"
+    pv_energy_sensor: "Sol-Ark PV Energy"
+    load_power_sensor: "Sol-Ark Load Power"
+    load_energy_sensor: "Sol-Ark Load Energy"
+    grid_power_sensor: "Sol-Ark Grid Power"
+    grid_energy_in_sensor: "Sol-Ark Grid Energy In"
+    grid_energy_out_sensor: "Sol-Ark Grid Energy Out"
+    battery_power_sensor: "Sol-Ark Battery Power"
+    battery_soc_sensor: "Sol-Ark Battery SoC"
+    battery_voltage_sensor: "Sol-Ark Battery Voltage"
+
+    # External appliances in your house to sum into the load:
+    linked_loads:
+      - "TV Socket Power"
+      - "Washer Socket Power"
+      - "Dryer Socket Power"
+      - "Freezer Socket Power"
+      - "Water Heater Power"
+      - "Main HVAC Power"
+
+devices:
+  Sol-Ark Inverter:
+    - platform: sensor
+      name: Sol-Ark Grid Power
+      class: power
+      unit_of_measurement: "W"
+    - platform: sensor
+      name: Sol-Ark Grid Energy In
+      class: energy
+      unit_of_measurement: "kWh"
+      initial_value: "100.0"
+    - platform: sensor
+      name: Sol-Ark Grid Energy Out
+      class: energy
+      unit_of_measurement: "kWh"
+      initial_value: "50.0"
+    - platform: sensor
+      name: Sol-Ark Load Power
+      class: power
+      unit_of_measurement: "W"
+      initial_value: "250"
+    - platform: sensor
+      name: Sol-Ark Load Energy
+      class: energy
+      unit_of_measurement: "kWh"
+      initial_value: "250.0"
+
+  Sol-Ark Solar Array:
+    - platform: sensor
+      name: Sol-Ark PV Power
+      class: power
+      unit_of_measurement: "W"
+    - platform: sensor
+      name: Sol-Ark PV Energy
+      class: energy
+      unit_of_measurement: "kWh"
+      initial_value: "300.0"
+
+  Sol-Ark Battery Storage:
+    - platform: sensor
+      name: Sol-Ark Battery SoC
+      class: battery
+      unit_of_measurement: "%"
+      initial_value: "85"
+    - platform: sensor
+      name: Sol-Ark Battery Power
+      class: power
+      unit_of_measurement: "W"
+    - platform: sensor
+      name: Sol-Ark Battery Voltage
+      class: voltage
+      unit_of_measurement: "V"
+      initial_value: "52.4"
+```
+
+* **Solar Generation**: Smooth diurnal bell curve from sunrise (~06:00) to sunset (~19:30), peaking at `peak_solar_power` (11 kW) at noon.
+* **Dynamic House Load**: Automatically aggregates `base_load` (250 W) + all active linked appliance power sensors.
+* **Self-Consumption & Grid Export**:
+  * Surplus solar powers the house, charges the battery, and exports any remaining excess to the grid.
+  * When solar is insufficient (night / overcast), battery discharges down to `battery_min_soc` (20%), after which power seamlessly imports from the grid.
+* **Energy Dashboard Ready**: Cumulative `kWh` energy sensors automatically accumulate over time to populate Home Assistant's native Energy Dashboard and Power Flow cards.
+* *Controllable via `virtual.set_battery_soc` and `virtual.set_solar_power`.*
 
 ### Switches
 
@@ -796,3 +905,19 @@ Sets brightness, color (HS), color temperature (Kelvin), or effect on a virtual 
   * `hs_color`: Color as `[hue (0-360), saturation (0-100)]`.
   * `color_temp_kelvin`: Color temperature in Kelvin (`2000`–`6535`).
   * `effect`: Effect name from `effect_list`.
+
+### `virtual.set_battery_soc`
+Manually sets the battery State of Charge percentage (`0`–`100%`) for a virtual energy hub / solar inverter simulation.
+
+* **Target**: Virtual integration
+* **Fields**:
+  * `value`: Target battery SoC percentage (`0`–`100`).
+  * `name`: Optional simulation name if multiple are configured.
+
+### `virtual.set_solar_power`
+Manually sets solar generation wattage (e.g. `7500`), or set to `auto` to resume the natural sun diurnal curve.
+
+* **Target**: Virtual integration
+* **Fields**:
+  * `value`: Numeric wattage string or `auto`.
+  * `name`: Optional simulation name if multiple are configured.

@@ -45,6 +45,7 @@ from .const import (
     COMPONENT_DOMAIN,
     CONF_CLASS,
     CONF_NAME,
+    CONF_SIMULATIONS,
     IMPORTED_GROUP_NAME,
     default_config_file,
     default_meta_file,
@@ -176,17 +177,25 @@ async def _delete_meta_data(hass, group_name):
         })
 
 
-async def _save_user_data(hass, file_name, devices):
-    await _async_save_yaml(hass, file_name, {
+async def _save_user_data(hass, file_name, devices, simulations=None):
+    payload = {
         ATTR_VERSION: 1,
         ATTR_DEVICES: devices
-    })
+    }
+    if simulations:
+        payload[CONF_SIMULATIONS] = simulations
+    await _async_save_yaml(hass, file_name, payload)
 
 
 async def _load_user_data(hass, file_name):
-    entities = await _async_load_yaml(hass, file_name)
-    # make devices: optional.
-    return entities.get(ATTR_DEVICES, entities)
+    raw_data = await _async_load_yaml(hass, file_name)
+    if isinstance(raw_data, dict):
+        simulations = raw_data.get(CONF_SIMULATIONS, [])
+        devices = raw_data.get(ATTR_DEVICES, raw_data)
+        if ATTR_DEVICES not in raw_data:
+            devices = {k: v for k, v in raw_data.items() if k not in (ATTR_VERSION, CONF_SIMULATIONS)}
+        return devices, simulations
+    return {}, []
 
 
 def _fix_config(config):
@@ -293,10 +302,12 @@ class BlendedCfg:
         self._orphaned_entities: dict[str, Any] = {}
         self._devices: list[dict[str, Any]] = []
         self._entities: dict[str, Any] = {}
+        self._simulations: list[dict[str, Any]] = []
 
     async def async_load(self):
         meta_data = await _load_meta_data(self._hass, self._group_name)
-        devices = await _load_user_data(self._hass, self._file_name)
+        devices, simulations = await _load_user_data(self._hass, self._file_name)
+        self._simulations = simulations
         changed = False
 
         _LOGGER.debug(f"loaded-meta-data={meta_data}")
@@ -412,6 +423,10 @@ class BlendedCfg:
     @property
     def switch_config(self):
         return self._entities.get(Platform.SWITCH, [])
+
+    @property
+    def simulations(self) -> list[dict[str, Any]]:
+        return self._simulations
 
 
 class UpgradeCfg:

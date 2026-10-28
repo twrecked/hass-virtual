@@ -34,6 +34,7 @@ from .const import (
     ATTR_ENTITIES,
     ATTR_FILE_NAME,
     ATTR_GROUP_NAME,
+    ATTR_VALUE,
     COMPONENT_CONFIG,
     COMPONENT_DOMAIN,
     COMPONENT_MANUFACTURER,
@@ -41,8 +42,11 @@ from .const import (
     COMPONENT_SERVICES,
     CONF_NAME,
     CONF_YAML_CONFIG,
+    SERVICE_SET_BATTERY_SOC,
+    SERVICE_SET_SOLAR_POWER,
 )
 from .cfg import BlendedCfg, UpgradeCfg
+from .simulations import SimulationManager
 
 
 __version__ = '0.10.0-alpha.5'
@@ -61,6 +65,16 @@ SERVICE_AVAILABLE = 'set_available'
 SERVICE_SCHEMA = vol.Schema({
     vol.Required(ATTR_ENTITY_ID): cv.comp_entity_ids,
     vol.Required('value'): cv.boolean,
+})
+
+SERVICE_BATTERY_SOC_SCHEMA = vol.Schema({
+    vol.Required(ATTR_VALUE): vol.All(vol.Coerce(float), vol.Range(min=0.0, max=100.0)),
+    vol.Optional(CONF_NAME): cv.string,
+})
+
+SERVICE_SOLAR_POWER_SCHEMA = vol.Schema({
+    vol.Required(ATTR_VALUE): cv.string,
+    vol.Optional(CONF_NAME): cv.string,
 })
 
 VIRTUAL_PLATFORMS = [
@@ -275,6 +289,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.debug("creating the entities")
     await hass.config_entries.async_forward_entry_setups(entry, VIRTUAL_PLATFORMS)
 
+    # Start any configured simulations
+    sim_manager: SimulationManager = hass.data.get("virtual_simulation_manager")
+    if sim_manager and vcfg.simulations:
+        _LOGGER.debug("setting up virtual simulations")
+        await sim_manager.async_setup_simulations(entry, vcfg.simulations)
+
     # Install service handler.
     @verify_domain_control(COMPONENT_DOMAIN)
     async def async_virtual_service_set_available(call) -> None:
@@ -288,6 +308,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.services.async_register(COMPONENT_DOMAIN, SERVICE_AVAILABLE,
                                      async_virtual_service_set_available, schema=SERVICE_SCHEMA)
 
+        @verify_domain_control(COMPONENT_DOMAIN)
+        async def async_virtual_service_set_battery_soc(call) -> None:
+            sm: SimulationManager = hass.data.get("virtual_simulation_manager")
+            if sm:
+                sm.set_battery_soc(float(call.data[ATTR_VALUE]), call.data.get(CONF_NAME))
+
+        @verify_domain_control(COMPONENT_DOMAIN)
+        async def async_virtual_service_set_solar_power(call) -> None:
+            sm: SimulationManager = hass.data.get("virtual_simulation_manager")
+            if sm:
+                sm.set_solar_power(call.data[ATTR_VALUE], call.data.get(CONF_NAME))
+
+        hass.services.async_register(
+            COMPONENT_DOMAIN, SERVICE_SET_BATTERY_SOC, async_virtual_service_set_battery_soc, schema=SERVICE_BATTERY_SOC_SCHEMA
+        )
+        hass.services.async_register(
+            COMPONENT_DOMAIN, SERVICE_SET_SOLAR_POWER, async_virtual_service_set_solar_power, schema=SERVICE_SOLAR_POWER_SCHEMA
+        )
+
     return True
 
 
@@ -297,6 +336,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # _LOGGER.debug(f"before hass={hass.data[COMPONENT_DOMAIN]}")
     unload_ok = await hass.config_entries.async_unload_platforms(entry, VIRTUAL_PLATFORMS)
     if unload_ok:
+        sm: SimulationManager = hass.data.get("virtual_simulation_manager")
+        if sm:
+            await sm.async_unload_simulations(entry)
         _LOGGER.debug("unloaded ok")
         hass.data[COMPONENT_DOMAIN].pop(entry.data[ATTR_GROUP_NAME], None)
         # Unregister webhook
