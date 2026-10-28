@@ -43,6 +43,7 @@ from .const import (
     CONF_NAME,
     CONF_YAML_CONFIG,
     SERVICE_SET_BATTERY_SOC,
+    SERVICE_SET_SIM_SPEED,
     SERVICE_SET_SOLAR_POWER,
 )
 from .cfg import BlendedCfg, UpgradeCfg
