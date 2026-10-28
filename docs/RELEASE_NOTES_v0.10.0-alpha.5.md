@@ -17,6 +17,10 @@
   - `class: power`, `temperature`, `humidity`, `voltage`, `battery`, etc.: automatically declare `state_class: measurement`.
   - Supports manual `state_class:` overrides in YAML.
 - Added `Sol-Ark Battery Energy In` and `Sol-Ark Battery Energy Out` sensors to complete Home Assistant's Energy Dashboard battery tracking.
+- Added `battery_strategy` option (`backup` vs `self_consumption`):
+  - In `backup` mode (default), the battery is held at 100% float charge for emergencies while grid power is healthy. Deficits pull from cheap grid power.
+  - When grid voltage drops (<= 25 V), the inverter automatically enters island mode, powering the home from solar and battery.
+- Added reactive grid voltage tracking (`grid_voltage_sensor`) allowing seamless blackout testing using standard `virtual.set`.
 
 ### 2. Modular Hardware Ecosystem Configurations (`examples/`)"
 Added ready-to-import virtual device configuration files partitioned by simulated hardware brand:

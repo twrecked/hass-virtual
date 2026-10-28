@@ -330,6 +330,7 @@ version: 1
 simulations:
   - type: solar_inverter
     name: "Sol-Ark Energy Manager"
+    battery_strategy: "backup"     # "backup" (holds battery at 100% float for outages) or "self_consumption" (daily cycle)
     peak_solar_power: 11000          # 11 kW peak at noon
     base_load: 250                   # Inverter self-consumption + standby draw (W)
     battery_capacity: 15.0           # 15 kWh pack
@@ -362,6 +363,12 @@ simulations:
 
 devices:
   Sol-Ark Inverter:
+    - platform: sensor
+      name: Sol-Ark Grid Voltage
+      class: voltage
+      unit_of_measurement: "V"
+      initial_value: "240.0"
+
     - platform: sensor
       name: Sol-Ark Grid Power
       class: power
@@ -427,6 +434,9 @@ devices:
 
 * **Solar Generation**: Smooth diurnal bell curve from sunrise (~06:00) to sunset (~19:30), peaking at `peak_solar_power` (11 kW) at noon.
 * **Dynamic House Load**: Automatically aggregates `base_load` (250 W) + all active linked appliance power sensors.
+* **Battery Operating Strategies (`battery_strategy`)**:
+  * **`backup`** (Default): Battery is treated as an emergency backup generator / UPS. While the grid is online, solar powers the house, tops up the battery, and exports excess; the battery sits preserved at 100% float charge and does not cycle daily. Nighttime deficits pull from the grid. When a blackout occurs (grid voltage drops to 0 V), the battery instantly takes over and powers the home.
+  * **`self_consumption`**: Standard daily cycling. Battery discharges every evening to minimize grid imports, common in regions with high peak-time electricity rates.
 * **Self-Consumption & Grid Export**:
   * Surplus solar powers the house, charges the battery, and exports any remaining excess to the grid.
   * When solar is insufficient (night / overcast), battery discharges down to `battery_min_soc` (20%), after which power seamlessly imports from the grid.

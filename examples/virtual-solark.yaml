@@ -3,6 +3,7 @@ version: 1
 simulations:
   - type: solar_inverter
     name: "Sol-Ark Energy Manager"
+    battery_strategy: "backup"     # "backup" (holds battery at 100% float for outages) or "self_consumption" (daily cycle)
     peak_solar_power: 11000          # 11 kW peak at noon
     base_load: 250                   # Inverter self-consumption + standby draw (W)
     battery_capacity: 15.0           # 15 kWh pack
@@ -15,6 +16,7 @@ simulations:
     pv_energy_sensor: "Sol-Ark PV Energy"
     load_power_sensor: "Sol-Ark Load Power"
     load_energy_sensor: "Sol-Ark Load Energy"
+    grid_voltage_sensor: "Sol-Ark Grid Voltage"
     grid_power_sensor: "Sol-Ark Grid Power"
     grid_energy_in_sensor: "Sol-Ark Grid Energy In"
     grid_energy_out_sensor: "Sol-Ark Grid Energy Out"
@@ -36,6 +38,12 @@ simulations:
 devices:
   # Device 1: Inverter & Grid
   Sol-Ark Inverter:
+    - platform: sensor
+      name: Sol-Ark Grid Voltage
+      class: voltage
+      unit_of_measurement: "V"
+      initial_value: "240.0"
+
     - platform: sensor
       name: Sol-Ark Grid Power
       class: power

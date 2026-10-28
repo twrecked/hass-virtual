@@ -7,11 +7,12 @@ import math
 from collections.abc import Callable
 from typing import Any
 
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
+from homeassistant.core import Event, HomeAssistant, callback
+from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
 from homeassistant.util import dt as dt_util, slugify
 
-from ..const import COMPONENT_DOMAIN
+from ..const import COMPONENT_DOMAIN, CONF_BATTERY_STRATEGY, DEFAULT_BATTERY_STRATEGY
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,8 +40,10 @@ class SolarInverterSimulation:
         self._battery_max_power: float = float(config.get("battery_max_power", DEFAULT_BATTERY_MAX_POWER))
         self._tick_interval: float = max(1.0, float(config.get("tick_interval", DEFAULT_TICK_INTERVAL)))
         self._sim_speed: float = max(0.1, float(config.get("sim_speed", DEFAULT_SIM_SPEED)))
+        self._battery_strategy: str = str(config.get(CONF_BATTERY_STRATEGY, DEFAULT_BATTERY_STRATEGY)).lower()
 
         # Linked sensors
+        self._grid_voltage_sensor: str | None = config.get("grid_voltage_sensor")
         self._pv_power_sensor: str | None = config.get("pv_power_sensor")
         self._pv_energy_sensor: str | None = config.get("pv_energy_sensor")
         self._grid_power_sensor: str | None = config.get("grid_power_sensor")
@@ -57,6 +60,7 @@ class SolarInverterSimulation:
         self._linked_loads: list[str] = config.get("linked_loads", [])
 
         # Simulation states
+        self._grid_voltage: float = 240.0
         self._solar_power_override: float | None = None
         self._battery_soc: float = 85.0
         self._battery_energy_stored: float = (85.0 / 100.0) * self._battery_capacity
@@ -71,6 +75,7 @@ class SolarInverterSimulation:
 
         self._last_tick_time: datetime.datetime | None = None
         self._unsub_timer: Callable[[], None] | None = None
+        self._unsub_voltage: Callable[[], None] | None = None
 
         _LOGGER.info(f"SolarInverterSimulation created: {self.name} (peak_solar={self._peak_solar_power}W)")
 
@@ -161,6 +166,8 @@ class SolarInverterSimulation:
         battery_power = 0.0
         grid_power = 0.0
 
+        grid_available = self._grid_voltage > 25.0
+
         if delta_power > 0:
             # Surplus solar: powers house, charges battery, exports remaining excess
             surplus = delta_power
@@ -169,17 +176,37 @@ class SolarInverterSimulation:
 
             charge_watts = min(surplus, max_charge_watts) if room_kwh > 0 else 0.0
             battery_power = charge_watts  # Positive = charging
-            grid_power = -(surplus - charge_watts)  # Negative = exporting to grid
+            if grid_available:
+                grid_power = -(surplus - charge_watts)  # Negative = exporting to grid
+            else:
+                grid_power = 0.0  # Off-grid: cannot backfeed a dead grid
 
         elif delta_power < 0:
-            # Deficit: solar provides what it can, battery discharges down to 20%, grid supplies rest
+            # Deficit: solar provides what it can
             deficit = abs(delta_power)
-            avail_kwh = max(0.0, self._battery_energy_stored - min_stored_kwh)
-            max_discharge_watts = min(self._battery_max_power, (avail_kwh / dt_hours) * 1000.0) if dt_hours > 0 else self._battery_max_power
 
-            discharge_watts = min(deficit, max_discharge_watts) if avail_kwh > 0 else 0.0
-            battery_power = -discharge_watts  # Negative = discharging
-            grid_power = deficit - discharge_watts  # Positive = importing from grid
+            # Determine whether battery is allowed to discharge:
+            # In "backup" mode, battery is reserved for power outages (grid_available is False).
+            # In "self_consumption" mode, battery discharges daily to offset home load.
+            allow_battery_discharge = (
+                not grid_available
+                or self._battery_strategy in ("self_consumption", "daily_cycle", "cycle")
+            )
+
+            if allow_battery_discharge:
+                avail_kwh = max(0.0, self._battery_energy_stored - min_stored_kwh)
+                max_discharge_watts = min(self._battery_max_power, (avail_kwh / dt_hours) * 1000.0) if dt_hours > 0 else self._battery_max_power
+
+                discharge_watts = min(deficit, max_discharge_watts) if avail_kwh > 0 else 0.0
+                battery_power = -discharge_watts  # Negative = discharging
+                if grid_available:
+                    grid_power = deficit - discharge_watts  # Positive = importing from grid
+                else:
+                    grid_power = 0.0  # Off-grid: cannot import from a dead grid
+            else:
+                # Backup mode with grid healthy: Preserve battery in reserve at float charge!
+                battery_power = 0.0
+                grid_power = deficit  # Grid supplies 100% of the deficit
 
         else:
             battery_power = 0.0
@@ -212,7 +239,7 @@ class SolarInverterSimulation:
             self._grid_energy_out += delta_e_grid
 
         _LOGGER.debug(
-            f"{self.name}: tick - pv={solar_power}W, load={load_power}W, "
+            f"{self.name}: tick ({self._battery_strategy}) - pv={solar_power}W, load={load_power}W, "
             f"battery={battery_power}W (soc={self._battery_soc}%), grid={grid_power}W"
         )
 
@@ -226,6 +253,7 @@ class SolarInverterSimulation:
         self._update_sensor(self._battery_voltage_sensor, str(battery_voltage))
         self._update_sensor(self._battery_energy_in_sensor, str(round(self._battery_energy_in, 2)))
         self._update_sensor(self._battery_energy_out_sensor, str(round(self._battery_energy_out, 2)))
+        self._update_sensor(self._grid_voltage_sensor, str(round(self._grid_voltage, 1)))
         self._update_sensor(self._grid_power_sensor, str(round(grid_power, 1)))
         self._update_sensor(self._grid_energy_in_sensor, str(round(self._grid_energy_in, 2)))
         self._update_sensor(self._grid_energy_out_sensor, str(round(self._grid_energy_out, 2)))
@@ -236,9 +264,34 @@ class SolarInverterSimulation:
         self._step_simulation()
 
     def start(self) -> None:
-        """Start the simulation timer."""
+        """Start the simulation timer and subscriptions."""
         if self._unsub_timer:
             return
+
+        grid_v_id = self._resolve_sensor_id(self._grid_voltage_sensor)
+        if grid_v_id:
+            st = self.hass.states.get(grid_v_id)
+            if st and st.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN, None):
+                try:
+                    self._grid_voltage = float(st.state)
+                except (ValueError, TypeError):
+                    pass
+
+            @callback
+            def _handle_voltage_change(event: Event) -> None:
+                new_state = event.data.get("new_state")
+                if new_state is None or new_state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                    return
+                try:
+                    self._grid_voltage = float(new_state.state)
+                    self._step_simulation()
+                except (ValueError, TypeError):
+                    pass
+
+            self._unsub_voltage = async_track_state_change_event(
+                self.hass, [grid_v_id], _handle_voltage_change
+            )
+
         self._last_tick_time = dt_util.utcnow()
         self._unsub_timer = async_track_time_interval(
             self.hass, self._on_tick, datetime.timedelta(seconds=self._tick_interval)
@@ -247,10 +300,13 @@ class SolarInverterSimulation:
         _LOGGER.info(f"Started simulation: {self.name}")
 
     def stop(self) -> None:
-        """Stop the simulation timer."""
+        """Stop the simulation timer and subscriptions."""
         if self._unsub_timer:
             self._unsub_timer()
             self._unsub_timer = None
+        if self._unsub_voltage:
+            self._unsub_voltage()
+            self._unsub_voltage = None
         _LOGGER.info(f"Stopped simulation: {self.name}")
 
     def set_battery_soc(self, soc: float) -> None:

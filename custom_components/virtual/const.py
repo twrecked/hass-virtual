@@ -94,6 +94,8 @@ CONF_HEATING_TYPE = "heating_type"
 CONF_CLIMATE_ENTITY = "climate_entity"
 CONF_GAS_SENSOR = "gas_sensor"
 CONF_GAS_ENERGY_SENSOR = "gas_energy_sensor"
+CONF_GRID_VOLTAGE_SENSOR = "grid_voltage_sensor"
+CONF_BATTERY_STRATEGY = "battery_strategy"
 CONF_GAS_FLOW_STAGE1 = "gas_flow_stage1"
 CONF_GAS_FLOW_STAGE2 = "gas_flow_stage2"
 CONF_BLOWER_POWER = "blower_power"
@@ -172,6 +174,7 @@ DEFAULT_CLIMATE_STANDBY_POWER = 10.0
 DEFAULT_HOUSE_LEAKAGE_RATE = 0.3
 DEFAULT_TICK_INTERVAL = 10.0
 DEFAULT_SIM_SPEED = 1.0
+DEFAULT_BATTERY_STRATEGY = "backup"
 DEFAULT_EDITOR_URL = "https://virtual-dot-twrecked-tools.nn.r.appspot.com"
 
 IMPORTED_GROUP_NAME = "imported"
