@@ -211,6 +211,11 @@ class SolarInverterSimulation:
             delta_e_grid = (abs(grid_power) * dt_hours) / 1000.0
             self._grid_energy_out += delta_e_grid
 
+        _LOGGER.debug(
+            f"{self.name}: tick - pv={solar_power}W, load={load_power}W, "
+            f"battery={battery_power}W (soc={self._battery_soc}%), grid={grid_power}W"
+        )
+
         # Push updates to linked virtual sensors
         self._update_sensor(self._pv_power_sensor, str(round(solar_power, 1)))
         self._update_sensor(self._pv_energy_sensor, str(round(self._pv_energy, 2)))

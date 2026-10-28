@@ -296,9 +296,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, VIRTUAL_PLATFORMS)
 
     # Start any configured simulations
-    sim_manager: SimulationManager = hass.data.get("virtual_simulation_manager")
-    if sim_manager and vcfg.simulations:
-        _LOGGER.debug("setting up virtual simulations")
+    if "virtual_simulation_manager" not in hass.data:
+        hass.data["virtual_simulation_manager"] = SimulationManager(hass)
+    sim_manager: SimulationManager = hass.data["virtual_simulation_manager"]
+    if vcfg.simulations:
+        _LOGGER.info(f"Setting up {len(vcfg.simulations)} simulation(s) for {entry.data[ATTR_GROUP_NAME]}")
         await sim_manager.async_setup_simulations(entry, vcfg.simulations)
 
     # Install service handler.

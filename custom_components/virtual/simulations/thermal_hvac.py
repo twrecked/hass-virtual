@@ -258,6 +258,11 @@ class ThermalHvacSimulation:
             except Exception as err:
                 _LOGGER.debug(f"Could not update climate {climate_id}: {err}")
 
+        _LOGGER.debug(
+            f"{self.name}: tick - indoor={reported_temp}°C (sim={self._sim_current_temp:.3f}°C), "
+            f"outdoor={self._outdoor_temp}°C, stage={stage}, power={power}W, gas={gas_flow}m³/h"
+        )
+
         # Update linked sensors
         self._update_sensor(self._indoor_sensor_config, str(reported_temp))
         self._update_sensor(self._power_sensor_config, str(round(power, 1)))
