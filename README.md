@@ -348,6 +348,8 @@ simulations:
     battery_power_sensor: "Sol-Ark Battery Power"
     battery_soc_sensor: "Sol-Ark Battery SoC"
     battery_voltage_sensor: "Sol-Ark Battery Voltage"
+    battery_energy_in_sensor: "Sol-Ark Battery Energy In"
+    battery_energy_out_sensor: "Sol-Ark Battery Energy Out"
 
     # External appliances in your house to sum into the load:
     linked_loads:
@@ -411,6 +413,16 @@ devices:
       class: voltage
       unit_of_measurement: "V"
       initial_value: "52.4"
+    - platform: sensor
+      name: Sol-Ark Battery Energy In
+      class: energy
+      unit_of_measurement: "kWh"
+      initial_value: "0.0"
+    - platform: sensor
+      name: Sol-Ark Battery Energy Out
+      class: energy
+      unit_of_measurement: "kWh"
+      initial_value: "0.0"
 ```
 
 * **Solar Generation**: Smooth diurnal bell curve from sunrise (~06:00) to sunset (~19:30), peaking at `peak_solar_power` (11 kW) at noon.

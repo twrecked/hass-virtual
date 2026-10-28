@@ -3,6 +3,8 @@
   Extract closed-loop thermal HVAC simulation into dedicated virtual-climate.yaml.
   Rename virtual-umbrella.yaml to virtual-examples.yaml for multi-platform device showcases.
   Sanitize example room and device names.
+  Add automatic state_class assignment on virtual sensors (total_increasing for energy/gas, measurement for power/temp) for full Home Assistant Energy Dashboard compatibility.
+  Add battery energy in and out sensors to virtual-solark.yaml.
 0.10.0-alpha.4:
   Add appliance load simulation and power profiling to virtual sensors.
   Support linked switches with automatic 0W power cut behavior.

@@ -14,6 +14,7 @@ from homeassistant.components.sensor import (
     DOMAIN as PLATFORM_DOMAIN,
     SensorDeviceClass,
     SensorEntity,
+    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -34,6 +35,7 @@ from homeassistant.util import dt as dt_util, slugify
 from . import get_entity_from_domain, get_entity_configs
 from .const import (
     ATTR_CONTROL_MODE,
+    CONF_STATE_CLASS,
     ATTR_CYCLE_ACTIVE,
     ATTR_CYCLE_REMAINING,
     ATTR_GROUP_NAME,
@@ -75,6 +77,7 @@ SERVICE_SET = "set"
 
 SENSOR_LOAD_SCHEMA = {
     vol.Optional(CONF_CLASS): cv.string,
+    vol.Optional(CONF_STATE_CLASS): cv.string,
     vol.Optional(CONF_UNIT_OF_MEASUREMENT, default=""): cv.string,
     vol.Optional(CONF_LINKED_SWITCH): cv.string,
     vol.Optional(CONF_STANDBY_POWER, default=DEFAULT_STANDBY_POWER): vol.Coerce(float),
@@ -186,6 +189,35 @@ class VirtualSensor(VirtualEntity, SensorEntity):
             unit = unit.replace("Â°", "°")
 
         self._attr_native_unit_of_measurement = unit
+
+        # Determine state class (crucial for Home Assistant Energy Dashboard & statistics)
+        raw_state_class = config.get(CONF_STATE_CLASS)
+        if raw_state_class:
+            try:
+                self._attr_state_class = SensorStateClass(str(raw_state_class).lower())
+            except ValueError:
+                self._attr_state_class = None
+        elif self._attr_device_class in (SensorDeviceClass.ENERGY, "energy", "gas"):
+            self._attr_state_class = SensorStateClass.TOTAL_INCREASING
+        elif self._attr_device_class in (
+            SensorDeviceClass.POWER,
+            SensorDeviceClass.TEMPERATURE,
+            SensorDeviceClass.HUMIDITY,
+            SensorDeviceClass.PRESSURE,
+            SensorDeviceClass.VOLTAGE,
+            SensorDeviceClass.CURRENT,
+            SensorDeviceClass.BATTERY,
+            SensorDeviceClass.ILLUMINANCE,
+            "power",
+            "temperature",
+            "humidity",
+            "pressure",
+            "voltage",
+            "current",
+            "battery",
+            "illuminance",
+        ):
+            self._attr_state_class = SensorStateClass.MEASUREMENT
 
         # Load simulation properties
         self._linked_switch_config: str | None = config.get(CONF_LINKED_SWITCH)

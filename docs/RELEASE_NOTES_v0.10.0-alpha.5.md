@@ -11,7 +11,14 @@
 
 ## 🌟 What's New in v0.10.0-alpha.5
 
-### 1. Modular Hardware Ecosystem Configurations (`examples/`)
+### 1. Home Assistant Energy Dashboard Support (Sensor `state_class`)
+- `VirtualSensor` now automatically assigns appropriate `state_class` attributes required by Home Assistant's native **Energy Dashboard** and long-term statistics:
+  - `class: energy` and `class: gas`: automatically declare `state_class: total_increasing`.
+  - `class: power`, `temperature`, `humidity`, `voltage`, `battery`, etc.: automatically declare `state_class: measurement`.
+  - Supports manual `state_class:` overrides in YAML.
+- Added `Sol-Ark Battery Energy In` and `Sol-Ark Battery Energy Out` sensors to complete Home Assistant's Energy Dashboard battery tracking.
+
+### 2. Modular Hardware Ecosystem Configurations (`examples/`)"
 Added ready-to-import virtual device configuration files partitioned by simulated hardware brand:
 
 - **`examples/virtual-sonoff.yaml`** (6 devices):
@@ -28,7 +35,7 @@ Added ready-to-import virtual device configuration files partitioned by simulate
 
 ---
 
-### 2. Dedicated Climate & Multi-Platform Example Files
+### 3. Dedicated Climate & Multi-Platform Example Files
 - **`examples/virtual-climate.yaml`**:
   - Dedicated configuration file containing the closed-loop thermal HVAC system (Thermostat + Indoor Temp + Outdoor Weather Sync + Power Meter) and a standalone basic thermostat.
 - **`examples/virtual-examples.yaml`**:
