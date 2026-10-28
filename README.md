@@ -70,7 +70,7 @@ _Virtual_ provides support for 17 distinct entity platforms:
   - [Covers](#covers)
   - [Valves](#valves)
   - [Device Trackers](#device-trackers)
-- [Solar Inverter & Energy Hub Simulation](#solar-inverter--energy-hub-simulation-simulations)
+- [Physics Simulation Engines](#physics-simulation-engines-simulations)
 - [Legacy YAML Configuration](#legacy-yaml-configuration)
 - [Services](#services)
   - [virtual.set_available](#virtualset_available)
@@ -308,53 +308,17 @@ Living Room Thermostat:
 * *Controllable via native `climate.set_temperature`, `climate.set_hvac_mode`, `climate.set_preset_mode`, and `climate.set_fan_mode` services.*
 * *Simulate ambient room temperature changes using the custom `virtual.set_current_temperature` service.*
 
-#### Closed-Loop HVAC & House Thermal Simulation
-Virtual climate entities can run an active, closed-loop thermal physics engine that models house insulation, outdoor weather leakage, and multi-stage heating/cooling with realistic electrical power draws:
-
-```yaml
-House HVAC:
-  - platform: climate
-    name: House Thermostat
-    initial_value: "heat"
-    initial_temperature: 21.0
-    initial_current_temperature: 20.0
-    indoor_sensor: "Indoor Temperature"   # Syncs indoor temperature in real-time
-    outdoor_sensor: "Outdoor Temperature" # Reacts to changing outdoor weather
-    power_sensor: "HVAC Power"           # Syncs active stage power wattage (W)
-    sim_speed: 1.0                       # Simulation speed (e.g. 10.0 for 10x fast forward)
-    house_leakage_rate: 0.3              # °C/hr drift per 10°C indoor/outdoor delta
-  - platform: sensor
-    name: Indoor Temperature
-    class: temperature
-    unit_of_measurement: "°C"
-  - platform: sensor
-    name: Outdoor Temperature
-    class: temperature
-    unit_of_measurement: "°C"
-    initial_value: "5.0"
-  - platform: sensor
-    name: HVAC Power
-    class: power
-    unit_of_measurement: "W"
-```
-
-* **Passive Heat Transfer**: The house naturally gains or loses heat towards the `outdoor_sensor` temperature based on insulation (`house_leakage_rate`). Without active HVAC, indoor temperature will never drift past the outdoor ambient reading.
-* **Intelligent Staging**:
-  * **Stage 2 Heat** (3.0°C/hr, ~3800W): Activates when outdoor is freezing (<0°C) or indoor is >1.5°C below target setpoint.
-  * **Stage 1 Heat** (1.5°C/hr, ~1800W): Activates during moderate cold or small setpoint deltas.
-  * **Stage 2 Cool** (-3.0°C/hr, ~2800W): Activates during heatwaves (>30°C) or when indoor is >1.5°C above target setpoint.
-  * **Stage 1 Cool** (-1.5°C/hr, ~1400W): Activates during mild cooling needs.
-  * **Fan** (-0.2°C/hr, ~120W): Activates in `fan_only` mode.
-  * **Idle/Standby** (~10W) / **Off** (0W).
-* **Sensor Synchronization**: Automatically updates both the linked `indoor_sensor` and `power_sensor` in lockstep.
-* *Control simulation acceleration via the `virtual.set_sim_speed` service.*
 
 ---
 
 
 ---
 
-### Solar Inverter & Energy Hub Simulation (`simulations/`)
+### Physics Simulation Engines (`simulations/`)
+
+Complex multi-device physics simulations live cleanly in the dedicated `simulations/` package, leaving Home Assistant entity platforms lightweight and standard. Simulations are declared in a top-level `simulations:` block in YAML.
+
+#### 1. Solar Inverter & Energy Hub (`type: solar_inverter`)
 
 Simulates hybrid solar inverters (such as Sol-Ark, Deye, Sunsynk, SolarEdge, Tesla Powerwall, or Enphase) bridged into Home Assistant via Solar Assistant or MQTT. The engine runs a brand-agnostic physics loop that continuously balances solar generation, house loads, battery storage, and the electricity grid:
 
@@ -456,6 +420,71 @@ devices:
   * When solar is insufficient (night / overcast), battery discharges down to `battery_min_soc` (20%), after which power seamlessly imports from the grid.
 * **Energy Dashboard Ready**: Cumulative `kWh` energy sensors automatically accumulate over time to populate Home Assistant's native Energy Dashboard and Power Flow cards.
 * *Controllable via `virtual.set_battery_soc` and `virtual.set_solar_power`.*
+
+
+#### 2. Thermal HVAC & House Simulation (`type: thermal_hvac`)
+
+Simulates physical house insulation, outdoor weather leakage, and multi-stage heating/cooling with support for both **electric heat pumps** and **natural gas / propane furnaces**:
+
+```yaml
+version: 1
+
+simulations:
+  - type: thermal_hvac
+    name: "Main House Thermal Engine"
+    heating_type: "electric"          # "electric" (heat pump / furnace) or "gas" (gas furnace / boiler)
+    climate_entity: "Main House Thermostat"
+    indoor_sensor: "Main Indoor Temp"
+    outdoor_sensor: "Main Outdoor Temp"
+    power_sensor: "Main HVAC Power"   # Electric heat pump draw or gas furnace blower power
+    # gas_sensor: "Main Furnace Gas Flow"      # For heating_type: gas (m³/hr)
+    # gas_energy_sensor: "Main Furnace Gas"    # For heating_type: gas (cumulative m³ for Energy Tab)
+    sim_speed: 1.0                    # Acceleration multiplier (e.g. 10.0 for 10x fast forward)
+    house_leakage_rate: 0.3           # Passive insulation loss (°C/hr per 10°C delta)
+    heat_rate_stage1: 1.5             # °C / hour
+    heat_rate_stage2: 3.0
+    cool_rate_stage1: 1.5
+    cool_rate_stage2: 3.0
+    fan_cool_rate: 0.2
+    heat_power_stage1: 1800.0         # Watts
+    heat_power_stage2: 3800.0
+    cool_power_stage1: 1400.0
+    cool_power_stage2: 2800.0
+    fan_power: 120.0
+    standby_power: 10.0
+
+devices:
+  Main House HVAC:
+    - platform: climate
+      name: Main House Thermostat
+      initial_value: "heat"
+      initial_temperature: 21.0
+      initial_current_temperature: 20.0
+    - platform: sensor
+      name: Main Indoor Temp
+      class: temperature
+      unit_of_measurement: "°C"
+      initial_value: "20.0"
+    - platform: sensor
+      name: Main Outdoor Temp
+      class: temperature
+      unit_of_measurement: "°C"
+      initial_value: "4.0"
+    - platform: sensor
+      name: Main HVAC Power
+      class: power
+      unit_of_measurement: "W"
+      initial_value: "1800"
+```
+
+* **Multi-Fuel Heating Support**:
+  * **Electric (`heating_type: "electric"`)**: Heat pump or electric furnace stages drawing electrical power (Watts) on `power_sensor`.
+  * **Gas (`heating_type: "gas"`)**: Gas furnace consuming fuel (`m³/hr`) on `gas_sensor`, accumulating cumulative `m³` on `gas_energy_sensor` for Home Assistant's native **Gas Energy Dashboard**, and drawing electrical blower fan power (`blower_power: 120 W`) on `power_sensor`.
+* **Passive Insulation Leakage**: The house naturally loses or gains heat toward `outdoor_sensor` based on `house_leakage_rate`. Without active heating/cooling, the house cannot drift past ambient outdoor temperature.
+* **Precision Accumulator**: Uses an unrounded internal float accumulator to prevent mathematical truncation across 10-second ticks.
+* *Accelerate simulation time with the `virtual.set_sim_speed` service.*
+
+---
 
 ### Switches
 

@@ -5,9 +5,10 @@ import logging
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import HomeAssistant
 
 from .solar_inverter import SolarInverterSimulation
+from .thermal_hvac import ThermalHvacSimulation
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,6 +32,10 @@ class SimulationManager:
             sim_type = sim_cfg.get("type", "").lower()
             if sim_type in ("solar_inverter", "solark", "sol_ark", "inverter", "energy_hub"):
                 sim = SolarInverterSimulation(self.hass, sim_cfg)
+                sim.start()
+                active_list.append(sim)
+            elif sim_type in ("thermal_hvac", "hvac", "house_thermal", "climate_sim", "furnace"):
+                sim = ThermalHvacSimulation(self.hass, sim_cfg)
                 sim.start()
                 active_list.append(sim)
             else:
@@ -59,3 +64,11 @@ class SimulationManager:
                 if isinstance(sim, SolarInverterSimulation):
                     if name is None or sim.name.lower() == name.lower():
                         sim.set_solar_power(power)
+
+    def set_sim_speed(self, speed: float, name: str | None = None) -> None:
+        """Set simulation speed across active simulations."""
+        for sim_list in self._simulations.values():
+            for sim in sim_list:
+                if hasattr(sim, "set_sim_speed"):
+                    if name is None or sim.name.lower() == name.lower():
+                        sim.set_sim_speed(speed)

@@ -1,42 +1,74 @@
 version: 1
+
+simulations:
+  # 1. Closed-Loop Thermal HVAC Engine (Electric Heat Pump or Gas Furnace)
+  - type: thermal_hvac
+    name: "Main House Thermal Engine"
+    heating_type: "electric"          # "electric" (heat pump / furnace) or "gas" (gas furnace / boiler)
+    climate_entity: "Main House Thermostat"
+    indoor_sensor: "Main Indoor Temp"
+    outdoor_sensor: "Main Outdoor Temp"
+    power_sensor: "Main HVAC Power"   # Electric heat pump draw or gas furnace blower power
+    # gas_sensor: "Main Furnace Gas Flow"      # For heating_type: gas (m³/hr)
+    # gas_energy_sensor: "Main Furnace Gas"    # For heating_type: gas (cumulative m³ for Energy Tab)
+    sim_speed: 1.0                    # Acceleration multiplier (e.g. 10.0 for 10x fast forward)
+    house_leakage_rate: 0.3           # Passive insulation loss (°C/hr per 10°C delta)
+    heat_rate_stage1: 1.5             # °C / hour
+    heat_rate_stage2: 3.0
+    cool_rate_stage1: 1.5
+    cool_rate_stage2: 3.0
+    fan_cool_rate: 0.2
+    heat_power_stage1: 1800.0         # Watts
+    heat_power_stage2: 3800.0
+    cool_power_stage1: 1400.0
+    cool_power_stage2: 2800.0
+    fan_power: 120.0
+    standby_power: 10.0
+
 devices:
-  # 1. Closed-Loop Thermal HVAC with Ambient Weather Sync
+  # Device 1: Thermal HVAC System
   Main House HVAC:
     - platform: climate
       name: Main House Thermostat
       initial_value: "heat"
       initial_temperature: 21.0
       initial_current_temperature: 20.0
-      indoor_sensor: "Main Indoor Temp"
-      outdoor_sensor: "Main Outdoor Temp"
-      power_sensor: "Main HVAC Power"
-      sim_speed: 1.0
-      house_leakage_rate: 0.3
+      min_temp: 7.0
+      max_temp: 35.0
+      target_temperature_step: 0.5
+      hvac_modes:
+        - "off"
+        - heat
+        - cool
+        - auto
+
     - platform: sensor
       name: Main Indoor Temp
       class: temperature
       unit_of_measurement: "°C"
       initial_value: "20.0"
+
     - platform: sensor
       name: Main Outdoor Temp
       class: temperature
       unit_of_measurement: "°C"
       initial_value: "4.0"
+
     - platform: sensor
       name: Main HVAC Power
       class: power
       unit_of_measurement: "W"
       initial_value: "1800"
 
-  # 2. Standalone Simple Thermostat
+  # Device 2: Standalone Basic Thermostat
   Basic Thermostat:
     - platform: climate
       name: Basic Thermostat
       initial_value: heat
-      initial_temperature: 21
+      initial_temperature: 21.0
       initial_current_temperature: 19.5
-      min_temp: 10
-      max_temp: 32
+      min_temp: 10.0
+      max_temp: 32.0
       target_temperature_step: 0.5
       hvac_modes:
         - "off"

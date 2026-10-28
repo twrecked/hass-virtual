@@ -77,6 +77,11 @@ SERVICE_SOLAR_POWER_SCHEMA = vol.Schema({
     vol.Optional(CONF_NAME): cv.string,
 })
 
+SERVICE_SIM_SPEED_SCHEMA = vol.Schema({
+    vol.Required("speed"): vol.Coerce(float),
+    vol.Optional(CONF_NAME): cv.string,
+})
+
 VIRTUAL_PLATFORMS = [
     Platform.ALARM_CONTROL_PANEL,
     Platform.BINARY_SENSOR,
@@ -325,6 +330,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
         hass.services.async_register(
             COMPONENT_DOMAIN, SERVICE_SET_SOLAR_POWER, async_virtual_service_set_solar_power, schema=SERVICE_SOLAR_POWER_SCHEMA
+        )
+
+        @verify_domain_control(COMPONENT_DOMAIN)
+        async def async_virtual_service_set_sim_speed(call) -> None:
+            sm: SimulationManager = hass.data.get("virtual_simulation_manager")
+            if sm:
+                sm.set_sim_speed(float(call.data["speed"]), call.data.get(CONF_NAME))
+
+        hass.services.async_register(
+            COMPONENT_DOMAIN, SERVICE_SET_SIM_SPEED, async_virtual_service_set_sim_speed, schema=SERVICE_SIM_SPEED_SCHEMA
         )
 
     return True
