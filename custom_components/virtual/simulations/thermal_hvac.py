@@ -101,6 +101,10 @@ class ThermalHvacSimulation:
         self._house_leakage_rate: float = float(config.get(CONF_HOUSE_LEAKAGE_RATE, DEFAULT_HOUSE_LEAKAGE_RATE))
         self._tick_interval: float = max(1.0, float(config.get(CONF_TICK_INTERVAL, DEFAULT_TICK_INTERVAL)))
         self._sim_speed: float = max(0.1, float(config.get(CONF_SIM_SPEED, DEFAULT_SIM_SPEED)))
+        self._deadband: float = max(0.1, float(config.get("deadband", 0.4)))
+
+        self._is_heating_active: bool = False
+        self._is_cooling_active: bool = False
 
         # Internal simulation states
         self._sim_current_temp: float = 20.0
@@ -151,39 +155,58 @@ class ThermalHvacSimulation:
     def _evaluate_hvac_stage(
         self, hvac_mode: str, cur_temp: float, target_temp: float
     ) -> tuple[str, float, float, float]:
-        """Determine active stage, temperature delta rate (°C/hr), electric power (W), and gas flow (m³/hr)."""
+        """Determine active stage with hysteresis deadband to prevent short-cycling."""
         mode = hvac_mode.lower()
         if mode in ("off", "none"):
+            self._is_heating_active = False
+            self._is_cooling_active = False
             return ("off", 0.0, 0.0, 0.0)
 
-        # Cooling
-        if mode == "cool" or (mode in ("auto", "heat_cool") and cur_temp > target_temp + 0.5):
-            if cur_temp > target_temp:
-                if (cur_temp - target_temp) > 1.5 or self._outdoor_temp > 30.0:
-                    return ("stage2_cool", -self._cool_rate_stage2, self._cool_power_stage2, 0.0)
-                return ("stage1_cool", -self._cool_rate_stage1, self._cool_power_stage1, 0.0)
-            return ("idle", 0.0, self._standby_power, 0.0)
-
-        # Heating
-        if mode == "heat" or (mode in ("auto", "heat_cool") and cur_temp < target_temp - 0.5):
-            if cur_temp < target_temp:
-                is_stage2 = (target_temp - cur_temp) > 1.5 or self._outdoor_temp < 0.0
-                rate = self._heat_rate_stage2 if is_stage2 else self._heat_rate_stage1
-                stage = "stage2_heat" if is_stage2 else "stage1_heat"
-
-                if self._heating_type == "gas":
-                    gas = self._gas_flow_stage2 if is_stage2 else self._gas_flow_stage1
-                    power = self._blower_power
-                else:
-                    gas = 0.0
-                    power = self._heat_power_stage2 if is_stage2 else self._heat_power_stage1
-
-                return (stage, rate, power, gas)
-            return ("idle", 0.0, self._standby_power, 0.0)
-
-        # Fan only
         if mode == "fan_only":
+            self._is_heating_active = False
+            self._is_cooling_active = False
             return ("fan", -self._fan_cool_rate, self._fan_power, 0.0)
+
+        # Hysteresis for Heating
+        if mode in ("heat", "auto", "heat_cool"):
+            if not self._is_heating_active:
+                if cur_temp <= target_temp - self._deadband:
+                    self._is_heating_active = True
+                    self._is_cooling_active = False
+            else:
+                if cur_temp >= target_temp:
+                    self._is_heating_active = False
+
+        # Hysteresis for Cooling
+        if mode in ("cool", "auto", "heat_cool"):
+            if not self._is_cooling_active:
+                if cur_temp >= target_temp + self._deadband:
+                    self._is_cooling_active = True
+                    self._is_heating_active = False
+            else:
+                if cur_temp <= target_temp:
+                    self._is_cooling_active = False
+
+        if self._is_heating_active:
+            is_stage2 = (target_temp - cur_temp) > 1.5 or self._outdoor_temp < 0.0
+            rate = self._heat_rate_stage2 if is_stage2 else self._heat_rate_stage1
+            stage = "stage2_heat" if is_stage2 else "stage1_heat"
+
+            if self._heating_type == "gas":
+                gas = self._gas_flow_stage2 if is_stage2 else self._gas_flow_stage1
+                power = self._blower_power
+            else:
+                gas = 0.0
+                power = self._heat_power_stage2 if is_stage2 else self._heat_power_stage1
+
+            return (stage, rate, power, gas)
+
+        if self._is_cooling_active:
+            is_stage2 = (cur_temp - target_temp) > 1.5 or self._outdoor_temp > 30.0
+            rate = -self._cool_rate_stage2 if is_stage2 else -self._cool_rate_stage1
+            stage = "stage2_cool" if is_stage2 else "stage1_cool"
+            power = self._cool_power_stage2 if is_stage2 else self._cool_power_stage1
+            return (stage, rate, power, 0.0)
 
         return ("idle", 0.0, self._standby_power, 0.0)
 

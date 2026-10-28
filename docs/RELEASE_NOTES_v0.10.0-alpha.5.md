@@ -17,6 +17,10 @@
   - `class: power`, `temperature`, `humidity`, `voltage`, `battery`, etc.: automatically declare `state_class: measurement`.
   - Supports manual `state_class:` overrides in YAML.
 - Added `Sol-Ark Battery Energy In` and `Sol-Ark Battery Energy Out` sensors to complete Home Assistant's Energy Dashboard battery tracking.
+- Added `linked_power` configuration option to `sensor.py`:
+  - Virtual energy sensors now automatically integrate companion power sensors into cumulative `kWh` without requiring Riemann sum helpers in Home Assistant.
+  - Added companion energy sensors to all sockets in `virtual-sonoff.yaml`, `virtual-climate.yaml` (HVAC energy), and `virtual-examples.yaml` (Water Heater energy).
+- Added `deadband` hysteresis (default 0.4°C) to `ThermalHvacSimulation` to run authentic heating and cooling cycles and eliminate rapid 10-second short-cycling.
 - Added `battery_strategy` option (`backup` vs `self_consumption`):
   - In `backup` mode (default), the battery is held at 100% float charge for emergencies while grid power is healthy. Deficits pull from cheap grid power.
   - When grid voltage drops (<= 25 V), the inverter automatically enters island mode, powering the home from solar and battery.

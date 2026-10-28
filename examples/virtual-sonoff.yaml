@@ -15,6 +15,12 @@ devices:
       active_power: 135.0
       initial_load: "standby"
       variance: 2.0
+    - platform: sensor
+      name: TV Socket Energy
+      class: energy
+      unit_of_measurement: "kWh"
+      linked_power: "TV Socket Power"
+      initial_value: "10.0"
 
   # 2. Audio Amplifier Socket
   Living Room Amplifier Outlet:
@@ -31,6 +37,12 @@ devices:
       active_power: 65.0
       initial_load: "standby"
       variance: 3.5
+    - platform: sensor
+      name: Amplifier Socket Energy
+      class: energy
+      unit_of_measurement: "kWh"
+      linked_power: "Amplifier Socket Power"
+      initial_value: "5.0"
 
   # 3. Chest Freezer (Recurring Compressor Cycle)
   Utility Chest Freezer Outlet:
@@ -49,6 +61,12 @@ devices:
       cycle_interval: 2700       # Repeats every 45 minutes
       cycle_align: "interval"
       variance: 1.0
+    - platform: sensor
+      name: Freezer Socket Energy
+      class: energy
+      unit_of_measurement: "kWh"
+      linked_power: "Freezer Socket Power"
+      initial_value: "25.0"
 
   # 4. Washing Machine Socket
   Laundry Washer Outlet:
@@ -65,6 +83,12 @@ devices:
       active_power: 380.0
       initial_load: "standby"
       variance: 5.0
+    - platform: sensor
+      name: Washer Socket Energy
+      class: energy
+      unit_of_measurement: "kWh"
+      linked_power: "Washer Socket Power"
+      initial_value: "18.0"
 
   # 5. Heat Pump Tumble Dryer Socket
   Laundry Dryer Outlet:
@@ -81,6 +105,12 @@ devices:
       active_power: 650.0
       initial_load: "standby"
       variance: 8.0
+    - platform: sensor
+      name: Dryer Socket Energy
+      class: energy
+      unit_of_measurement: "kWh"
+      linked_power: "Dryer Socket Power"
+      initial_value: "22.0"
 
   # 6. Master Bedroom Fan & Light (Sonoff iFan)
   Master Bedroom Ceiling Fan:

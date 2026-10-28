@@ -28,7 +28,7 @@ from homeassistant.const import (
 from homeassistant.core import Event, HomeAssistant, ServiceCall, callback
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.event import async_call_later, async_track_state_change_event
+from homeassistant.helpers.event import async_call_later, async_track_state_change_event, async_track_time_interval
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import dt as dt_util, slugify
 
@@ -40,6 +40,7 @@ from .const import (
     ATTR_CYCLE_REMAINING,
     ATTR_GROUP_NAME,
     ATTR_LINKED_SWITCH,
+    ATTR_LINKED_POWER,
     ATTR_LOAD_STATE,
     ATTR_NEXT_CYCLE_START,
     ATTR_VALUE,
@@ -54,6 +55,7 @@ from .const import (
     CONF_INITIAL_LOAD,
     CONF_INITIAL_VALUE,
     CONF_LINKED_SWITCH,
+    CONF_LINKED_POWER,
     CONF_STANDBY_POWER,
     CONF_VARIANCE,
     CONF_YAML_CONFIG,
@@ -80,6 +82,7 @@ SENSOR_LOAD_SCHEMA = {
     vol.Optional(CONF_STATE_CLASS): cv.string,
     vol.Optional(CONF_UNIT_OF_MEASUREMENT, default=""): cv.string,
     vol.Optional(CONF_LINKED_SWITCH): cv.string,
+    vol.Optional(CONF_LINKED_POWER): cv.string,
     vol.Optional(CONF_STANDBY_POWER, default=DEFAULT_STANDBY_POWER): vol.Coerce(float),
     vol.Optional(CONF_ACTIVE_POWER, default=DEFAULT_ACTIVE_POWER): vol.Coerce(float),
     vol.Optional(CONF_INITIAL_LOAD, default=DEFAULT_INITIAL_LOAD): cv.string,
@@ -248,7 +251,20 @@ class VirtualSensor(VirtualEntity, SensorEntity):
         self._schedule_timer_cancel: Callable[[], None] | None = None
         self._switch_unsub: Callable[[], None] | None = None
 
-        _LOGGER.info(f"VirtualSensor: {self.name} created (load_simulation={self._is_load_simulation})")
+        # Energy accumulation properties (for energy sensors integrating power)
+        self._linked_power_config: str | None = config.get(CONF_LINKED_POWER)
+        self._linked_power_id: str | None = None
+        self._last_power_reading: float = 0.0
+        self._last_energy_calc_time: datetime.datetime | None = None
+        self._power_unsub: Callable[[], None] | None = None
+        self._energy_interval_unsub: Callable[[], None] | None = None
+
+        try:
+            self._energy_accumulator: float = float(config.get(CONF_INITIAL_VALUE, DEFAULT_SENSOR_VALUE))
+        except (ValueError, TypeError):
+            self._energy_accumulator = 0.0
+
+        _LOGGER.info(f"VirtualSensor: {self.name} created (load_simulation={self._is_load_simulation}, linked_power={self._linked_power_config})")
 
     def _create_state(self, config: dict[str, Any]) -> None:
         """Create initial state."""
@@ -264,6 +280,15 @@ class VirtualSensor(VirtualEntity, SensorEntity):
     def _restore_state(self, state, config: dict[str, Any]) -> None:
         """Restore state from persistent storage."""
         super()._restore_state(state, config)
+
+        if self._linked_power_config:
+            if state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN, None):
+                try:
+                    self._energy_accumulator = float(state.state)
+                except (ValueError, TypeError):
+                    self._energy_accumulator = 0.0
+            self._attr_native_value = str(round(self._energy_accumulator, 3))
+            return
 
         if not self._is_load_simulation:
             if state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN, None):
@@ -342,6 +367,8 @@ class VirtualSensor(VirtualEntity, SensorEntity):
             attrs[ATTR_NEXT_CYCLE_START] = self._next_cycle_start.isoformat()
 
         self._attr_extra_state_attributes.update(attrs)
+        if self._linked_power_config:
+            self._attr_extra_state_attributes[ATTR_LINKED_POWER] = self._linked_power_id or self._linked_power_config
 
     def _recalculate_power_and_update(self) -> None:
         """Recalculate power value and write state to Home Assistant."""
@@ -431,6 +458,38 @@ class VirtualSensor(VirtualEntity, SensorEntity):
             self._evaluate_schedule(dt_util.utcnow())
         self._recalculate_power_and_update()
 
+        # Set up automatic energy accumulation if linked to a power sensor
+        if self._linked_power_config:
+            self._linked_power_id = self._resolve_sensor_id(self._linked_power_config)
+            if self._linked_power_id:
+                st = self.hass.states.get(self._linked_power_id)
+                if st and st.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN, None):
+                    try:
+                        self._last_power_reading = max(0.0, float(st.state))
+                    except (ValueError, TypeError):
+                        self._last_power_reading = 0.0
+
+                self._last_energy_calc_time = dt_util.utcnow()
+
+                @callback
+                def _handle_power_change(event: Event) -> None:
+                    new_st = event.data.get("new_state")
+                    if new_st is None or new_st.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                        return
+                    try:
+                        new_p = max(0.0, float(new_st.state))
+                        self._accumulate_energy(new_p)
+                    except (ValueError, TypeError):
+                        pass
+
+                self._power_unsub = async_track_state_change_event(
+                    self.hass, [self._linked_power_id], _handle_power_change
+                )
+
+                self._energy_interval_unsub = async_track_time_interval(
+                    self.hass, self._on_energy_interval, datetime.timedelta(seconds=30)
+                )
+
     async def async_will_remove_from_hass(self) -> None:
         """Clean up timers and subscriptions when entity is removed."""
         if self._switch_unsub:
@@ -442,7 +501,40 @@ class VirtualSensor(VirtualEntity, SensorEntity):
         if self._schedule_timer_cancel:
             self._schedule_timer_cancel()
             self._schedule_timer_cancel = None
+        if self._power_unsub:
+            self._power_unsub()
+            self._power_unsub = None
+        if self._energy_interval_unsub:
+            self._energy_interval_unsub()
+            self._energy_interval_unsub = None
         await super().async_will_remove_from_hass()
+
+    def _accumulate_energy(self, new_power: float | None = None) -> None:
+        """Integrate power over time into cumulative kWh."""
+        now = dt_util.utcnow()
+        if self._last_energy_calc_time is None:
+            self._last_energy_calc_time = now
+            if new_power is not None:
+                self._last_power_reading = new_power
+            return
+
+        dt_seconds = (now - self._last_energy_calc_time).total_seconds()
+        self._last_energy_calc_time = now
+        if dt_seconds > 0 and self._last_power_reading > 0:
+            dt_hours = dt_seconds / 3600.0
+            delta_kwh = (self._last_power_reading * dt_hours) / 1000.0
+            self._energy_accumulator += delta_kwh
+            self._attr_native_value = str(round(self._energy_accumulator, 3))
+            self._update_attributes()
+            self.async_write_ha_state()
+
+        if new_power is not None:
+            self._last_power_reading = new_power
+
+    @callback
+    def _on_energy_interval(self, _now=None) -> None:
+        """Periodic energy calculation for constant power draws."""
+        self._accumulate_energy()
 
     @callback
     def _on_schedule_tick(self, _tick_time=None) -> None:

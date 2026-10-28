@@ -84,6 +84,12 @@ devices:
       cycle_duration: 600
       cycle_interval: 3600
       cycle_align: "hour"
+    - platform: sensor
+      name: Water Heater Energy
+      class: energy
+      unit_of_measurement: "kWh"
+      linked_power: "Water Heater Power"
+      initial_value: "0.0"
 
   # 9. Security Camera with Gated Motion & Sound Detection
   Driveway Security:

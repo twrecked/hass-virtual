@@ -5,6 +5,8 @@
   Sanitize example room and device names.
   Add automatic state_class assignment on virtual sensors (total_increasing for energy/gas, measurement for power/temp) for full Home Assistant Energy Dashboard compatibility.
   Add battery energy in and out sensors to virtual-solark.yaml.
+  Add linked_power support on virtual energy sensors for automatic power-to-kWh accumulation without needing Home Assistant helpers.
+  Add hysteresis deadband to ThermalHvacSimulation to prevent rapid thermostat short-cycling.
   Add battery_strategy (backup vs self_consumption) to solar inverter simulation.
   Add reactive grid voltage tracking (grid_voltage_sensor) and island mode power outage simulation.
 0.10.0-alpha.4:

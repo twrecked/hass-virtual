@@ -60,6 +60,13 @@ devices:
       unit_of_measurement: "W"
       initial_value: "1800"
 
+    - platform: sensor
+      name: Main HVAC Energy
+      class: energy
+      unit_of_measurement: "kWh"
+      linked_power: "Main HVAC Power"
+      initial_value: "0.0"
+
   # Device 2: Standalone Basic Thermostat
   Basic Thermostat:
     - platform: climate

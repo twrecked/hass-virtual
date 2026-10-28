@@ -497,6 +497,12 @@ devices:
       class: power
       unit_of_measurement: "W"
       initial_value: "1800"
+    - platform: sensor
+      name: Main HVAC Energy
+      class: energy
+      unit_of_measurement: "kWh"
+      linked_power: "Main HVAC Power"
+      initial_value: "0.0"
 ```
 
 * **Multi-Fuel Heating Support**:
@@ -605,6 +611,11 @@ Living Room TV Outlet:
     active_power: 140.0
     initial_load: "standby"
     variance: 1.5
+  - platform: sensor
+    name: TV Energy
+    class: energy
+    unit_of_measurement: "kWh"
+    linked_power: "TV Power"           # Auto-accumulates kWh without needing HA helpers
 ```
 
 **Example 2: Water Heater with Recurring Scheduled Duty Cycle**
@@ -626,6 +637,7 @@ Utility Water Heater:
 ```
 
 * `linked_switch`: Name or entity ID of the switch supplying mains power.
+* `linked_power`: Name or entity ID of a companion power sensor to automatically integrate Watts into accumulating kWh for Home Assistant's Energy Dashboard.
 * `standby_power`: Numeric wattage when switch is energized and appliance is idling.
 * `active_power`: Numeric wattage when appliance is active/running.
 * `initial_load`: Initial appliance state (`standby`, `active`, or `off`).
