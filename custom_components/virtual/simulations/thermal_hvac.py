@@ -327,6 +327,17 @@ class ThermalHvacSimulation:
                 self.hass, [outdoor_id], _handle_outdoor_change
             )
 
+        # Restore cumulative gas consumption if present
+        gas_eid = self._resolve_id("sensor", self._gas_energy_sensor_config)
+        if gas_eid:
+            st = self.hass.states.get(gas_eid)
+            if st and st.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN, None):
+                try:
+                    self._cumulative_gas = max(0.0, float(st.state))
+                    _LOGGER.debug(f"{self.name}: Restored cumulative gas to {self._cumulative_gas:.3f} m³")
+                except (ValueError, TypeError):
+                    pass
+
         # Initialize current temperature from indoor sensor or climate
         indoor_id = self._resolve_id("sensor", self._indoor_sensor_config)
         if indoor_id:

@@ -64,8 +64,9 @@ class SolarInverterSimulation:
         # Simulation states
         self._grid_voltage: float = 240.0
         self._solar_power_override: float | None = None
-        self._battery_soc: float = 85.0
-        self._battery_energy_stored: float = (85.0 / 100.0) * self._battery_capacity
+        initial_soc = 100.0 if self._battery_strategy == "backup" else 85.0
+        self._battery_soc: float = initial_soc
+        self._battery_energy_stored: float = (initial_soc / 100.0) * self._battery_capacity
 
         # Cumulative energy accumulators (kWh)
         self._pv_energy: float = 0.0
@@ -277,6 +278,41 @@ class SolarInverterSimulation:
         """Start the simulation timer and subscriptions."""
         if self._unsub_timer:
             return
+
+        # Restore battery SoC from entity state if available
+        soc_id = self._resolve_sensor_id(self._battery_soc_sensor)
+        if soc_id:
+            st = self.hass.states.get(soc_id)
+            if st and st.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN, None):
+                try:
+                    self._battery_soc = round(max(0.0, min(100.0, float(st.state))), 1)
+                    self._battery_energy_stored = (self._battery_soc / 100.0) * self._battery_capacity
+                    _LOGGER.debug(f"{self.name}: Restored battery SoC to {self._battery_soc}%")
+                except (ValueError, TypeError):
+                    pass
+
+        # Helper to restore cumulative energy meters from persisted entity states
+        def _restore_energy(sensor_config: str | None, current_val: float) -> float:
+            eid = self._resolve_sensor_id(sensor_config)
+            if not eid:
+                return current_val
+            st = self.hass.states.get(eid)
+            if st and st.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN, None):
+                try:
+                    val = max(0.0, float(st.state))
+                    _LOGGER.debug(f"{self.name}: Restored energy for {eid} to {val:.2f} kWh")
+                    return val
+                except (ValueError, TypeError):
+                    pass
+            return current_val
+
+        self._pv_energy = _restore_energy(self._pv_energy_sensor, self._pv_energy)
+        self._grid_energy_in = _restore_energy(self._grid_energy_in_sensor, self._grid_energy_in)
+        self._grid_energy_out = _restore_energy(self._grid_energy_out_sensor, self._grid_energy_out)
+        self._load_energy = _restore_energy(self._load_energy_sensor, self._load_energy)
+        self._base_load_energy = _restore_energy(self._base_load_energy_sensor, self._base_load_energy)
+        self._battery_energy_in = _restore_energy(self._battery_energy_in_sensor, self._battery_energy_in)
+        self._battery_energy_out = _restore_energy(self._battery_energy_out_sensor, self._battery_energy_out)
 
         grid_v_id = self._resolve_sensor_id(self._grid_voltage_sensor)
         if grid_v_id:

@@ -6,6 +6,7 @@
   Add automatic state_class assignment on virtual sensors (total_increasing for energy/gas, measurement for power/temp) for full Home Assistant Energy Dashboard compatibility.
   Add battery energy in and out sensors to virtual-solark.yaml.
   Add base_load_power_sensor and base_load_energy_sensor to solar inverter simulation for clean Energy Dashboard accounting.
+  Persist simulation states (battery SoC, cumulative energy meters, and gas consumption) across Home Assistant restarts.
   Fix battery power polarity (negative = charging, positive = discharging) to match Home Assistant standard convention.
   Add Utility Water Heater and clean appliance naming to virtual-sonoff.yaml.
   Add linked_power support on virtual energy sensors for automatic power-to-kWh accumulation without needing Home Assistant helpers.

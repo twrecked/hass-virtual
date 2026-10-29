@@ -28,6 +28,7 @@
 
 ### 2. Inverter Baseload Tracking & Battery Polarity
 - **Base Load Power & Energy Sensors**: The Sol-Ark simulation now exposes `base_load_power_sensor` and `base_load_energy_sensor`, allowing you to add baseline home draw to *Individual Devices* and eliminate "unaccounted for energy" on the Energy tab.
+- **Simulation State Persistence**: The simulation engines now restore their exact battery State of Charge, cumulative energy meters (`kWh`), and gas consumption (`m³`) across Home Assistant restarts, ensuring seamless continuity on Energy Dashboard charts without resetting counters to zero.
 - **Battery Power Polarity Fix**: Corrected single-sensor battery polarity in `solar_inverter.py` to match Home Assistant's standard convention (`negative = charging`, `positive = discharging`), ensuring charging power is properly shown entering the battery.
 
 ### 3. Modular Hardware Ecosystem Configurations (`examples/`)""
