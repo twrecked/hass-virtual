@@ -1,116 +1,118 @@
 version: 1
 devices:
-  # 1. Living Room Television Socket
+  # 1. Living Room Television
   Living Room TV Outlet:
     - platform: switch
-      name: TV Socket
+      name: TV Switch
       class: outlet
       initial_value: "on"
     - platform: sensor
-      name: TV Socket Power
+      name: Television
       class: power
       unit_of_measurement: "W"
-      linked_switch: "TV Socket"
+      linked_switch: "TV Switch"
       standby_power: 2.5
       active_power: 135.0
       initial_load: "standby"
       variance: 2.0
     - platform: sensor
-      name: TV Socket Energy
+      name: Television Energy
       class: energy
       unit_of_measurement: "kWh"
-      linked_power: "TV Socket Power"
-      initial_value: "10.0"
+      linked_power: "Television"
+      initial_value: "0.0"
 
-  # 2. Audio Amplifier Socket
+  # 2. Audio Amplifier
   Living Room Amplifier Outlet:
     - platform: switch
-      name: Amplifier Socket
+      name: Amplifier Switch
       class: outlet
       initial_value: "on"
     - platform: sensor
-      name: Amplifier Socket Power
+      name: Amplifier
       class: power
       unit_of_measurement: "W"
-      linked_switch: "Amplifier Socket"
+      linked_switch: "Amplifier Switch"
       standby_power: 1.5
       active_power: 65.0
       initial_load: "standby"
       variance: 3.5
     - platform: sensor
-      name: Amplifier Socket Energy
+      name: Amplifier Energy
       class: energy
       unit_of_measurement: "kWh"
-      linked_power: "Amplifier Socket Power"
-      initial_value: "5.0"
+      linked_power: "Amplifier"
+      initial_value: "0.0"
 
   # 3. Chest Freezer (Recurring Compressor Cycle)
   Utility Chest Freezer Outlet:
     - platform: switch
-      name: Freezer Socket
+      name: Freezer Switch
       class: outlet
       initial_value: "on"
     - platform: sensor
-      name: Freezer Socket Power
+      name: Chest Freezer
       class: power
       unit_of_measurement: "W"
-      linked_switch: "Freezer Socket"
+      linked_switch: "Freezer Switch"
       standby_power: 0.8
       active_power: 85.0
-      cycle_duration: 900        # 15 minutes compressor active
-      cycle_interval: 2700       # Repeats every 45 minutes
+      cycle_duration: 900        # 15 min compressor run
+      cycle_interval: 2700       # Every 45 min
       cycle_align: "interval"
       variance: 1.0
     - platform: sensor
-      name: Freezer Socket Energy
+      name: Chest Freezer Energy
       class: energy
       unit_of_measurement: "kWh"
-      linked_power: "Freezer Socket Power"
-      initial_value: "25.0"
+      linked_power: "Chest Freezer"
+      initial_value: "0.0"
 
-  # 4. Washing Machine Socket
-  Laundry Washer Outlet:
+  # 4. Washing Machine
+  Washing Machine Outlet:
     - platform: switch
-      name: Washer Socket
+      name: Washing Machine Switch
       class: outlet
       initial_value: "on"
     - platform: sensor
-      name: Washer Socket Power
+      name: Washing Machine
       class: power
       unit_of_measurement: "W"
-      linked_switch: "Washer Socket"
+      linked_switch: "Washing Machine Switch"
       standby_power: 2.0
       active_power: 380.0
+      cycle_duration: 2700       # Default 45 min wash cycle
       initial_load: "standby"
       variance: 5.0
     - platform: sensor
-      name: Washer Socket Energy
+      name: Washing Machine Energy
       class: energy
       unit_of_measurement: "kWh"
-      linked_power: "Washer Socket Power"
-      initial_value: "18.0"
+      linked_power: "Washing Machine"
+      initial_value: "0.0"
 
-  # 5. Heat Pump Tumble Dryer Socket
-  Laundry Dryer Outlet:
+  # 5. Heat Pump Tumble Dryer
+  Tumble Dryer Outlet:
     - platform: switch
-      name: Dryer Socket
+      name: Tumble Dryer Switch
       class: outlet
       initial_value: "on"
     - platform: sensor
-      name: Dryer Socket Power
+      name: Tumble Dryer
       class: power
       unit_of_measurement: "W"
-      linked_switch: "Dryer Socket"
+      linked_switch: "Tumble Dryer Switch"
       standby_power: 1.0
       active_power: 650.0
+      cycle_duration: 3600       # Default 60 min dry cycle
       initial_load: "standby"
       variance: 8.0
     - platform: sensor
-      name: Dryer Socket Energy
+      name: Tumble Dryer Energy
       class: energy
       unit_of_measurement: "kWh"
-      linked_power: "Dryer Socket Power"
-      initial_value: "22.0"
+      linked_power: "Tumble Dryer"
+      initial_value: "0.0"
 
   # 6. Master Bedroom Fan & Light (Sonoff iFan)
   Master Bedroom Ceiling Fan:
@@ -124,3 +126,26 @@ devices:
       support_brightness: false   # Simple on/off light
       support_color: false
       support_color_temp: false
+
+  # 7. Water Heater (Scheduled Hourly Heating Cycle)
+  Utility Water Heater:
+    - platform: switch
+      name: Water Heater Switch
+      class: switch
+      initial_value: "on"
+    - platform: sensor
+      name: Water Heater Power
+      class: power
+      unit_of_measurement: "W"
+      linked_switch: "Water Heater Switch"
+      standby_power: 0.0
+      active_power: 2400.0
+      cycle_duration: 600        # 10 minutes active
+      cycle_interval: 3600       # Repeats every 1 hour
+      cycle_align: "hour"        # Aligned to :00 on the clock
+    - platform: sensor
+      name: Water Heater Energy
+      class: energy
+      unit_of_measurement: "kWh"
+      linked_power: "Water Heater Power"
+      initial_value: "0.0"

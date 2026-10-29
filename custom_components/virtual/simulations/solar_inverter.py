@@ -44,6 +44,8 @@ class SolarInverterSimulation:
 
         # Linked sensors
         self._grid_voltage_sensor: str | None = config.get("grid_voltage_sensor")
+        self._base_load_power_sensor: str | None = config.get("base_load_power_sensor")
+        self._base_load_energy_sensor: str | None = config.get("base_load_energy_sensor")
         self._pv_power_sensor: str | None = config.get("pv_power_sensor")
         self._pv_energy_sensor: str | None = config.get("pv_energy_sensor")
         self._grid_power_sensor: str | None = config.get("grid_power_sensor")
@@ -70,6 +72,7 @@ class SolarInverterSimulation:
         self._grid_energy_in: float = 0.0
         self._grid_energy_out: float = 0.0
         self._load_energy: float = 0.0
+        self._base_load_energy: float = 0.0
         self._battery_energy_in: float = 0.0
         self._battery_energy_out: float = 0.0
 
@@ -175,7 +178,7 @@ class SolarInverterSimulation:
             max_charge_watts = min(self._battery_max_power, (room_kwh / dt_hours) * 1000.0) if dt_hours > 0 else self._battery_max_power
 
             charge_watts = min(surplus, max_charge_watts) if room_kwh > 0 else 0.0
-            battery_power = charge_watts  # Positive = charging
+            battery_power = -charge_watts  # Negative = charging (HA standard polarity)
             if grid_available:
                 grid_power = -(surplus - charge_watts)  # Negative = exporting to grid
             else:
@@ -198,7 +201,7 @@ class SolarInverterSimulation:
                 max_discharge_watts = min(self._battery_max_power, (avail_kwh / dt_hours) * 1000.0) if dt_hours > 0 else self._battery_max_power
 
                 discharge_watts = min(deficit, max_discharge_watts) if avail_kwh > 0 else 0.0
-                battery_power = -discharge_watts  # Negative = discharging
+                battery_power = discharge_watts  # Positive = discharging (HA standard polarity)
                 if grid_available:
                     grid_power = deficit - discharge_watts  # Positive = importing from grid
                 else:
@@ -219,12 +222,17 @@ class SolarInverterSimulation:
         delta_e_load = (load_power * dt_hours) / 1000.0
         self._load_energy += delta_e_load
 
-        if battery_power > 0:
-            delta_e_batt = (battery_power * dt_hours) / 1000.0
+        delta_e_base = (self._base_load * dt_hours) / 1000.0
+        self._base_load_energy += delta_e_base
+
+        if battery_power < 0:
+            # Negative = charging into battery
+            delta_e_batt = (abs(battery_power) * dt_hours) / 1000.0
             self._battery_energy_stored = min(max_stored_kwh, self._battery_energy_stored + delta_e_batt)
             self._battery_energy_in += delta_e_batt
-        elif battery_power < 0:
-            delta_e_batt = (abs(battery_power) * dt_hours) / 1000.0
+        elif battery_power > 0:
+            # Positive = discharging out of battery
+            delta_e_batt = (battery_power * dt_hours) / 1000.0
             self._battery_energy_stored = max(min_stored_kwh, self._battery_energy_stored - delta_e_batt)
             self._battery_energy_out += delta_e_batt
 
@@ -248,6 +256,8 @@ class SolarInverterSimulation:
         self._update_sensor(self._pv_energy_sensor, str(round(self._pv_energy, 2)))
         self._update_sensor(self._load_power_sensor, str(round(load_power, 1)))
         self._update_sensor(self._load_energy_sensor, str(round(self._load_energy, 2)))
+        self._update_sensor(self._base_load_power_sensor, str(round(self._base_load, 1)))
+        self._update_sensor(self._base_load_energy_sensor, str(round(self._base_load_energy, 2)))
         self._update_sensor(self._battery_power_sensor, str(round(battery_power, 1)))
         self._update_sensor(self._battery_soc_sensor, str(round(self._battery_soc, 1)))
         self._update_sensor(self._battery_voltage_sensor, str(battery_voltage))

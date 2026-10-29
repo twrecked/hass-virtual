@@ -376,6 +376,23 @@ class VirtualSensor(VirtualEntity, SensorEntity):
         self._update_attributes()
         self.async_write_ha_state()
 
+    def _resolve_sensor_id(self, sensor_config: str | None) -> str | None:
+        """Resolve sensor name to entity_id."""
+        if not sensor_config:
+            return None
+        if "." in sensor_config:
+            return sensor_config
+
+        slug = slugify(sensor_config)
+        candidates = [
+            f"sensor.{slug}",
+            f"sensor.{COMPONENT_DOMAIN}_{slug}",
+        ]
+        for c in candidates:
+            if self.hass.states.get(c):
+                return c
+        return candidates[0]
+
     def _resolve_switch_id(self) -> str | None:
         """Resolve switch name to entity_id."""
         if not self._linked_switch_config:
@@ -434,30 +451,6 @@ class VirtualSensor(VirtualEntity, SensorEntity):
         """Call when entity is added to Home Assistant."""
         await super().async_added_to_hass()
 
-        if not self._is_load_simulation:
-            return
-
-        self._linked_switch_id = self._resolve_switch_id()
-        if self._linked_switch_id:
-            current_state = self.hass.states.get(self._linked_switch_id)
-            if current_state:
-                self._linked_switch_state = current_state.state
-
-            @callback
-            def _handle_switch_change(event: Event) -> None:
-                new_state = event.data.get("new_state")
-                if new_state is None:
-                    return
-                self._on_switch_state_change(new_state.state)
-
-            self._switch_unsub = async_track_state_change_event(
-                self.hass, [self._linked_switch_id], _handle_switch_change
-            )
-
-        if self._control_mode == "auto" and self._cycle_interval:
-            self._evaluate_schedule(dt_util.utcnow())
-        self._recalculate_power_and_update()
-
         # Set up automatic energy accumulation if linked to a power sensor
         if self._linked_power_config:
             self._linked_power_id = self._resolve_sensor_id(self._linked_power_config)
@@ -489,6 +482,30 @@ class VirtualSensor(VirtualEntity, SensorEntity):
                 self._energy_interval_unsub = async_track_time_interval(
                     self.hass, self._on_energy_interval, datetime.timedelta(seconds=30)
                 )
+
+        if not self._is_load_simulation:
+            return
+
+        self._linked_switch_id = self._resolve_switch_id()
+        if self._linked_switch_id:
+            current_state = self.hass.states.get(self._linked_switch_id)
+            if current_state:
+                self._linked_switch_state = current_state.state
+
+            @callback
+            def _handle_switch_change(event: Event) -> None:
+                new_state = event.data.get("new_state")
+                if new_state is None:
+                    return
+                self._on_switch_state_change(new_state.state)
+
+            self._switch_unsub = async_track_state_change_event(
+                self.hass, [self._linked_switch_id], _handle_switch_change
+            )
+
+        if self._control_mode == "auto" and self._cycle_interval:
+            self._evaluate_schedule(dt_util.utcnow())
+        self._recalculate_power_and_update()
 
     async def async_will_remove_from_hass(self) -> None:
         """Clean up timers and subscriptions when entity is removed."""
@@ -525,6 +542,9 @@ class VirtualSensor(VirtualEntity, SensorEntity):
             delta_kwh = (self._last_power_reading * dt_hours) / 1000.0
             self._energy_accumulator += delta_kwh
             self._attr_native_value = str(round(self._energy_accumulator, 3))
+            _LOGGER.debug(
+                f"{self.name}: accumulated {delta_kwh:.6f} kWh from {self._last_power_reading}W over {dt_seconds:.1f}s -> total {self._energy_accumulator:.3f} kWh"
+            )
             self._update_attributes()
             self.async_write_ha_state()
 
@@ -561,7 +581,12 @@ class VirtualSensor(VirtualEntity, SensorEntity):
     def set(self, value) -> None:
         """Set sensor state value directly."""
         _LOGGER.debug(f"set {self.name} to {value}")
-        self._attr_native_value = value
+        self._attr_native_value = str(value)
+        if self._linked_power_config:
+            try:
+                self._energy_accumulator = float(value)
+            except (ValueError, TypeError):
+                pass
         self._update_attributes()
         self.async_write_ha_state()
 

@@ -26,7 +26,11 @@
   - When grid voltage drops (<= 25 V), the inverter automatically enters island mode, powering the home from solar and battery.
 - Added reactive grid voltage tracking (`grid_voltage_sensor`) allowing seamless blackout testing using standard `virtual.set`.
 
-### 2. Modular Hardware Ecosystem Configurations (`examples/`)"
+### 2. Inverter Baseload Tracking & Battery Polarity
+- **Base Load Power & Energy Sensors**: The Sol-Ark simulation now exposes `base_load_power_sensor` and `base_load_energy_sensor`, allowing you to add baseline home draw to *Individual Devices* and eliminate "unaccounted for energy" on the Energy tab.
+- **Battery Power Polarity Fix**: Corrected single-sensor battery polarity in `solar_inverter.py` to match Home Assistant's standard convention (`negative = charging`, `positive = discharging`), ensuring charging power is properly shown entering the battery.
+
+### 3. Modular Hardware Ecosystem Configurations (`examples/`)""
 Added ready-to-import virtual device configuration files partitioned by simulated hardware brand:
 
 - **`examples/virtual-sonoff.yaml`** (6 devices):
@@ -43,7 +47,7 @@ Added ready-to-import virtual device configuration files partitioned by simulate
 
 ---
 
-### 3. Dedicated Climate & Multi-Platform Example Files
+### 4. Dedicated Climate & Multi-Platform Example Files
 - **`examples/virtual-climate.yaml`**:
   - Dedicated configuration file containing the closed-loop thermal HVAC system (Thermostat + Indoor Temp + Outdoor Weather Sync + Power Meter) and a standalone basic thermostat.
 - **`examples/virtual-examples.yaml`**:

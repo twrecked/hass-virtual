@@ -343,6 +343,8 @@ simulations:
     pv_energy_sensor: "Sol-Ark PV Energy"
     load_power_sensor: "Sol-Ark Load Power"
     load_energy_sensor: "Sol-Ark Load Energy"
+    base_load_power_sensor: "Sol-Ark Base Load Power"
+    base_load_energy_sensor: "Sol-Ark Base Load Energy"
     grid_power_sensor: "Sol-Ark Grid Power"
     grid_energy_in_sensor: "Sol-Ark Grid Energy In"
     grid_energy_out_sensor: "Sol-Ark Grid Energy Out"
@@ -354,10 +356,11 @@ simulations:
 
     # External appliances in your house to sum into the load:
     linked_loads:
-      - "TV Socket Power"
-      - "Washer Socket Power"
-      - "Dryer Socket Power"
-      - "Freezer Socket Power"
+      - "Television"
+      - "Amplifier"
+      - "Chest Freezer"
+      - "Washing Machine"
+      - "Tumble Dryer"
       - "Water Heater Power"
       - "Main HVAC Power"
 
@@ -393,6 +396,18 @@ devices:
       class: energy
       unit_of_measurement: "kWh"
       initial_value: "250.0"
+
+    - platform: sensor
+      name: Sol-Ark Base Load Power
+      class: power
+      unit_of_measurement: "W"
+      initial_value: "250"
+
+    - platform: sensor
+      name: Sol-Ark Base Load Energy
+      class: energy
+      unit_of_measurement: "kWh"
+      initial_value: "0.0"
 
   Sol-Ark Solar Array:
     - platform: sensor
