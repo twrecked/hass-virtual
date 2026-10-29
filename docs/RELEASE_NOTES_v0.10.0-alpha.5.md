@@ -31,7 +31,7 @@
 - **Simulation State Persistence**: The simulation engines now restore their exact battery State of Charge, cumulative energy meters (`kWh`), and gas consumption (`m³`) across Home Assistant restarts, ensuring seamless continuity on Energy Dashboard charts without resetting counters to zero.
 - **Battery Power Polarity Fix**: Corrected single-sensor battery polarity in `solar_inverter.py` to match Home Assistant's standard convention (`negative = charging`, `positive = discharging`), ensuring charging power is properly shown entering the battery.
 
-### 3. Modular Hardware Ecosystem Configurations (`examples/`)""
+### 3. Modular Hardware Ecosystem Configurations (`examples/`)
 Added ready-to-import virtual device configuration files partitioned by simulated hardware brand:
 
 - **`examples/virtual-sonoff.yaml`** (6 devices):
