@@ -1,3 +1,8 @@
+0.10.0-alpha.6:
+  Add battery drain simulation (battery_life_days, drain_rate) with acceleration multiplier (sim_speed) to battery sensors.
+  Support companion low-battery binary sensors (class: battery) with automatic threshold tracking (low_battery_threshold).
+  Persist battery drain percentage across Home Assistant restarts.
+  Support virtual.set_sim_speed and virtual.set on battery simulation sensors.
 0.10.0-alpha.5:
   Add modular hardware ecosystem example configurations (virtual-sonoff.yaml, virtual-hue.yaml, and virtual-zwave.yaml).
   Extract closed-loop thermal HVAC simulation into dedicated virtual-climate.yaml.

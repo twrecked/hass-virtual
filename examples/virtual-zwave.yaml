@@ -15,7 +15,14 @@ devices:
       name: Front Door Lock Battery
       class: battery
       unit_of_measurement: "%"
-      initial_value: "85"
+      initial_value: "100"
+      battery_life_days: 90       # Discharges over ~3 months
+      sim_speed: 1.0              # Can be accelerated with virtual.set_sim_speed
+    - platform: binary_sensor
+      name: Front Door Lock Low Battery
+      class: battery
+      linked_battery_sensor: "Front Door Lock Battery"
+      low_battery_threshold: 15
 
   # ==========================================
   # DOOR CONTACT SENSORS (STANDALONE DEVICES)

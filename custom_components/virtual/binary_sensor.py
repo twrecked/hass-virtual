@@ -39,7 +39,9 @@ from .const import (
     COMPONENT_SERVICES,
     CONF_CLASS,
     CONF_INITIAL_VALUE,
+    CONF_LINKED_BATTERY_SENSOR,
     CONF_LINKED_ENTITY,
+    CONF_LOW_BATTERY_THRESHOLD,
     CONF_OFF_DELAY,
     CONF_YAML_CONFIG,
 )
@@ -55,6 +57,8 @@ BASE_SCHEMA = virtual_schema(DEFAULT_BINARY_SENSOR_VALUE, {
     vol.Optional(CONF_CLASS): cv.string,
     vol.Optional(CONF_OFF_DELAY): vol.Coerce(float),
     vol.Optional(CONF_LINKED_ENTITY): cv.string,
+    vol.Optional(CONF_LINKED_BATTERY_SENSOR): cv.string,
+    vol.Optional(CONF_LOW_BATTERY_THRESHOLD, default=15.0): vol.Coerce(float),
 })
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(BASE_SCHEMA)
@@ -150,6 +154,12 @@ class VirtualBinarySensor(VirtualEntity, BinarySensorEntity):
         self._timer_cancel: Callable[[], None] | None = None
         self._entity_unsub: Callable[[], None] | None = None
 
+        # Battery tracking properties
+        self._linked_battery_sensor: str | None = config.get(CONF_LINKED_BATTERY_SENSOR)
+        self._linked_battery_sensor_id: str | None = None
+        self._low_battery_threshold: float = float(config.get(CONF_LOW_BATTERY_THRESHOLD, 15.0))
+        self._battery_unsub: Callable[[], None] | None = None
+
         _LOGGER.info(
             f"VirtualBinarySensor: {self.name} created (off_delay={self._off_delay}, linked_entity={self._linked_entity_config})"
         )
@@ -177,6 +187,10 @@ class VirtualBinarySensor(VirtualEntity, BinarySensorEntity):
 
         if self._linked_entity_id or self._linked_entity_config:
             self._attr_extra_state_attributes[ATTR_LINKED_ENTITY] = self._linked_entity_id or self._linked_entity_config
+
+        if self._linked_battery_sensor:
+            self._attr_extra_state_attributes["linked_battery_sensor"] = self._linked_battery_sensor_id or self._linked_battery_sensor
+            self._attr_extra_state_attributes["low_battery_threshold"] = self._low_battery_threshold
 
         if self._off_time and self._attr_is_on:
             now = dt_util.utcnow()
@@ -241,6 +255,25 @@ class VirtualBinarySensor(VirtualEntity, BinarySensorEntity):
                 self.hass, [self._linked_entity_id], _handle_entity_change
             )
 
+        # Subscribe to linked battery sensor if configured
+        if self._linked_battery_sensor:
+            self._linked_battery_sensor_id = self._resolve_entity_id("sensor", self._linked_battery_sensor)
+            if self._linked_battery_sensor_id:
+                st = self.hass.states.get(self._linked_battery_sensor_id)
+                if st and st.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN, None):
+                    self._on_battery_level_change(st.state)
+
+                @callback
+                def _handle_battery_change(event: Event) -> None:
+                    new_state = event.data.get("new_state")
+                    if new_state is None or new_state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                        return
+                    self._on_battery_level_change(new_state.state)
+
+                self._battery_unsub = async_track_state_change_event(
+                    self.hass, [self._linked_battery_sensor_id], _handle_battery_change
+                )
+
         self._update_attributes()
 
     async def async_will_remove_from_hass(self) -> None:
@@ -249,7 +282,34 @@ class VirtualBinarySensor(VirtualEntity, BinarySensorEntity):
         if self._entity_unsub:
             self._entity_unsub()
             self._entity_unsub = None
+        if self._battery_unsub:
+            self._battery_unsub()
+            self._battery_unsub = None
         await super().async_will_remove_from_hass()
+
+    def _resolve_entity_id(self, domain: str, name_or_id: str | None) -> str | None:
+        """Resolve entity name to entity_id."""
+        if not name_or_id:
+            return None
+        if "." in name_or_id:
+            return name_or_id
+        slug = slugify(name_or_id)
+        candidates = [f"{domain}.{slug}", f"{domain}.{COMPONENT_DOMAIN}_{slug}"]
+        for c in candidates:
+            if self.hass.states.get(c):
+                return c
+        return candidates[0]
+
+    def _on_battery_level_change(self, state_str: str) -> None:
+        """Evaluate low battery status when linked battery percentage changes."""
+        try:
+            level = float(state_str)
+            self._attr_is_on = level <= self._low_battery_threshold
+            self._update_attributes()
+            self.async_write_ha_state()
+            _LOGGER.debug(f"{self.name}: battery level is {level}% -> low_battery={self._attr_is_on}")
+        except (ValueError, TypeError):
+            pass
 
     def _cancel_timer(self) -> None:
         """Cancel any active auto-off countdown timer."""

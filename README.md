@@ -607,6 +607,39 @@ Outdoor Weather:
     unit_of_measurement: '°C'
 ```
 
+
+#### Battery Drain Simulation & Low-Battery Warnings
+Virtual battery sensors can simulate natural battery discharge over months with time-acceleration controls to test low-battery notifications:
+
+```yaml
+Front Door Lock:
+  - platform: lock
+    name: Front Door Lock
+    initial_value: "locked"
+
+  # Battery Percentage Sensor with drain simulation
+  - platform: sensor
+    name: Front Door Lock Battery
+    class: battery
+    unit_of_measurement: "%"
+    initial_value: "100"
+    battery_life_days: 90        # Complete discharge over ~3 months
+    sim_speed: 1.0               # Speed multiplier (e.g. 1000 for rapid testing)
+
+  # Companion Low-Battery Warning Sensor
+  - platform: binary_sensor
+    name: Front Door Lock Low Battery
+    class: battery
+    linked_battery_sensor: "Front Door Lock Battery"
+    low_battery_threshold: 15    # Flips to 'on' (Warning) when battery <= 15%
+```
+
+* `battery_life_days`: Total expected battery lifespan in days (e.g. `90` or `180`).
+* `drain_rate`: Optional direct percentage drop per day (%/day).
+* `sim_speed`: Time acceleration multiplier (e.g. `1000` to fast-forward months into minutes).
+* `linked_battery_sensor`: For binary battery sensors, links to a battery percentage sensor to automatically trigger when `level <= low_battery_threshold` (default `15%`).
+* *Battery level persists across Home Assistant restarts and can be set directly via `virtual.set`.*
+
 #### Appliance Load Simulation & Power Profiling
 Virtual sensors can simulate realistic appliance loads linked to a controlling switch (e.g. Sonoff smart plugs or relay-switched water heaters). The sensor automatically drops to `0 W` when the linked switch is turned `off`, and simulates `standby` vs `active` power draws with optional noise/jitter when the switch is energized.
 

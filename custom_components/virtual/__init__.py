@@ -50,7 +50,7 @@ from .cfg import BlendedCfg, UpgradeCfg
 from .simulations import SimulationManager
 
 
-__version__ = '0.10.0-alpha.5'
+__version__ = '0.10.0-alpha.6'
 
 _LOGGER = logging.getLogger(__name__)
 

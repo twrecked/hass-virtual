@@ -54,8 +54,11 @@ from .const import (
     CONF_CYCLE_INTERVAL,
     CONF_INITIAL_LOAD,
     CONF_INITIAL_VALUE,
+    CONF_BATTERY_LIFE_DAYS,
+    CONF_DRAIN_RATE,
     CONF_LINKED_SWITCH,
     CONF_LINKED_POWER,
+    CONF_SIM_SPEED,
     CONF_STANDBY_POWER,
     CONF_VARIANCE,
     CONF_YAML_CONFIG,
@@ -83,6 +86,9 @@ SENSOR_LOAD_SCHEMA = {
     vol.Optional(CONF_UNIT_OF_MEASUREMENT, default=""): cv.string,
     vol.Optional(CONF_LINKED_SWITCH): cv.string,
     vol.Optional(CONF_LINKED_POWER): cv.string,
+    vol.Optional(CONF_BATTERY_LIFE_DAYS): vol.Coerce(float),
+    vol.Optional(CONF_DRAIN_RATE): vol.Coerce(float),
+    vol.Optional(CONF_SIM_SPEED, default=1.0): vol.Coerce(float),
     vol.Optional(CONF_STANDBY_POWER, default=DEFAULT_STANDBY_POWER): vol.Coerce(float),
     vol.Optional(CONF_ACTIVE_POWER, default=DEFAULT_ACTIVE_POWER): vol.Coerce(float),
     vol.Optional(CONF_INITIAL_LOAD, default=DEFAULT_INITIAL_LOAD): cv.string,
@@ -264,13 +270,41 @@ class VirtualSensor(VirtualEntity, SensorEntity):
         except (ValueError, TypeError):
             self._energy_accumulator = 0.0
 
-        _LOGGER.info(f"VirtualSensor: {self.name} created (load_simulation={self._is_load_simulation}, linked_power={self._linked_power_config})")
+        # Battery drain simulation properties
+        raw_life_days = config.get(CONF_BATTERY_LIFE_DAYS)
+        self._battery_life_days: float | None = float(raw_life_days) if raw_life_days is not None else None
+
+        raw_drain_rate = config.get(CONF_DRAIN_RATE)
+        self._drain_rate: float | None = float(raw_drain_rate) if raw_drain_rate is not None else None
+
+        self._sim_speed: float = max(0.1, float(config.get(CONF_SIM_SPEED, 1.0)))
+
+        self._is_battery_simulation: bool = bool(
+            (self._attr_device_class in (SensorDeviceClass.BATTERY, "battery") or self._battery_life_days is not None or self._drain_rate is not None)
+            and (self._battery_life_days is not None or self._drain_rate is not None)
+        )
+
+        try:
+            self._sim_battery_level: float = float(config.get(CONF_INITIAL_VALUE, 100))
+        except (ValueError, TypeError):
+            self._sim_battery_level = 100.0
+
+        self._last_battery_calc_time: datetime.datetime | None = None
+        self._battery_interval_unsub: Callable[[], None] | None = None
+
+        _LOGGER.info(f"VirtualSensor: {self.name} created (load_sim={self._is_load_simulation}, linked_pwr={self._linked_power_config}, battery_sim={self._is_battery_simulation})")
 
     def _create_state(self, config: dict[str, Any]) -> None:
         """Create initial state."""
         super()._create_state(config)
 
-        if self._is_load_simulation:
+        if self._is_battery_simulation:
+            try:
+                self._sim_battery_level = float(config.get(CONF_INITIAL_VALUE, 100))
+            except (ValueError, TypeError):
+                self._sim_battery_level = 100.0
+            self._attr_native_value = str(round(self._sim_battery_level, 1))
+        elif self._is_load_simulation:
             self._load_state = self._initial_load
             self._control_mode = "auto" if self._cycle_interval else "override"
             self._attr_native_value = str(self._calculate_power())
@@ -280,6 +314,20 @@ class VirtualSensor(VirtualEntity, SensorEntity):
     def _restore_state(self, state, config: dict[str, Any]) -> None:
         """Restore state from persistent storage."""
         super()._restore_state(state, config)
+
+        if self._is_battery_simulation:
+            if state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN, None):
+                try:
+                    self._sim_battery_level = float(state.state)
+                except (ValueError, TypeError):
+                    self._sim_battery_level = 100.0
+            else:
+                try:
+                    self._sim_battery_level = float(config.get(CONF_INITIAL_VALUE, 100))
+                except (ValueError, TypeError):
+                    self._sim_battery_level = 100.0
+            self._attr_native_value = str(round(self._sim_battery_level, 1))
+            return
 
         if self._linked_power_config:
             if state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN, None):
@@ -369,6 +417,10 @@ class VirtualSensor(VirtualEntity, SensorEntity):
         self._attr_extra_state_attributes.update(attrs)
         if self._linked_power_config:
             self._attr_extra_state_attributes[ATTR_LINKED_POWER] = self._linked_power_id or self._linked_power_config
+        if self._is_battery_simulation:
+            if self._battery_life_days is not None:
+                self._attr_extra_state_attributes["battery_life_days"] = self._battery_life_days
+            self._attr_extra_state_attributes["sim_speed"] = self._sim_speed
 
     def _recalculate_power_and_update(self) -> None:
         """Recalculate power value and write state to Home Assistant."""
@@ -483,6 +535,13 @@ class VirtualSensor(VirtualEntity, SensorEntity):
                     self.hass, self._on_energy_interval, datetime.timedelta(seconds=30)
                 )
 
+        # Set up battery drain simulation timer
+        if self._is_battery_simulation:
+            self._last_battery_calc_time = dt_util.utcnow()
+            self._battery_interval_unsub = async_track_time_interval(
+                self.hass, self._on_battery_interval, datetime.timedelta(seconds=30)
+            )
+
         if not self._is_load_simulation:
             return
 
@@ -524,7 +583,48 @@ class VirtualSensor(VirtualEntity, SensorEntity):
         if self._energy_interval_unsub:
             self._energy_interval_unsub()
             self._energy_interval_unsub = None
+        if self._battery_interval_unsub:
+            self._battery_interval_unsub()
+            self._battery_interval_unsub = None
         await super().async_will_remove_from_hass()
+
+    def _drain_battery(self) -> None:
+        """Calculate battery drain over elapsed time."""
+        now = dt_util.utcnow()
+        if self._last_battery_calc_time is None:
+            self._last_battery_calc_time = now
+            return
+
+        dt_seconds = (now - self._last_battery_calc_time).total_seconds()
+        self._last_battery_calc_time = now
+        if dt_seconds <= 0:
+            return
+
+        # Calculate drain rate per hour (% / hour)
+        if self._battery_life_days and self._battery_life_days > 0:
+            drain_per_hour = (100.0 / self._battery_life_days) / 24.0
+        elif self._drain_rate and self._drain_rate > 0:
+            drain_per_hour = self._drain_rate / 24.0
+        else:
+            return
+
+        dt_hours = (dt_seconds * self._sim_speed) / 3600.0
+        loss = drain_per_hour * dt_hours
+        self._sim_battery_level = max(0.0, self._sim_battery_level - loss)
+        self._attr_native_value = str(round(self._sim_battery_level, 1))
+        self._update_attributes()
+        self.async_write_ha_state()
+
+    @callback
+    def _on_battery_interval(self, _now=None) -> None:
+        """Periodic battery drain step."""
+        self._drain_battery()
+
+    def set_sim_speed(self, speed: float) -> None:
+        """Set simulation acceleration multiplier."""
+        self._sim_speed = max(0.1, float(speed))
+        self._update_attributes()
+        self.async_write_ha_state()
 
     def _accumulate_energy(self, new_power: float | None = None) -> None:
         """Integrate power over time into cumulative kWh."""
@@ -582,6 +682,12 @@ class VirtualSensor(VirtualEntity, SensorEntity):
         """Set sensor state value directly."""
         _LOGGER.debug(f"set {self.name} to {value}")
         self._attr_native_value = str(value)
+        if self._is_battery_simulation:
+            try:
+                self._sim_battery_level = max(0.0, min(100.0, float(value)))
+                self._last_battery_calc_time = dt_util.utcnow()
+            except (ValueError, TypeError):
+                pass
         if self._linked_power_config:
             try:
                 self._energy_accumulator = float(value)
