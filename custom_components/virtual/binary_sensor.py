@@ -30,6 +30,7 @@ from homeassistant.util import dt as dt_util, slugify
 
 from . import get_entity_from_domain, get_entity_configs
 from .const import (
+    ATTR_DEVICE_ID,
     ATTR_GROUP_NAME,
     ATTR_LINKED_ENTITY,
     ATTR_OFF_DELAY,
@@ -207,9 +208,15 @@ class VirtualBinarySensor(VirtualEntity, BinarySensorEntity):
             return self._linked_entity_config
 
         slug = slugify(self._linked_entity_config)
+        device_id = self._config.get(ATTR_DEVICE_ID) if self._config else None
+        dev_slug = slugify(device_id) if device_id and device_id != "NOTYET" else None
+
         # Search by common platforms: camera, switch, light, media_player, etc.
         for domain in ("camera", "switch", "light", "media_player", "climate", "fan", "lock", "cover"):
-            for candidate in (f"{domain}.{slug}", f"{domain}.{COMPONENT_DOMAIN}_{slug}"):
+            candidates = [f"{domain}.{slug}", f"{domain}.{COMPONENT_DOMAIN}_{slug}"]
+            if dev_slug:
+                candidates.insert(0, f"{domain}.{dev_slug}_{slug}")
+            for candidate in candidates:
                 if self.hass.states.get(candidate):
                     return candidate
 
@@ -295,6 +302,9 @@ class VirtualBinarySensor(VirtualEntity, BinarySensorEntity):
             return name_or_id
         slug = slugify(name_or_id)
         candidates = [f"{domain}.{slug}", f"{domain}.{COMPONENT_DOMAIN}_{slug}"]
+        device_id = self._config.get(ATTR_DEVICE_ID) if self._config else None
+        if device_id and device_id != "NOTYET":
+            candidates.insert(0, f"{domain}.{slugify(device_id)}_{slug}")
         for c in candidates:
             if self.hass.states.get(c):
                 return c

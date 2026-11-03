@@ -45,9 +45,17 @@ _LOGGER = logging.getLogger(__name__)
 
 positive_tick = vol.All(vol.Coerce(float), vol.Range(min=0, min_included=False))
 
+def _clean_name(name: str | None) -> str:
+    """Strip legacy prefixes (+ and !) from name."""
+    if not name:
+        return ""
+    if name.startswith("+") or name.startswith("!"):
+        return name[1:]
+    return name
+
 def virtual_schema(default_initial_value: str, extra_attrs: dict[Any, Any]) -> dict[Any, Any]:
     schema = {
-        vol.Required(CONF_NAME): cv.string,
+        vol.Optional(CONF_NAME, default=None): vol.Any(cv.string, None),
         vol.Optional(CONF_INITIAL_VALUE, default=default_initial_value): cv.string,
         vol.Optional(CONF_INITIAL_AVAILABILITY, default=DEFAULT_AVAILABILITY): cv.boolean,
         vol.Optional(CONF_PERSISTENT, default=DEFAULT_PERSISTENT): cv.boolean,
@@ -63,54 +71,118 @@ class VirtualEntity(RestoreEntity):
     """A base class to add state restoring.
     """
 
+    _attr_has_entity_name = True
+
     # Are we saving/restoring this entity
     _persistent: bool = True
 
     def __init__(self, config, domain, old_style : bool = False):
-        """Initialize an Virtual Sensor."""
+        """Initialize a Virtual Entity."""
         _LOGGER.debug(f"creating-virtual-{domain}={config}")
         self._config = config
-        self._persistent = config.get(CONF_PERSISTENT)
+        self._persistent = config.get(CONF_PERSISTENT, DEFAULT_PERSISTENT)
+
+        raw_name = config.get(CONF_NAME)
+        device_id = config.get(ATTR_DEVICE_ID)
+        has_device = device_id is not None and device_id != "NOTYET"
 
         if old_style:
             # Build name, entity id and unique id. We do this because historically
             # the non-domain piece of the entity_id was prefixed with virtual_ so
             # we build the pieces manually to make sure.
-            self._attr_name = config.get(CONF_NAME)
-            if self._attr_name.startswith("!"):
-                self._attr_name = self._attr_name[1:]
-                self.entity_id = f'{domain}.{slugify(self._attr_name)}'
+            if raw_name is None or raw_name == "":
+                raw_name = domain.replace("_", " ").title()
+
+            if raw_name.startswith("!"):
+                clean_name = raw_name[1:]
+                self._attr_name = clean_name
+                self.entity_id = f'{domain}.{slugify(clean_name)}'
             else:
-                self.entity_id = f'{domain}.{COMPONENT_DOMAIN}_{slugify(self._attr_name)}'
-            self._attr_unique_id = slugify(self._attr_name)
+                clean_name = raw_name
+                self._attr_name = clean_name
+                self.entity_id = f'{domain}.{COMPONENT_DOMAIN}_{slugify(clean_name)}'
+            self._attr_unique_id = slugify(clean_name)
 
         else:
-            # Build name, entity id and unique id. We do this because historically
-            # the non-domain piece of the entity_id was prefixed with virtual_ so
-            # we build the pieces manually to make sure.
-            self._attr_name = config.get(CONF_NAME)
-
-            self.entity_id = config.get(ATTR_ENTITY_ID)
-            if self.entity_id == "NOTYET":
-                if self._attr_name.startswith("+"):
-                    self._attr_name = self._attr_name[1:]
-                    self.entity_id = f'{domain}.{COMPONENT_DOMAIN}_{slugify(self._attr_name)}'
-                else:
-                    self.entity_id = f'{domain}.{slugify(self._attr_name)}'
-
-            self._attr_unique_id = config.get(ATTR_UNIQUE_ID, None)
-            if self._attr_unique_id == "NOTYET":
-                self._attr_unique_id = slugify(self._attr_name)
-
-            if config.get(ATTR_DEVICE_ID) != "NOTYET":
+            if has_device:
                 _LOGGER.debug("setting up device info")
                 self._attr_device_info = DeviceInfo(
-                    identifiers={(COMPONENT_DOMAIN, config.get(ATTR_DEVICE_ID))},
+                    identifiers={(COMPONENT_DOMAIN, device_id)},
                     manufacturer=COMPONENT_MANUFACTURER,
                     model=COMPONENT_MODEL,
                 )
 
-        _LOGGER.info(f'VirtualEntity {self._attr_name} created')
+                clean_device_name = _clean_name(device_id)
+
+                # Check if this is the primary entity of the device:
+                # Name is omitted (None/empty) or matches the device name
+                is_primary = False
+                if raw_name is None or raw_name == "":
+                    is_primary = True
+                else:
+                    norm_raw = _clean_name(raw_name).strip().lower()
+                    norm_dev = clean_device_name.strip().lower()
+                    if norm_raw == norm_dev:
+                        is_primary = True
+
+                if is_primary:
+                    self._attr_name = None
+                    default_slug = slugify(clean_device_name)
+                    default_unique_id = default_slug
+                    default_entity_id = f'{domain}.{default_slug}'
+                else:
+                    # Sub-entity: clean prefix if raw_name duplicates device name
+                    sub_name = _clean_name(raw_name).strip()
+                    norm_dev = clean_device_name.strip().lower()
+                    if sub_name.lower().startswith(norm_dev):
+                        stripped = sub_name[len(clean_device_name):].lstrip(" -_:")
+                        if stripped:
+                            sub_name = stripped
+                        else:
+                            is_primary = True
+
+                    if is_primary:
+                        self._attr_name = None
+                        default_slug = slugify(clean_device_name)
+                        default_unique_id = default_slug
+                        default_entity_id = f'{domain}.{default_slug}'
+                    else:
+                        self._attr_name = sub_name
+                        dev_slug = slugify(clean_device_name)
+                        sub_slug = slugify(sub_name)
+                        default_unique_id = f'{dev_slug}_{sub_slug}'
+                        default_entity_id = f'{domain}.{dev_slug}_{sub_slug}'
+
+            else:
+                # Standalone entity (no device attached)
+                if raw_name is None or raw_name == "":
+                    raw_name = domain.replace("_", " ").title()
+
+                if raw_name.startswith("+"):
+                    clean_name = raw_name[1:]
+                    self._attr_name = clean_name
+                    default_entity_id = f'{domain}.{COMPONENT_DOMAIN}_{slugify(clean_name)}'
+                else:
+                    clean_name = raw_name
+                    self._attr_name = clean_name
+                    default_entity_id = f'{domain}.{slugify(clean_name)}'
+
+                default_unique_id = slugify(clean_name)
+
+            configured_entity_id = config.get(ATTR_ENTITY_ID)
+            if configured_entity_id and configured_entity_id != "NOTYET":
+                self.entity_id = configured_entity_id
+            else:
+                self.entity_id = default_entity_id
+
+            configured_unique_id = config.get(ATTR_UNIQUE_ID)
+            if configured_unique_id and configured_unique_id != "NOTYET":
+                self._attr_unique_id = configured_unique_id
+            else:
+                self._attr_unique_id = default_unique_id
+
+        log_name = self._attr_name or (self.entity_id if hasattr(self, "entity_id") else "unnamed")
+        _LOGGER.info(f'VirtualEntity {log_name} created')
 
     def _create_state(self, config):
         _LOGGER.info(f'VirtualEntity {self.unique_id}: creating initial state')
@@ -184,7 +256,7 @@ class VirtualOpenableEntity(VirtualEntity):
         self._target_position = None
         self._positions_per_tick = None
 
-        _LOGGER.info(f"VirtualOpenable: {self.name} created")
+        _LOGGER.info(f"VirtualOpenable: {self.name or self.entity_id} created")
 
     def _create_state(self, config):
         super()._create_state(config)
@@ -218,7 +290,7 @@ class VirtualOpenableEntity(VirtualEntity):
             self._timer_handle = None
 
     def _stop(self) -> None:
-        _LOGGER.info(f"stopping {self.name} at position {self._current_position}")
+        _LOGGER.info(f"stopping {self.name or self.entity_id} at position {self._current_position}")
 
         self._cancel_timer()
 
@@ -243,7 +315,7 @@ class VirtualOpenableEntity(VirtualEntity):
         self.async_write_ha_state()
 
     def _set_position(self, position: int) -> None:
-        _LOGGER.info(f"setting {self.name} position {position}")
+        _LOGGER.info(f"setting {self.name or self.entity_id} position {position}")
 
         self._cancel_timer()
 

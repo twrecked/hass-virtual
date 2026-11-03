@@ -322,60 +322,107 @@ class BlendedCfg:
                 CONF_NAME: _make_name(device_name)
             })
 
+            clean_device_name = _make_name(device_name)
+
             for entity in entities:
 
                 platform = entity.pop(CONF_PLATFORM)
                 device_class = entity.get(CONF_CLASS, None)
+                raw_name = entity.get(CONF_NAME, None)
 
-                # Figure out the name. We use the one provided and if that isn't
-                # there the device name and, optionally, the class.
-                name = entity.get(CONF_NAME, None)
-                if name is None:
-                    name = f"{device_name} {_make_suffix(platform, device_class)}"
+                # Determine if this is the primary entity or a sub-entity
+                is_primary = False
+                sub_name = None
+                if raw_name is None or raw_name == "":
+                    is_primary = True
+                else:
+                    clean_raw = _make_name(raw_name).strip()
+                    norm_dev = clean_device_name.strip().lower()
+                    if clean_raw.lower() == norm_dev:
+                        is_primary = True
+                    elif clean_raw.lower().startswith(norm_dev):
+                        stripped = clean_raw[len(clean_device_name):].lstrip(" -_:")
+                        if stripped:
+                            sub_name = stripped
+                        else:
+                            is_primary = True
+                    else:
+                        sub_name = clean_raw
 
-                # Look up unique id for this device. If not there this is a new
-                # device.
-                unique_id = meta_data.get(name, {}).get(ATTR_UNIQUE_ID, None)
-                if unique_id is None:
-                    _LOGGER.debug(f"creating {name}")
+                # Candidate keys to look up existing metadata
+                if is_primary:
+                    candidates = [
+                        device_name,
+                        clean_device_name,
+                        f"{device_name} {_make_suffix(platform, device_class)}",
+                        f"{clean_device_name} {_make_suffix(platform, device_class)}",
+                        raw_name,
+                    ]
+                else:
+                    candidates = [
+                        f"{device_name} {sub_name}",
+                        f"{clean_device_name} {sub_name}",
+                        raw_name,
+                        sub_name,
+                        f"{device_name}_{sub_name}",
+                    ]
+
+                meta_entry = None
+                found_key = None
+                for candidate in candidates:
+                    if candidate and candidate in meta_data:
+                        meta_entry = meta_data[candidate]
+                        found_key = candidate
+                        break
+
+                if meta_entry is None:
                     unique_id = _make_unique_id()
-                    meta_data.update({name: {
+                    if is_primary:
+                        found_key = device_name
+                        entity_id = _make_entity_id(platform, device_name)
+                    else:
+                        found_key = f"{clean_device_name} {sub_name}"
+                        dev_slug = slugify(clean_device_name)
+                        sub_slug = slugify(sub_name)
+                        if device_name.startswith("+"):
+                            entity_id = f"{platform}.{COMPONENT_DOMAIN}_{dev_slug}_{sub_slug}"
+                        else:
+                            entity_id = f"{platform}.{dev_slug}_{sub_slug}"
+
+                    _LOGGER.debug(f"creating {found_key}")
+                    meta_entry = {
                         ATTR_UNIQUE_ID: unique_id,
-                        ATTR_ENTITY_ID: _make_entity_id(platform, name),
-                        ATTR_DEVICE_ID: device_name
-                    }})
+                        ATTR_ENTITY_ID: entity_id,
+                        ATTR_DEVICE_ID: device_name,
+                    }
+                    meta_data[found_key] = meta_entry
                     changed = True
 
-                # Now copy over the entity id of the device. Not having this is a
-                # bug.
-                entity_id = meta_data.get(name, {}).get(ATTR_ENTITY_ID, None)
+                unique_id = meta_entry.get(ATTR_UNIQUE_ID)
+                entity_id = meta_entry.get(ATTR_ENTITY_ID)
                 if entity_id is None:
-                    _LOGGER.info(f"problem creating {name}, no entity id")
+                    _LOGGER.info(f"problem creating {found_key}, no entity id")
                     continue
 
-                # Add device entry
-                if meta_data.get(name, {}).get(ATTR_DEVICE_ID, None) is None:
-                    _LOGGER.info(f"problem creating {name}, no device id")
-                    meta_data[name][ATTR_DEVICE_ID] = device_name
+                if meta_entry.get(ATTR_DEVICE_ID) is None:
+                    _LOGGER.info(f"problem creating {found_key}, no device id")
+                    meta_entry[ATTR_DEVICE_ID] = device_name
                     changed = True
 
-                # Update the entity.
+                # Update the entity. Primary entity passes CONF_NAME: None
                 entity.update({
-                    CONF_NAME: _make_name(name),
+                    CONF_NAME: sub_name if not is_primary else None,
                     ATTR_ENTITY_ID: entity_id,
                     ATTR_UNIQUE_ID: unique_id,
-                    ATTR_DEVICE_ID: device_name
+                    ATTR_DEVICE_ID: device_name,
                 })
                 _LOGGER.debug(f"added entity {platform}/{entity}")
 
-                # Now store in the correct place. Move off temporary meta
-                # data list.
-                # _LOGGER.debug(f"entities={self._entities}")
                 if platform not in self._entities:
                     self._entities[platform] = []
                 self._entities[platform].append(entity)
                 self._meta_data.update({
-                    name: meta_data.pop(name)
+                    found_key: meta_data.pop(found_key)
                 })
 
         # Create orphaned list. If we have anything here we need to update

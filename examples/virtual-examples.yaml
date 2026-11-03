@@ -1,10 +1,17 @@
 version: 1
 devices:
+  # Clean single-entity dimmer light (name omitted -> inherits device name without stutter)
+  Living Room Dimmer:
+    - platform: light
+      initial_value: "off"
+      support_brightness: true
+      initial_brightness: 255
+
   # Multi-entity showcase device
   Example Devices:
     # 1. Virtual Alarm Control Panel
     - platform: alarm_control_panel
-      name: Example Security
+      name: Security
       initial_value: disarmed
       code: "1234"
       code_arm_required: false
@@ -13,12 +20,12 @@ devices:
 
     # 2. Virtual Button
     - platform: button
-      name: Example Action
+      name: Action
       class: restart
 
     # 3. Virtual Select Dropdown
     - platform: select
-      name: Example Mode
+      name: Mode
       options:
         - Home
         - Away
@@ -28,7 +35,7 @@ devices:
 
     # 4. Virtual Text Input
     - platform: text
-      name: Example Message
+      name: Message
       initial_value: "Testing Tier 1 and Tier 2 devices"
       min: 0
       max: 255
@@ -36,7 +43,7 @@ devices:
 
     # 5. Virtual Media Player
     - platform: media_player
-      name: Example Speaker
+      name: Speaker
       class: speaker
       initial_value: idle
       initial_volume: 0.5
@@ -47,22 +54,21 @@ devices:
 
     # 6. Virtual Camera
     - platform: camera
-      name: Example Camera
+      name: Camera
       initial_value: idle
       image_url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=640"
       stream_url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
 
-  # 7. Smart Plug with Simulated TV Load
+  # 7. Smart Plug with Simulated TV Load (Switch is primary entity)
   Living Room TV Outlet:
     - platform: switch
-      name: TV Plug
       class: outlet
       initial_value: "on"
     - platform: sensor
-      name: TV Power
+      name: Power
       class: power
       unit_of_measurement: "W"
-      linked_switch: "TV Plug"
+      linked_switch: "Living Room TV Outlet"
       standby_power: 3.5
       active_power: 140.0
       initial_load: "standby"
@@ -71,39 +77,37 @@ devices:
   # 8. Water Heater with Scheduled Hourly Heating Cycle
   Utility Water Heater:
     - platform: switch
-      name: Water Heater Switch
       class: switch
       initial_value: "on"
     - platform: sensor
-      name: Water Heater Power
+      name: Power
       class: power
       unit_of_measurement: "W"
-      linked_switch: "Water Heater Switch"
+      linked_switch: "Utility Water Heater"
       standby_power: 0.0
       active_power: 2400.0
       cycle_duration: 600
       cycle_interval: 3600
       cycle_align: "hour"
     - platform: sensor
-      name: Water Heater Energy
+      name: Energy
       class: energy
       unit_of_measurement: "kWh"
-      linked_power: "Water Heater Power"
+      linked_power: "Power"
       initial_value: "0.0"
 
   # 9. Security Camera with Gated Motion & Sound Detection
   Driveway Security:
     - platform: camera
-      name: Driveway Camera
       image_url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=640"
       stream_url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
     - platform: binary_sensor
-      name: Driveway Motion
+      name: Motion
       class: motion
       off_delay: 10
-      linked_entity: "Driveway Camera"
+      linked_entity: "Driveway Security"
     - platform: binary_sensor
-      name: Driveway Sound
+      name: Sound
       class: sound
       off_delay: 5
-      linked_entity: "Driveway Camera"
+      linked_entity: "Driveway Security"

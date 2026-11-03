@@ -1,43 +1,33 @@
 version: 1
 devices:
-  # --- White-Only Dimmable Lights ---
+  # --- White-Only Dimmable Lights (Clean Single-Entity Devices) ---
 
-  # 1. Mani's Bedroom
-  Manis Bedroom:
+  # 1. Mani's Bedroom Light
+  Manis Bedroom Light:
     - platform: light
-      name: Manis Bedroom Light
       initial_value: "off"
       support_brightness: true
       initial_brightness: 254
-      support_color: false
-      support_color_temp: false
 
-  # 2. Margo's Bedroom
-  Margos Bedroom:
+  # 2. Margo's Bedroom Light
+  Margos Bedroom Light:
     - platform: light
-      name: Margos Bedroom Light
       initial_value: "off"
       support_brightness: true
       initial_brightness: 254
-      support_color: false
-      support_color_temp: false
 
-  # 3. Master Bedroom Closet
-  Master Bedroom Closet:
+  # 3. Master Closet Light
+  Master Closet Light:
     - platform: light
-      name: Master Closet Light
       initial_value: "off"
       support_brightness: true
       initial_brightness: 254
-      support_color: false
-      support_color_temp: false
 
   # --- Multi-Coloured Lights (Color & Color Temp) ---
 
   # 4. Front Porch Light
-  Front Porch:
+  Front Porch Light:
     - platform: light
-      name: Front Porch Light
       initial_value: "off"
       support_brightness: true
       initial_brightness: 254
@@ -54,7 +44,6 @@ devices:
   # 5. Back Deck Light 1
   Back Deck Light 1:
     - platform: light
-      name: Back Deck Light 1
       initial_value: "off"
       support_brightness: true
       initial_brightness: 254
@@ -71,7 +60,6 @@ devices:
   # 6. Back Deck Light 2
   Back Deck Light 2:
     - platform: light
-      name: Back Deck Light 2
       initial_value: "off"
       support_brightness: true
       initial_brightness: 254

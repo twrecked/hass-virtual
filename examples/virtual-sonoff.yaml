@@ -3,14 +3,13 @@ devices:
   # 1. Living Room Television
   Living Room TV Outlet:
     - platform: switch
-      name: TV Switch
       class: outlet
       initial_value: "on"
     - platform: sensor
       name: Television
       class: power
       unit_of_measurement: "W"
-      linked_switch: "TV Switch"
+      linked_switch: "Living Room TV Outlet"
       standby_power: 2.5
       active_power: 135.0
       initial_load: "standby"
@@ -25,14 +24,13 @@ devices:
   # 2. Audio Amplifier
   Living Room Amplifier Outlet:
     - platform: switch
-      name: Amplifier Switch
       class: outlet
       initial_value: "on"
     - platform: sensor
       name: Amplifier
       class: power
       unit_of_measurement: "W"
-      linked_switch: "Amplifier Switch"
+      linked_switch: "Living Room Amplifier Outlet"
       standby_power: 1.5
       active_power: 65.0
       initial_load: "standby"
@@ -47,14 +45,13 @@ devices:
   # 3. Chest Freezer (Recurring Compressor Cycle)
   Utility Chest Freezer Outlet:
     - platform: switch
-      name: Freezer Switch
       class: outlet
       initial_value: "on"
     - platform: sensor
       name: Chest Freezer
       class: power
       unit_of_measurement: "W"
-      linked_switch: "Freezer Switch"
+      linked_switch: "Utility Chest Freezer Outlet"
       standby_power: 0.8
       active_power: 85.0
       cycle_duration: 900        # 15 min compressor run
@@ -71,14 +68,13 @@ devices:
   # 4. Washing Machine
   Washing Machine Outlet:
     - platform: switch
-      name: Washing Machine Switch
       class: outlet
       initial_value: "on"
     - platform: sensor
       name: Washing Machine
       class: power
       unit_of_measurement: "W"
-      linked_switch: "Washing Machine Switch"
+      linked_switch: "Washing Machine Outlet"
       standby_power: 2.0
       active_power: 380.0
       cycle_duration: 2700       # Default 45 min wash cycle
@@ -94,14 +90,13 @@ devices:
   # 5. Heat Pump Tumble Dryer
   Tumble Dryer Outlet:
     - platform: switch
-      name: Tumble Dryer Switch
       class: outlet
       initial_value: "on"
     - platform: sensor
       name: Tumble Dryer
       class: power
       unit_of_measurement: "W"
-      linked_switch: "Tumble Dryer Switch"
+      linked_switch: "Tumble Dryer Outlet"
       standby_power: 1.0
       active_power: 650.0
       cycle_duration: 3600       # Default 60 min dry cycle
@@ -117,35 +112,31 @@ devices:
   # 6. Master Bedroom Fan & Light (Sonoff iFan)
   Master Bedroom Ceiling Fan:
     - platform: fan
-      name: Master Bedroom Fan
       speed_count: 3              # 3 speeds: Low (33%), Medium (67%), High (100%)
       initial_value: "off"
     - platform: light
-      name: Master Bedroom Fan Light
+      name: Light
       initial_value: "off"
       support_brightness: false   # Simple on/off light
-      support_color: false
-      support_color_temp: false
 
   # 7. Water Heater (Scheduled Hourly Heating Cycle)
   Utility Water Heater:
     - platform: switch
-      name: Water Heater Switch
       class: switch
       initial_value: "on"
     - platform: sensor
-      name: Water Heater Power
+      name: Power
       class: power
       unit_of_measurement: "W"
-      linked_switch: "Water Heater Switch"
+      linked_switch: "Utility Water Heater"
       standby_power: 0.0
       active_power: 2400.0
       cycle_duration: 600        # 10 minutes active
       cycle_interval: 3600       # Repeats every 1 hour
       cycle_align: "hour"        # Aligned to :00 on the clock
     - platform: sensor
-      name: Water Heater Energy
+      name: Energy
       class: energy
       unit_of_measurement: "kWh"
-      linked_power: "Water Heater Power"
+      linked_power: "Power"
       initial_value: "0.0"

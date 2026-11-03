@@ -211,32 +211,43 @@ If you want the convenience of one-click sync without any cloud traffic:
 
 # Entity Configuration & File Layout
 
-### File Structure
+### File Structure & ADR-0007 Entity Naming
 
-A standard `virtual.yaml` file defines devices, each containing one or more entity platforms:
+A standard `virtual.yaml` file defines devices, each containing one or more entity platforms. `hass-virtual` adheres to Home Assistant's modern entity naming architecture (`_attr_has_entity_name = True`, ADR-0007):
+
+* **Single-Entity Devices (Primary Entity)**: Omit `name` entirely. The entity automatically inherits the device's name without repetition or stuttering.
+* **Multi-Entity Devices (Sub-Entities)**: Specify concise names for secondary entities (e.g., `Battery`, `Motion`, `Temperature`). Home Assistant automatically formats the display name as `<Device Name> <Entity Name>` (e.g. `Front Door Lock Battery`), and sets the entity ID to `{domain}.{device_slug}_{entity_slug}`.
+* **Backward Compatibility**: If legacy configurations still supply `name: "Front Door Lock Battery"`, `hass-virtual` cleanly strips the redundant device name prefix to prevent double-prefixing.
+
+#### Examples
 
 ```yaml
 version: 1
 devices:
-  Living Room Multi Sensor:
-    - platform: binary_sensor
-      name: Living Room Motion
-      initial_value: 'off'
-      class: motion
+  # 1. Clean Single-Entity Device (name omitted -> friendly name: "Living Room Dimmer")
+  Living Room Dimmer:
+    - platform: light
+      initial_value: "off"
+      support_brightness: true
+
+  # 2. Multi-Entity Device (Primary lock entity + concise sub-entities)
+  Front Door Lock:
+    - platform: lock
+      initial_value: "locked"
+      locking_time: 2
     - platform: sensor
-      name: Living Room Temperature
-      initial_value: 21
-      class: temperature
-      unit_of_measurement: '°C'
-    - platform: sensor
-      name: Living Room Battery
-      initial_value: 100
+      name: Battery
       class: battery
-      unit_of_measurement: '%'
+      unit_of_measurement: "%"
+      initial_value: "100"
+    - platform: binary_sensor
+      name: Low Battery
+      class: battery
+      linked_battery_sensor: "Battery"
+      low_battery_threshold: 15
 ```
 
 * **Device Groupings**: Entities listed under a device name share the same parent device in Home Assistant's Device Registry.
-* **Entity Names**: The `name` parameter on an entity is optional. If omitted, Home Assistant creates a clean entity name combining the device name and the entity type/class (e.g. `Living Room Multi Sensor Motion`).
 
 ---
 

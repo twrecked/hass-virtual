@@ -34,6 +34,7 @@ from homeassistant.util import dt as dt_util, slugify
 
 from . import get_entity_from_domain, get_entity_configs
 from .const import (
+    ATTR_DEVICE_ID,
     ATTR_CONTROL_MODE,
     CONF_STATE_CLASS,
     ATTR_CYCLE_ACTIVE,
@@ -440,6 +441,9 @@ class VirtualSensor(VirtualEntity, SensorEntity):
             f"sensor.{slug}",
             f"sensor.{COMPONENT_DOMAIN}_{slug}",
         ]
+        device_id = self._config.get(ATTR_DEVICE_ID) if self._config else None
+        if device_id and device_id != "NOTYET":
+            candidates.insert(0, f"sensor.{slugify(device_id)}_{slug}")
         for c in candidates:
             if self.hass.states.get(c):
                 return c
@@ -452,10 +456,14 @@ class VirtualSensor(VirtualEntity, SensorEntity):
         if "." in self._linked_switch_config:
             return self._linked_switch_config
 
+        slug = slugify(self._linked_switch_config)
         candidates = [
-            f"switch.{slugify(self._linked_switch_config)}",
-            f"switch.{COMPONENT_DOMAIN}_{slugify(self._linked_switch_config)}",
+            f"switch.{slug}",
+            f"switch.{COMPONENT_DOMAIN}_{slug}",
         ]
+        device_id = self._config.get(ATTR_DEVICE_ID) if self._config else None
+        if device_id and device_id != "NOTYET":
+            candidates.insert(0, f"switch.{slugify(device_id)}_{slug}")
         for candidate in candidates:
             if self.hass.states.get(candidate):
                 return candidate

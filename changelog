@@ -1,3 +1,12 @@
+0.10.0-alpha.7:
+  Adopt Home Assistant ADR-0007 entity naming architecture (_attr_has_entity_name = True).
+  Make name parameter optional in entity schema (vol.Optional(CONF_NAME, default=None)).
+  Support primary entity naming (omitted or matching name sets _attr_name = None).
+  Support concise sub-entity naming (e.g. Battery, Motion, Temperature) on multi-entity devices.
+  Cleanly strip redundant device name prefixes on sub-entities to prevent double-prefixing.
+  Preserve existing unique IDs and entity IDs in BlendedCfg for seamless backward compatibility.
+  Support sibling entity resolution for linked switches, power, and companion low-battery tracking.
+  Modernize virtual-device-editor templates and update examples and README.
 0.10.0-alpha.6:
   Add battery drain simulation (battery_life_days, drain_rate) with acceleration multiplier (sim_speed) to battery sensors.
   Support companion low-battery binary sensors (class: battery) with automatic threshold tracking (low_battery_threshold).

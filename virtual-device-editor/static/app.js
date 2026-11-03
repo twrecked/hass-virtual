@@ -231,33 +231,36 @@ const TEMPLATES = [
     id: "water_heater",
     name: "Water Heater",
     description: "Switch with scheduled 10-min hourly heating cycle and power simulation",
-    create: (name) => ({
-      name: name || "Water Heater",
-      entities: [
-        {
-          platform: "switch",
-          name: "Water Heater Switch",
-          class: "switch",
-          initial_value: "on",
-          persistent: true,
-          initial_availability: true,
-        },
-        {
-          platform: "sensor",
-          name: "Water Heater Power",
-          class: "power",
-          unit_of_measurement: "W",
-          linked_switch: "Water Heater Switch",
-          standby_power: 0,
-          active_power: 2400,
-          cycle_duration: 600,
-          cycle_interval: 3600,
-          cycle_align: "hour",
-          persistent: true,
-          initial_availability: true,
-        },
-      ],
-    }),
+    create: (name) => {
+      const devName = name || "Water Heater";
+      return {
+        name: devName,
+        entities: [
+          {
+            platform: "switch",
+            name: "",
+            class: "switch",
+            initial_value: "on",
+            persistent: true,
+            initial_availability: true,
+          },
+          {
+            platform: "sensor",
+            name: "Power",
+            class: "power",
+            unit_of_measurement: "W",
+            linked_switch: devName,
+            standby_power: 0,
+            active_power: 2400,
+            cycle_duration: 600,
+            cycle_interval: 3600,
+            cycle_align: "hour",
+            persistent: true,
+            initial_availability: true,
+          },
+        ],
+      };
+    },
   },
   {
     id: "weather_station",
@@ -283,7 +286,7 @@ const TEMPLATES = [
         entities: [
           {
             platform: "climate",
-            name: `${devName} Thermostat`,
+            name: "",
             initial_value: "heat",
             initial_temperature: 21.0,
             initial_current_temperature: 20.0,
@@ -297,7 +300,7 @@ const TEMPLATES = [
           },
           {
             platform: "sensor",
-            name: `${devName} Indoor Temp`,
+            name: "Indoor Temp",
             class: "temperature",
             unit_of_measurement: "°C",
             initial_value: "20.0",
@@ -306,7 +309,7 @@ const TEMPLATES = [
           },
           {
             platform: "sensor",
-            name: `${devName} Outdoor Temp`,
+            name: "Outdoor Temp",
             class: "temperature",
             unit_of_measurement: "°C",
             initial_value: "5.0",
@@ -315,7 +318,7 @@ const TEMPLATES = [
           },
           {
             platform: "sensor",
-            name: `${devName} Power`,
+            name: "Power",
             class: "power",
             unit_of_measurement: "W",
             initial_value: "1800",
@@ -452,7 +455,7 @@ const TEMPLATES = [
         entities: [
           {
             platform: "camera",
-            name: devName,
+            name: "",
             initial_value: "idle",
             image_url: "",
             stream_url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
@@ -461,7 +464,7 @@ const TEMPLATES = [
           },
           {
             platform: "binary_sensor",
-            name: `${devName} Motion`,
+            name: "Motion",
             class: "motion",
             initial_value: "off",
             off_delay: 15,
@@ -471,7 +474,7 @@ const TEMPLATES = [
           },
           {
             platform: "binary_sensor",
-            name: `${devName} Sound`,
+            name: "Sound",
             class: "sound",
             initial_value: "off",
             off_delay: 5,

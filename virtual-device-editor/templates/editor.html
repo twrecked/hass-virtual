@@ -133,7 +133,8 @@
                   <!-- Entity Name override -->
                   <div class="form-group">
                     <label>Entity Name (Optional)</label>
-                    <input v-model="entity.name" class="form-control" placeholder="Default: Device Name" />
+                    <input v-model="entity.name" class="form-control" placeholder="Leave blank for primary entity, or enter short name (e.g. Battery, Motion)" />
+                    <small class="form-text text-muted">Leave blank for the primary entity (uses device name). For sub-entities, use short names (e.g., Battery, Motion) without repeating the device name.</small>
                   </div>
 
                   <!-- Device Class -->
