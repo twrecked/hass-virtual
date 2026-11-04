@@ -1,17 +1,14 @@
 """
-Handles the file based Virtual configuration.
+Handles file-based virtual device configuration and coordination.
 
-Virtual seems to need a lot device config so rather than get rid of
-the options or clutter up the config flow system I'm adding a text file
-where the user can configure things.
+Because virtual devices require flexible, detailed configuration (durations, power simulation,
+battery lifespans, sensor linkage), devices are organized in YAML files linked to an integration entry.
 
-There are 2 pieces:
-
-- `BlendedCfg`; this class is responsible for loading the new file based
-  configuration and merging it with the flow data and options.
-
-- `UpgradeCfg`; A helper class to import configuration from the old YAML
-  layout.
+Key components:
+- `BlendedCfg`: Acts as a virtual device coordinator. Loads YAML device definitions,
+  manages entity identity and ADR-0007 naming, reconciles state with Home Assistant's
+  device and entity registries, and supplies structured payloads to platform setup.
+- `UpgradeCfg`: Helper class to import legacy pre-v0.9 configuration into the modern file layout.
 """
 from __future__ import annotations
 
@@ -287,16 +284,19 @@ def _make_suffix(platform, device_class):
 
 
 class BlendedCfg:
-    """Helper class to get at Virtual configuration options.
+    """Virtual device controller and configuration manager.
 
-    Reads in non config flow settings from the external config file and merges
-    them with flow data and options.
+    Acts as an in-memory hardware bridge and coordinator for a virtual device file.
+    Loads and parses YAML device definitions, determines primary and sub-entity
+    naming (ADR-0007), resolves entity IDs and unique IDs against Home Assistant's
+    native registries, and supplies structured device and entity payloads to setup.
     """
 
-    def __init__(self, hass: HomeAssistant, flow_data: dict[str, Any]):
+    def __init__(self, hass: HomeAssistant, flow_data: dict[str, Any], entry_id: str | None = None):
         self._hass = hass
         self._group_name = flow_data[ATTR_GROUP_NAME]
         self._file_name = flow_data[ATTR_FILE_NAME]
+        self._entry_id = entry_id
 
         self._meta_data: dict[str, Any] = {}
         self._orphaned_entities: dict[str, Any] = {}
@@ -313,6 +313,19 @@ class BlendedCfg:
         _LOGGER.debug(f"loaded-meta-data={meta_data}")
         _LOGGER.debug(f"loaded-devices={devices}")
 
+        # Check Home Assistant native registries for existing devices/entities
+        import homeassistant.helpers.device_registry as dr
+        import homeassistant.helpers.entity_registry as er
+
+        dev_reg = dr.async_get(self._hass)
+        ent_reg = er.async_get(self._hass)
+
+        existing_devs = []
+        existing_ents = []
+        if self._entry_id:
+            existing_devs = dr.async_entries_for_config_entry(dev_reg, self._entry_id)
+            existing_ents = er.async_entries_for_config_entry(ent_reg, self._entry_id)
+
         # Let's fix up the devices/entities
         for device_name, entities in devices.items():
 
@@ -323,6 +336,19 @@ class BlendedCfg:
             })
 
             clean_device_name = _make_name(device_name)
+
+            # Match existing device in registry by identifier
+            matched_dev = None
+            for d in existing_devs:
+                if any(ident == (COMPONENT_DOMAIN, device_name) for ident in d.identifiers):
+                    matched_dev = d
+                    break
+
+            dev_entities = (
+                [e for e in existing_ents if e.device_id == matched_dev.id]
+                if matched_dev
+                else []
+            )
 
             for entity in entities:
 
@@ -349,65 +375,80 @@ class BlendedCfg:
                     else:
                         sub_name = clean_raw
 
-                # Candidate keys to look up existing metadata
-                if is_primary:
-                    candidates = [
-                        device_name,
-                        clean_device_name,
-                        f"{device_name} {_make_suffix(platform, device_class)}",
-                        f"{clean_device_name} {_make_suffix(platform, device_class)}",
-                        raw_name,
-                    ]
-                else:
-                    candidates = [
-                        f"{device_name} {sub_name}",
-                        f"{clean_device_name} {sub_name}",
-                        raw_name,
-                        sub_name,
-                        f"{device_name}_{sub_name}",
-                    ]
+                # 1. Match from existing Home Assistant entity_registry
+                matched_ent = None
+                for e in dev_entities:
+                    if e.domain == platform:
+                        if is_primary:
+                            if e.original_name is None or e.original_name == clean_device_name or e.original_name == raw_name:
+                                matched_ent = e
+                                break
+                        else:
+                            if e.original_name == sub_name or e.original_name == f"{clean_device_name} {sub_name}" or e.original_name == raw_name:
+                                matched_ent = e
+                                break
 
-                meta_entry = None
+                unique_id = None
+                entity_id = None
                 found_key = None
-                for candidate in candidates:
-                    if candidate and candidate in meta_data:
-                        meta_entry = meta_data[candidate]
-                        found_key = candidate
-                        break
 
-                if meta_entry is None:
-                    unique_id = _make_unique_id()
+                if matched_ent:
+                    unique_id = matched_ent.unique_id
+                    entity_id = matched_ent.entity_id
+                    found_key = f"{device_name} {sub_name}" if not is_primary else device_name
+
+                # 2. Fall back to meta_data candidate keys (e.g. from virtual.meta.json)
+                if unique_id is None:
+                    if is_primary:
+                        candidates = [
+                            device_name,
+                            clean_device_name,
+                            f"{device_name} {_make_suffix(platform, device_class)}",
+                            f"{clean_device_name} {_make_suffix(platform, device_class)}",
+                            raw_name,
+                        ]
+                    else:
+                        candidates = [
+                            f"{device_name} {sub_name}",
+                            f"{clean_device_name} {sub_name}",
+                            raw_name,
+                            sub_name,
+                            f"{device_name}_{sub_name}",
+                        ]
+
+                    for candidate in candidates:
+                        if candidate and candidate in meta_data:
+                            meta_entry = meta_data[candidate]
+                            found_key = candidate
+                            unique_id = meta_entry.get(ATTR_UNIQUE_ID)
+                            entity_id = meta_entry.get(ATTR_ENTITY_ID)
+                            break
+
+                # 3. For new entities: generate deterministic unique_id & entity_id
+                if unique_id is None:
                     if is_primary:
                         found_key = device_name
+                        dev_slug = slugify(clean_device_name)
+                        unique_id = f"{dev_slug}.{COMPONENT_DOMAIN}"
                         entity_id = _make_entity_id(platform, device_name)
                     else:
                         found_key = f"{clean_device_name} {sub_name}"
                         dev_slug = slugify(clean_device_name)
                         sub_slug = slugify(sub_name)
+                        unique_id = f"{dev_slug}_{sub_slug}.{COMPONENT_DOMAIN}"
                         if device_name.startswith("+"):
                             entity_id = f"{platform}.{COMPONENT_DOMAIN}_{dev_slug}_{sub_slug}"
                         else:
                             entity_id = f"{platform}.{dev_slug}_{sub_slug}"
 
-                    _LOGGER.debug(f"creating {found_key}")
-                    meta_entry = {
+                if found_key in meta_data:
+                    self._meta_data[found_key] = meta_data.pop(found_key)
+                else:
+                    self._meta_data[found_key] = {
                         ATTR_UNIQUE_ID: unique_id,
                         ATTR_ENTITY_ID: entity_id,
                         ATTR_DEVICE_ID: device_name,
                     }
-                    meta_data[found_key] = meta_entry
-                    changed = True
-
-                unique_id = meta_entry.get(ATTR_UNIQUE_ID)
-                entity_id = meta_entry.get(ATTR_ENTITY_ID)
-                if entity_id is None:
-                    _LOGGER.info(f"problem creating {found_key}, no entity id")
-                    continue
-
-                if meta_entry.get(ATTR_DEVICE_ID) is None:
-                    _LOGGER.info(f"problem creating {found_key}, no device id")
-                    meta_entry[ATTR_DEVICE_ID] = device_name
-                    changed = True
 
                 # Update the entity. Primary entity passes CONF_NAME: None
                 entity.update({
@@ -421,9 +462,6 @@ class BlendedCfg:
                 if platform not in self._entities:
                     self._entities[platform] = []
                 self._entities[platform].append(entity)
-                self._meta_data.update({
-                    found_key: meta_data.pop(found_key)
-                })
 
         # Create orphaned list. If we have anything here we need to update
         # the saved meta data.

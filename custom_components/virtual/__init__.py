@@ -11,6 +11,7 @@ import yaml
 from homeassistant.components import webhook
 import homeassistant.helpers.config_validation as cv
 import homeassistant.helpers.device_registry as dr
+import homeassistant.helpers.entity_registry as er
 from homeassistant.helpers.config_validation import PLATFORM_SCHEMA
 from homeassistant.helpers.issue_registry import (
     async_create_issue,
@@ -267,19 +268,45 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Get the config.
     _LOGGER.debug(f"creating new cfg")
-    vcfg = BlendedCfg(hass, entry.data)
+    vcfg = BlendedCfg(hass, entry.data, entry_id=entry.entry_id)
     await vcfg.async_load()
 
-    # create the devices.
+    # create or update the devices in registry
     _LOGGER.debug("creating the devices")
     for device in vcfg.devices:
         _LOGGER.debug(f"creating-device={device}")
         await _async_get_or_create_virtual_device_in_registry(hass, entry, device)
 
-    # Delete orphaned devices.
-    for switch, device in vcfg.orphaned_entities.items():
-        _LOGGER.debug(f"deleting {switch}/{device}")
-        await _async_delete_virtual_device_from_registry(hass, entry, device)
+    # Clean up any orphaned devices in registry that are no longer in this entry's config
+    device_registry = dr.async_get(hass)
+    active_device_identifiers = {
+        (COMPONENT_DOMAIN, dev[ATTR_DEVICE_ID]) for dev in vcfg.devices
+    }
+    for device_entry in dr.async_entries_for_config_entry(device_registry, entry.entry_id):
+        if not any(ident in active_device_identifiers for ident in device_entry.identifiers):
+            _LOGGER.info(
+                "Removing orphaned device from registry: %s (%s)",
+                device_entry.name,
+                device_entry.id,
+            )
+            device_registry.async_remove_device(device_entry.id)
+
+    # Clean up any orphaned entities in registry that are no longer in this entry's config
+    entity_registry = er.async_get(hass)
+    active_entity_ids = {
+        ent[ATTR_ENTITY_ID]
+        for platform_ents in vcfg.entities.values()
+        for ent in platform_ents
+        if ATTR_ENTITY_ID in ent
+    }
+    for entity_entry in er.async_entries_for_config_entry(entity_registry, entry.entry_id):
+        if entity_entry.entity_id not in active_entity_ids:
+            _LOGGER.info(
+                "Removing orphaned entity from registry: %s (%s)",
+                entity_entry.entity_id,
+                entity_entry.unique_id,
+            )
+            entity_registry.async_remove(entity_entry.entity_id)
 
     # Update the component data.
     hass.data[COMPONENT_DOMAIN].update({
@@ -415,9 +442,11 @@ async def _async_delete_virtual_device_from_registry(
         hass: HomeAssistant, _entry: ConfigEntry, device: dict[str, Any]
 ) -> None:
     registery = dr.async_get(hass)
-    device_in_registry = registery.async_get_device(
-        identifiers={(COMPONENT_DOMAIN, device[ATTR_DEVICE_ID])},
-    )
+    ident = (COMPONENT_DOMAIN, device[ATTR_DEVICE_ID])
+    if hasattr(registery, "async_get_device_by_identifier"):
+        device_in_registry = registery.async_get_device_by_identifier(ident)
+    else:
+        device_in_registry = registery.async_get_device(identifiers={ident})
     if device_in_registry:
         _LOGGER.debug(f"found something to delete! {device_in_registry.id}")
         registery.async_remove_device(device_in_registry.id)
