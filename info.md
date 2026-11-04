@@ -32,4 +32,4 @@ Supports UI configuration via Config Flow, YAML device definitions, state persis
 
 
 ## Documentation
-See [here](https://github.com/twrecked/hass-virtual/blob/master/README.md) for full documentation.
+See [here](https://github.com/twrecked/hass-virtual/blob/main/README.md) for full documentation.
