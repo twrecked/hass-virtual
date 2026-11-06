@@ -25,11 +25,11 @@ _Virtual_ provides support for 17 distinct entity platforms:
 
 ---
 
-> ### ⚠️ Virtual `v0.10.0-alpha` Notice
+> ### ⚠️ Virtual `v0.10.0-beta` Notice
 >
 > **Virtual v0.10 modernizes the integration with native Home Assistant entity models, an interactive web-based Visual Device Editor, and non-blocking asynchronous state storage.**
 >
-> **This is an active alpha release — community testing and feedback are welcome!**
+> **This is an active beta release — community testing and feedback are welcome!**
 >
 > If you encounter issues, regressions, or unexpected behavior, please [open a GitHub issue](https://github.com/twrecked/hass-virtual/issues).
 >

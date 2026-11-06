@@ -30,13 +30,13 @@ simulations:
 
     # External appliances in your house to sum into the load:
     linked_loads:
-      - "Television"
-      - "Amplifier"
-      - "Chest Freezer"
-      - "Washing Machine"
-      - "Tumble Dryer"
-      - "Water Heater Power"
-      - "Main HVAC Power"
+      - "sensor.living_room_tv_outlet_power"
+      - "sensor.living_room_amplifier_outlet_power"
+      - "sensor.utility_chest_freezer_outlet_power"
+      - "sensor.washing_machine_outlet_power"
+      - "sensor.tumble_dryer_outlet_power"
+      - "sensor.utility_water_heater_power"
+      - "sensor.main_hvac_power"
 
 devices:
   # Device 1: Inverter & Grid
