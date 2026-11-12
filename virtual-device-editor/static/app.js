@@ -59,6 +59,7 @@ const PLATFORMS = [
   "number",
   "select",
   "sensor",
+  "siren",
   "switch",
   "text",
   "valve",
@@ -103,6 +104,23 @@ const TEMPLATES = [
       entities: [
         { platform: "binary_sensor", class: "motion", initial_value: "off", persistent: true, initial_availability: true },
         { platform: "sensor", class: "battery", unit_of_measurement: "%", initial_value: "100", persistent: true, initial_availability: true },
+      ],
+    }),
+  },
+  {
+    id: "security_siren",
+    name: "Security Siren",
+    description: "Configurable siren with auto-off timer and tone options",
+    create: (name) => ({
+      name: name || "Alarm Siren",
+      entities: [
+        {
+          platform: "siren",
+          initial_value: "off",
+          duration: 30,
+          persistent: true,
+          initial_availability: true,
+        },
       ],
     }),
   },
@@ -660,6 +678,19 @@ createApp({
               item.sound_mode_list = ent.sound_mode_list_str.split(",").map((s) => s.trim()).filter((s) => s);
             }
           }
+          if (ent.platform === "siren") {
+            if (ent.duration !== undefined && ent.duration !== "") item.duration = Number(ent.duration);
+            if (ent.mode) item.mode = ent.mode;
+            if (ent.support_volume_set) {
+              item.support_volume_set = true;
+              if (ent.initial_volume !== undefined && ent.initial_volume !== "") {
+                item.initial_volume = Number(ent.initial_volume);
+              }
+            }
+            if (ent.available_tones_str) {
+              item.available_tones = ent.available_tones_str.split(",").map((s) => s.trim()).filter((s) => s);
+            }
+          }
 
           output.devices[deviceName].push(item);
         }
@@ -704,7 +735,7 @@ createApp({
       const base = {
         platform,
         name: "",
-        initial_value: platform === "light" || platform === "switch" || platform === "binary_sensor" ? "off" : "0",
+        initial_value: platform === "light" || platform === "switch" || platform === "binary_sensor" || platform === "siren" ? "off" : "0",
         persistent: true,
         initial_availability: true,
       };
@@ -762,6 +793,13 @@ createApp({
         base.target_temperature_step = 0.5;
         base.hvac_modes_str = "off, heat, cool, auto";
         base.preset_modes_str = "none, eco, comfort, away";
+      } else if (platform === "siren") {
+        base.initial_value = "off";
+        base.duration = 0;
+        base.mode = "manual";
+        base.support_volume_set = false;
+        base.initial_volume = 1.0;
+        base.available_tones_str = "";
       }
 
       return base;
@@ -858,6 +896,9 @@ createApp({
             stream_url: item.stream_url !== undefined ? item.stream_url : (item.platform === "camera" ? "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" : ""),
             source_list_str: Array.isArray(item.source_list) ? item.source_list.join(", ") : (item.source_list || ""),
             sound_mode_list_str: Array.isArray(item.sound_mode_list) ? item.sound_mode_list.join(", ") : (item.sound_mode_list || ""),
+            duration: item.duration !== undefined ? item.duration : (item.platform === "siren" ? 0 : undefined),
+            support_volume_set: item.support_volume_set || false,
+            available_tones_str: Array.isArray(item.available_tones) ? item.available_tones.join(", ") : (item.available_tones || ""),
           }));
 
           newDevices.push({

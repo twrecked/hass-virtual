@@ -111,3 +111,20 @@ devices:
       class: sound
       off_delay: 5
       linked_entity: "Driveway Security"
+
+  # 10. Manually Controlled Alarm Siren (runs until explicitly turned off)
+  Home Alarm Siren:
+    - platform: siren
+      initial_value: "off"
+
+  # 11. Automatic Timed Chime / Siren with Tones (runs for 30s and shuts off automatically)
+  Perimeter Warning Chime:
+    - platform: siren
+      initial_value: "off"
+      duration: 30
+      available_tones:
+        - alert
+        - chime
+        - warning
+      support_volume_set: true
+      initial_volume: 0.8

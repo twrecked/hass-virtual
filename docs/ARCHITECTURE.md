@@ -29,14 +29,14 @@ This document describes the architectural design, lifecycle, and component inter
 │  - Registers/updates devices in HA device_registry     │
 │  - Automatically prunes unreferenced/orphaned devices  │
 │  - Automatically prunes unreferenced/orphaned entities │
-│  - Forwards entry setups to the 17 platform modules    │
+│  - Forwards entry setups to the 18 platform modules    │
 │  - Boots background SimulationManager (Solar / HVAC)   │
 │  - Hosts token-authenticated builder hot-reload webhook│
 └───────────────────────────┬────────────────────────────┘
                             │
                             ▼
 ┌────────────────────────────────────────────────────────┐
-│                  17 Entity Platforms                   │
+│                  18 Entity Platforms                   │
 │   (switch, light, sensor, binary_sensor, lock, etc.)   │
 │  - Subclasses VirtualEntity (RestoreEntity)            │
 │  - Enforces _attr_has_entity_name = True               │
@@ -74,7 +74,7 @@ The integration entry lifecycle is coordinated in `custom_components/virtual/__i
    * **Orphaned Devices**: Any device belonging to this entry that is no longer in the YAML file (e.g. after a device rename or deletion) is automatically purged using `device_registry.async_remove_device()`.
    * **Orphaned Entities**: Any entity belonging to this entry that is no longer in the YAML file is automatically purged using `entity_registry.async_remove()`.
 3. **Platform Forwarding**:
-   Dispatches entity definitions to all 17 supported platform modules via `hass.config_entries.async_forward_entry_setups()`.
+   Dispatches entity definitions to all 18 supported platform modules via `hass.config_entries.async_forward_entry_setups()`.
 4. **Simulation Engine Initialization**:
    Instantiates and boots the `SimulationManager` to execute background simulations.
 5. **Hot-Reload Builder Webhook**:

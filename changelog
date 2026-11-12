@@ -1,4 +1,5 @@
 0.10.0-beta.1:
+  Add virtual siren platform supporting manual control, automatic auto-off duration timeouts, tone selection, and volume configuration.
   Fix linked entity candidate resolution (_resolve_switch_id, _resolve_sensor_id) to prevent duplicate device slug insertion when the target matches the parent device.
   Standardize appliance outlet device examples (virtual-sonoff.yaml) to concise ADR-0007 naming (Power and Energy sub-entities).
   Update solar inverter linked load references in virtual-solark.yaml example.

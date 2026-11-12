@@ -121,6 +121,9 @@ CONF_SIMULATIONS = "simulations"
 CONF_STATE_CLASS = "state_class"
 CONF_YAML_CONFIG = "yaml_config"
 CONF_EDITOR_URL = "editor_url"
+CONF_AVAILABLE_TONES = "available_tones"
+CONF_DURATION = "duration"
+CONF_SUPPORT_VOLUME_SET = "support_volume_set"
 
 ATTR_IMAGE_URL = "image_url"
 ATTR_STREAM_URL = "stream_url"
@@ -185,6 +188,8 @@ DEFAULT_TICK_INTERVAL = 10.0
 DEFAULT_SIM_SPEED = 1.0
 DEFAULT_BATTERY_STRATEGY = "backup"
 DEFAULT_EDITOR_URL = "https://virtual-dot-twrecked-tools.nn.r.appspot.com"
+DEFAULT_SIREN_VALUE = "off"
+DEFAULT_SIREN_DURATION = 0
 
 IMPORTED_GROUP_NAME = "imported"
 
