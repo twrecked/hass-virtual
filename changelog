@@ -3,6 +3,7 @@
   Fix linked entity candidate resolution (_resolve_switch_id, _resolve_sensor_id) to prevent duplicate device slug insertion when the target matches the parent device.
   Standardize appliance outlet device examples (virtual-sonoff.yaml) to concise ADR-0007 naming (Power and Energy sub-entities).
   Update solar inverter linked load references in virtual-solark.yaml example.
+  Migrate deprecated climate temperature properties to native temperature attributes (_attr_native_current_temperature, _attr_native_target_temperature, _attr_native_temperature_unit).
 0.10.0-alpha.7:
   Adopt Home Assistant ADR-0007 entity naming architecture (_attr_has_entity_name = True).
   Make name parameter optional in entity schema (vol.Optional(CONF_NAME, default=None)).

@@ -28,5 +28,8 @@
 * **Tone & Volume Features**: Dynamically supports `SirenEntityFeature.TONES` when `available_tones` are provided, and `SirenEntityFeature.VOLUME_SET` when `support_volume_set: true`.
 * **Virtual Device Editor Integration**: Fully integrated into the web UI builder with form controls, feature toggles, and a "Security Siren" template.
 
-### 4. Transition to Beta
+### 4. Climate Native Property Migration
+* Migrated deprecated Home Assistant temperature attributes in `VirtualClimate` (`_attr_temperature_unit`, `_attr_target_temperature`, `_attr_current_temperature`) to modern native properties (`_attr_native_temperature_unit`, `_attr_native_target_temperature`, `_attr_native_current_temperature`), eliminating core deprecation warnings.
+
+### 5. Transition to Beta
 * Virtual v0.10 core architecture (18 platforms, ADR-0007 entity naming model, simulation engines, and async persistence) is now feature-frozen and entering beta stabilization.

@@ -168,7 +168,7 @@ class VirtualClimate(VirtualEntity, ClimateEntity):
         """Initialize the Virtual climate device."""
         super().__init__(config, PLATFORM_DOMAIN, old_style)
 
-        self._attr_temperature_unit = UnitOfTemperature.CELSIUS
+        self._attr_native_temperature_unit = UnitOfTemperature.CELSIUS
 
         min_val = config.get(CONF_MIN_TEMP)
         if min_val is None:
@@ -205,21 +205,21 @@ class VirtualClimate(VirtualEntity, ClimateEntity):
         """Calculate native Home Assistant HVAC action."""
         if self._attr_hvac_mode == HVACMode.OFF:
             return HVACAction.OFF
-        if self._attr_current_temperature is None or self._attr_target_temperature is None:
+        if self._attr_native_current_temperature is None or self._attr_native_target_temperature is None:
             return HVACAction.IDLE
 
         if self._attr_hvac_mode == HVACMode.HEAT:
-            if self._attr_current_temperature < self._attr_target_temperature:
+            if self._attr_native_current_temperature < self._attr_native_target_temperature:
                 return HVACAction.HEATING
             return HVACAction.IDLE
         elif self._attr_hvac_mode == HVACMode.COOL:
-            if self._attr_current_temperature > self._attr_target_temperature:
+            if self._attr_native_current_temperature > self._attr_native_target_temperature:
                 return HVACAction.COOLING
             return HVACAction.IDLE
         elif self._attr_hvac_mode in (HVACMode.AUTO, HVACMode.HEAT_COOL):
-            if self._attr_current_temperature < self._attr_target_temperature - 0.5:
+            if self._attr_native_current_temperature < self._attr_native_target_temperature - 0.5:
                 return HVACAction.HEATING
-            elif self._attr_current_temperature > self._attr_target_temperature + 0.5:
+            elif self._attr_native_current_temperature > self._attr_native_target_temperature + 0.5:
                 return HVACAction.COOLING
             return HVACAction.IDLE
         elif self._attr_hvac_mode == HVACMode.FAN_ONLY:
@@ -232,8 +232,8 @@ class VirtualClimate(VirtualEntity, ClimateEntity):
 
         raw_mode = str(config.get(CONF_INITIAL_VALUE, DEFAULT_CLIMATE_VALUE)).lower()
         self._attr_hvac_mode = HVAC_MODE_MAP.get(raw_mode, self._attr_hvac_modes[0])
-        self._attr_target_temperature = float(config.get(CONF_INITIAL_TEMPERATURE, DEFAULT_TARGET_TEMP))
-        self._attr_current_temperature = float(config.get(CONF_INITIAL_CURRENT_TEMPERATURE, DEFAULT_CURRENT_TEMP))
+        self._attr_native_target_temperature = float(config.get(CONF_INITIAL_TEMPERATURE, DEFAULT_TARGET_TEMP))
+        self._attr_native_current_temperature = float(config.get(CONF_INITIAL_CURRENT_TEMPERATURE, DEFAULT_CURRENT_TEMP))
         self._attr_preset_mode = self._attr_preset_modes[0] if self._attr_preset_modes else None
         self._attr_fan_mode = self._attr_fan_modes[0] if self._attr_fan_modes else None
         self._attr_hvac_action = self._calculate_hvac_action()
@@ -250,20 +250,20 @@ class VirtualClimate(VirtualEntity, ClimateEntity):
         target_temp = state.attributes.get(ATTR_TEMPERATURE)
         if target_temp is not None:
             try:
-                self._attr_target_temperature = float(target_temp)
+                self._attr_native_target_temperature = float(target_temp)
             except (ValueError, TypeError):
-                self._attr_target_temperature = float(config.get(CONF_INITIAL_TEMPERATURE, DEFAULT_TARGET_TEMP))
+                self._attr_native_target_temperature = float(config.get(CONF_INITIAL_TEMPERATURE, DEFAULT_TARGET_TEMP))
         else:
-            self._attr_target_temperature = float(config.get(CONF_INITIAL_TEMPERATURE, DEFAULT_TARGET_TEMP))
+            self._attr_native_target_temperature = float(config.get(CONF_INITIAL_TEMPERATURE, DEFAULT_TARGET_TEMP))
 
         current_temp = state.attributes.get(ATTR_CURRENT_TEMPERATURE)
         if current_temp is not None:
             try:
-                self._attr_current_temperature = float(current_temp)
+                self._attr_native_current_temperature = float(current_temp)
             except (ValueError, TypeError):
-                self._attr_current_temperature = float(config.get(CONF_INITIAL_CURRENT_TEMPERATURE, DEFAULT_CURRENT_TEMP))
+                self._attr_native_current_temperature = float(config.get(CONF_INITIAL_CURRENT_TEMPERATURE, DEFAULT_CURRENT_TEMP))
         else:
-            self._attr_current_temperature = float(config.get(CONF_INITIAL_CURRENT_TEMPERATURE, DEFAULT_CURRENT_TEMP))
+            self._attr_native_current_temperature = float(config.get(CONF_INITIAL_CURRENT_TEMPERATURE, DEFAULT_CURRENT_TEMP))
 
         self._attr_preset_mode = state.attributes.get(ATTR_PRESET_MODE)
         self._attr_fan_mode = state.attributes.get(ATTR_FAN_MODE)
@@ -284,7 +284,7 @@ class VirtualClimate(VirtualEntity, ClimateEntity):
         """Set new target temperature."""
         temp = kwargs.get(ATTR_TEMPERATURE)
         if temp is not None:
-            self._attr_target_temperature = max(self._attr_min_temp, min(self._attr_max_temp, float(temp)))
+            self._attr_native_target_temperature = max(self._attr_min_temp, min(self._attr_max_temp, float(temp)))
             self._attr_hvac_action = self._calculate_hvac_action()
             self._update_attributes()
             self.async_write_ha_state()
@@ -323,7 +323,7 @@ class VirtualClimate(VirtualEntity, ClimateEntity):
     def set_current_temperature(self, temperature: float) -> None:
         """Update current ambient temperature directly."""
         _LOGGER.debug(f"Setting current temperature of {self.name} to {temperature}")
-        self._attr_current_temperature = float(temperature)
+        self._attr_native_current_temperature = float(temperature)
         self._attr_hvac_action = self._calculate_hvac_action()
         self._update_attributes()
         self.async_write_ha_state()
