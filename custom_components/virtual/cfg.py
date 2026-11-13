@@ -510,6 +510,10 @@ class BlendedCfg:
         return self._entities.get(Platform.SWITCH, [])
 
     @property
+    def siren_config(self):
+        return self._entities.get(Platform.SIREN, [])
+
+    @property
     def simulations(self) -> list[dict[str, Any]]:
         return self._simulations
 
@@ -533,7 +537,7 @@ class UpgradeCfg:
         # Add in the easily formatted devices.
         for platform in [Platform.BINARY_SENSOR, Platform.SENSOR,
                          Platform.FAN, Platform.LIGHT,
-                         Platform.LOCK, Platform.SWITCH]:
+                         Platform.LOCK, Platform.SIREN, Platform.SWITCH]:
             devices = _parse_old_config(devices, config.get(platform, []), str(platform))
 
         # Device tracker is awkward, we have to split it out and fake looking

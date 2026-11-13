@@ -443,7 +443,9 @@ class VirtualSensor(VirtualEntity, SensorEntity):
         ]
         device_id = self._config.get(ATTR_DEVICE_ID) if self._config else None
         if device_id and device_id != "NOTYET":
-            candidates.insert(0, f"sensor.{slugify(device_id)}_{slug}")
+            dev_slug = slugify(device_id)
+            if dev_slug != slug:
+                candidates.insert(0, f"sensor.{dev_slug}_{slug}")
         for c in candidates:
             if self.hass.states.get(c):
                 return c
@@ -463,7 +465,9 @@ class VirtualSensor(VirtualEntity, SensorEntity):
         ]
         device_id = self._config.get(ATTR_DEVICE_ID) if self._config else None
         if device_id and device_id != "NOTYET":
-            candidates.insert(0, f"switch.{slugify(device_id)}_{slug}")
+            dev_slug = slugify(device_id)
+            if dev_slug != slug:
+                candidates.insert(0, f"switch.{dev_slug}_{slug}")
         for candidate in candidates:
             if self.hass.states.get(candidate):
                 return candidate

@@ -3,7 +3,7 @@ Virtual devices, mock hardware, and physics simulation engines (HVAC, Solar, Ene
 
 
 ## Features
-It provides 17 distinct virtual device platforms:
+It provides 18 distinct virtual device platforms:
 * Virtual alarm control panels
 * Virtual binary sensors (with auto-off timeout and entity gating)
 * Virtual buttons
@@ -18,6 +18,7 @@ It provides 17 distinct virtual device platforms:
 * Virtual numbers
 * Virtual selects
 * Virtual sensors (with simulated appliance power loads and auto-accumulating energy)
+* Virtual sirens (manual alarm sirens and automatic timed chimes)
 * Virtual switches
 * Virtual texts
 * Virtual valves

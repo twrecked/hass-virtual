@@ -6,7 +6,7 @@ devices:
       class: outlet
       initial_value: "on"
     - platform: sensor
-      name: Television
+      name: Power
       class: power
       unit_of_measurement: "W"
       linked_switch: "Living Room TV Outlet"
@@ -15,10 +15,10 @@ devices:
       initial_load: "standby"
       variance: 2.0
     - platform: sensor
-      name: Television Energy
+      name: Energy
       class: energy
       unit_of_measurement: "kWh"
-      linked_power: "Television"
+      linked_power: "Power"
       initial_value: "0.0"
 
   # 2. Audio Amplifier
@@ -27,7 +27,7 @@ devices:
       class: outlet
       initial_value: "on"
     - platform: sensor
-      name: Amplifier
+      name: Power
       class: power
       unit_of_measurement: "W"
       linked_switch: "Living Room Amplifier Outlet"
@@ -36,10 +36,10 @@ devices:
       initial_load: "standby"
       variance: 3.5
     - platform: sensor
-      name: Amplifier Energy
+      name: Energy
       class: energy
       unit_of_measurement: "kWh"
-      linked_power: "Amplifier"
+      linked_power: "Power"
       initial_value: "0.0"
 
   # 3. Chest Freezer (Recurring Compressor Cycle)
@@ -48,7 +48,7 @@ devices:
       class: outlet
       initial_value: "on"
     - platform: sensor
-      name: Chest Freezer
+      name: Power
       class: power
       unit_of_measurement: "W"
       linked_switch: "Utility Chest Freezer Outlet"
@@ -59,10 +59,10 @@ devices:
       cycle_align: "interval"
       variance: 1.0
     - platform: sensor
-      name: Chest Freezer Energy
+      name: Energy
       class: energy
       unit_of_measurement: "kWh"
-      linked_power: "Chest Freezer"
+      linked_power: "Power"
       initial_value: "0.0"
 
   # 4. Washing Machine
@@ -71,7 +71,7 @@ devices:
       class: outlet
       initial_value: "on"
     - platform: sensor
-      name: Washing Machine
+      name: Power
       class: power
       unit_of_measurement: "W"
       linked_switch: "Washing Machine Outlet"
@@ -81,10 +81,10 @@ devices:
       initial_load: "standby"
       variance: 5.0
     - platform: sensor
-      name: Washing Machine Energy
+      name: Energy
       class: energy
       unit_of_measurement: "kWh"
-      linked_power: "Washing Machine"
+      linked_power: "Power"
       initial_value: "0.0"
 
   # 5. Heat Pump Tumble Dryer
@@ -93,7 +93,7 @@ devices:
       class: outlet
       initial_value: "on"
     - platform: sensor
-      name: Tumble Dryer
+      name: Power
       class: power
       unit_of_measurement: "W"
       linked_switch: "Tumble Dryer Outlet"
@@ -103,10 +103,10 @@ devices:
       initial_load: "standby"
       variance: 8.0
     - platform: sensor
-      name: Tumble Dryer Energy
+      name: Energy
       class: energy
       unit_of_measurement: "kWh"
-      linked_power: "Tumble Dryer"
+      linked_power: "Power"
       initial_value: "0.0"
 
   # 6. Master Bedroom Fan & Light (Sonoff iFan)

@@ -4,7 +4,7 @@ _Virtual_ is a custom integration for [Home Assistant](https://www.home-assistan
 
 ![icon](images/virtual-icon.png)
 
-_Virtual_ provides support for 17 distinct entity platforms:
+_Virtual_ provides support for 18 distinct entity platforms:
 - **Alarm Control Panels**: Virtual security panels with arming/trigger delays and PIN codes.
 - **Binary Sensors**: Motion, presence, door, window, smoke, and moisture sensors.
 - **Buttons**: Stateless push-buttons to trigger automations and actions.
@@ -19,17 +19,18 @@ _Virtual_ provides support for 17 distinct entity platforms:
 - **Numbers**: Configurable sliders and numeric inputs with custom ranges and units.
 - **Selects**: Dropdown selectors for modes, states, and presets.
 - **Sensors**: Environmental (temperature, humidity, pressure), power, energy, and battery monitors.
+- **Sirens**: Manual alarm sirens and automatic timed warning chimes with duration auto-off and tone selection.
 - **Switches**: Simple on/off switches and power outlets.
 - **Texts**: Configurable text input fields with string length and regex pattern constraints.
 - **Valves**: Timed water and gas valves with position reporting.
 
 ---
 
-> ### ⚠️ Virtual `v0.10.0-alpha` Notice
+> ### ⚠️ Virtual `v0.10.0-beta` Notice
 >
 > **Virtual v0.10 modernizes the integration with native Home Assistant entity models, an interactive web-based Visual Device Editor, and non-blocking asynchronous state storage.**
 >
-> **This is an active alpha release — community testing and feedback are welcome!**
+> **This is an active beta release — community testing and feedback are welcome!**
 >
 > If you encounter issues, regressions, or unexpected behavior, please [open a GitHub issue](https://github.com/twrecked/hass-virtual/issues).
 >
@@ -107,8 +108,8 @@ All entity states are maintained in-memory and can persist cleanly across Home A
 2. **Options Flow & Webhook Sync**:
    - Clicking **Configure** on any Virtual group in Home Assistant launches the visual editor preloaded with your YAML.
    * Clicking **Save & Return** in the editor writes your changes to disk and reloads the integration automatically via an authenticated webhook.
-3. **Major Platform Expansion (17 Supported Platforms)**:
-   - Added native support for `alarm_control_panel`, `button`, `camera`, `climate`, `media_player`, `number`, `select`, `text`, and `valve` entities with standard Home Assistant device classes, units, and services.
+3. **Major Platform Expansion (18 Supported Platforms)**:
+   - Added native support for `alarm_control_panel`, `button`, `camera`, `climate`, `media_player`, `number`, `select`, `siren`, `text`, and `valve` entities with standard Home Assistant device classes, units, and services.
 4. **Strict Home Assistant & Python Modernization**:
    - Entities now directly inherit from core entity classes (`NumberEntity`, `SensorEntity`), eliminating threadpool worker overhead.
    - State persistence and storage use Home Assistant's managed non-blocking `Store` helper and async executor, eliminating the external `aiofiles` dependency.

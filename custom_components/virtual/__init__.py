@@ -51,7 +51,7 @@ from .cfg import BlendedCfg, UpgradeCfg
 from .simulations import SimulationManager
 
 
-__version__ = '0.10.0-alpha.7'
+__version__ = '0.10.0-beta.1'
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -99,6 +99,7 @@ VIRTUAL_PLATFORMS = [
     Platform.NUMBER,
     Platform.SELECT,
     Platform.SENSOR,
+    Platform.SIREN,
     Platform.SWITCH,
     Platform.TEXT,
     Platform.VALVE,
